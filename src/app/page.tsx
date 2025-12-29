@@ -1,65 +1,277 @@
-import Image from "next/image";
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { Content } from "@google/generative-ai";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 
-export default function Home() {
+// 定義顯示在介面上的訊息類型
+type DisplayMessage = {
+  role: "user" | "model";
+  text: string;
+  image?: string;
+};
+
+export default function HomePage() {
+  const [image, setImage] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [displayConversation, setDisplayConversation] = useState<DisplayMessage[]>([]);
+  const [apiHistory, setApiHistory] = useState<Content[]>([]); // 用於傳送給 API
+  const [currentPrompt, setCurrentPrompt] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // 渲染包含數學公式的文字
+  const renderMathInText = (text: string): string => {
+    try {
+      // 先處理 **粗體** 標記
+      let processedText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      
+      // 處理換行
+      processedText = processedText.replace(/\n/g, "<br />");
+      
+      // 處理 display math ($$...$$)
+      processedText = processedText.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
+        try {
+          return katex.renderToString(formula, { displayMode: true, throwOnError: false });
+        } catch (e) {
+          return match; // 如果渲染失敗，返回原始文字
+        }
+      });
+      
+      // 處理 inline math ($...$)
+      processedText = processedText.replace(/\$([^$]+)\$/g, (match, formula) => {
+        try {
+          return katex.renderToString(formula, { displayMode: false, throwOnError: false });
+        } catch (e) {
+          return match; // 如果渲染失敗，返回原始文字
+        }
+      });
+      
+      return processedText;
+    } catch (e) {
+      console.error("Error rendering math:", e);
+      return text;
+    }
+  };
+
+  // 將檔案轉為純 base64（不含 data: 前綴）
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const commaIndex = result.indexOf(",");
+        if (commaIndex !== -1) {
+          resolve(result.slice(commaIndex + 1));
+        } else {
+          // 若非 dataURL，直接回傳原字串
+          resolve(result);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // 處理圖片選擇
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImage(file);
+      setImageUrl(URL.createObjectURL(file));
+      // 重置對話
+      setDisplayConversation([]);
+      setApiHistory([]);
+      setError("");
+    }
+  };
+
+  // 觸發檔案選擇
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 處理表單提交 (傳送訊息)
+  const handleSubmit = async () => {
+    const promptText = currentPrompt.trim();
+    const promptForRetry = promptText; // 保留原始輸入，若失敗可還原
+
+    // 允許只有圖片或只有文字，但至少要有一個
+    if (!promptText && !image) {
+      setError("請輸入問題或上傳圖片");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    // --- 更新介面對話 ---
+    const displayText = promptText || "[圖片問題]";
+    const userMessage: DisplayMessage = { role: "user", text: displayText };
+    // 只有第一則訊息需要顯示圖片
+    if (apiHistory.length === 0 && image) {
+      userMessage.image = imageUrl;
+    }
+    setDisplayConversation(prev => [...prev, userMessage]);
+    // 讓視窗在使用者送出新問題時捲到該訊息位置（不影響後續 AI 回覆的閱讀）
+    setTimeout(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
+      }
+    }, 0);
+    
+    // --- 準備傳送給 API 的資料 ---
+    const formData = new FormData();
+    const apiPrompt = promptText || "請分析這張圖片並解答題目";
+    formData.append("prompt", apiPrompt);
+    formData.append("history", JSON.stringify(apiHistory));
+    // 只有第一則訊息需要傳送圖片檔案
+    if (apiHistory.length === 0 && image) {
+      formData.append("image", image);
+    }
+
+    // 清空輸入框，但保持圖片以供後續對話使用
+    setCurrentPrompt("");
+
+    try {
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "API 請求失敗");
+      }
+
+      const data = await response.json();
+      const modelResponseText = data.result;
+
+      // --- 更新介面對話 ---
+      const modelMessage: DisplayMessage = { role: "model", text: modelResponseText };
+      setDisplayConversation(prev => [...prev, modelMessage]);
+
+      // --- 更新用於傳送給 API 的歷史紀錄 ---
+      const modelApiPart = { role: "model", parts: [{ text: modelResponseText }] };
+      // 若是第一則對話且有圖片，將圖片的 inlineData 一併放入歷史，讓後續追問仍可引用圖片
+      if (apiHistory.length === 0 && image) {
+        try {
+          const base64 = await fileToBase64(image);
+          const initialUserWithImage = {
+            role: "user",
+            parts: [
+              { inlineData: { data: base64, mimeType: image.type } },
+              { text: apiPrompt },
+            ],
+          };
+          setApiHistory([initialUserWithImage, modelApiPart]);
+        } catch (e) {
+          // 如果轉檔失敗，至少保留文字歷史
+          const fallbackUser = { role: "user", parts: [{ text: apiPrompt }] };
+          setApiHistory([fallbackUser, modelApiPart]);
+        }
+      } else {
+        const userApiPart = { role: "user", parts: [{ text: apiPrompt }] };
+        setApiHistory(prev => [...prev, userApiPart, modelApiPart]);
+      }
+
+    } catch (err: any) {
+      setError(err.message);
+      // 如果出錯，將剛才送出的訊息從對話中移除，讓使用者可以重試
+      setDisplayConversation(prev => prev.slice(0, -1));
+      // 將原本的提問放回輸入框，方便再次送出
+      setCurrentPrompt(promptForRetry);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden">
+      <div className="w-full max-w-2xl h-full bg-white rounded-lg shadow-lg flex flex-col">
+        <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 p-4 border-b flex-shrink-0">
+          🤖 QuizMate - AI 互動家教
+        </h1>
+
+        {/* Chat Area */}
+        <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto overflow-x-hidden">
+          {displayConversation.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <div
+                  onClick={handleUploadClick}
+                  className="flex flex-col items-center justify-center w-full max-w-md h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                >
+                  {imageUrl ? (
+                    <img src={imageUrl} alt="Preview" className="h-full w-full object-contain rounded-lg p-2"/>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-5 text-center">
+                      <svg className="w-10 h-10 mb-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                      <p className="font-semibold">點擊上傳題目照片</p>
+                      <p className="text-xs mt-1">或從相簿選擇</p>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-4">可以上傳圖片、輸入文字，或兩者皆可</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {displayConversation.map((msg, index) => (
+              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`}>
+                  {msg.image && <img src={msg.image} alt="User upload" className="rounded-lg mb-2 max-h-60" />}
+                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInText(msg.text) }} />
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+                <div className="flex justify-start">
+                    <div className="max-w-lg p-3 rounded-lg shadow-md bg-gray-200 text-gray-800">
+                        <p className="text-sm animate-pulse">AI 正在思考中...</p>
+                    </div>
+                </div>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Input Area */}
+        <div className="p-4 border-t bg-white flex-shrink-0">
+          {error && <p className="text-red-500 text-xs text-center mb-2">{error}</p>}
+          <div className="flex items-center space-x-2">
+            <input
+              ref={fileInputRef}
+              id="dropzone-file"
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button title="上傳圖片" onClick={handleUploadClick} className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1.586-1.586a2 2 0 00-2.828 0L6 14" /></svg>
+            </button>
+            <input
+              type="text"
+              value={currentPrompt}
+              onChange={(e) => setCurrentPrompt(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSubmit()}
+              placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或直接上傳圖片"}
+              className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-900"
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading || (!currentPrompt.trim() && !image)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:bg-gray-300"
+            >
+              傳送
+            </button>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
+
+
