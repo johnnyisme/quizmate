@@ -272,12 +272,12 @@ export default function HomePage() {
               onChange={(e) => setCurrentPrompt(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSubmit()}
               placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或直接上傳圖片"}
-              className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-900"
+              className="flex-1 min-w-0 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-900"
             />
             <button
               onClick={handleSubmit}
               disabled={isLoading || (!currentPrompt.trim() && !image)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:bg-gray-300"
+              className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-full font-semibold whitespace-nowrap flex-shrink-0 hover:bg-blue-600 disabled:bg-gray-300"
             >
               傳送
             </button>
