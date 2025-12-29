@@ -54,6 +54,13 @@ function getNextAvailableKey(apiKeys: string[]): string {
   return apiKeys[0];
 }
 
+// 解析並清理環境變數中的 API Keys（移除意外的引號與空白）
+function parseApiKeys(raw: string): string[] {
+  return (raw.includes(",") ? raw.split(",") : [raw])
+    .map(k => k.trim().replace(/^"+|"+$/g, ""))
+    .filter(k => k.length > 0);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -73,9 +80,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Gemini API keys not configured" }, { status: 500 });
     }
 
-    const apiKeys = apiKeysString.includes(",") 
-      ? apiKeysString.split(",").map(k => k.trim())
-      : [apiKeysString];
+    const apiKeys = parseApiKeys(apiKeysString);
 
     // 取得下一個可用的 key
     const apiKey = getNextAvailableKey(apiKeys);
@@ -145,9 +150,7 @@ export async function POST(req: NextRequest) {
         if (!apiKeysString) {
           return NextResponse.json({ error: "Gemini API keys not configured" }, { status: 500 });
         }
-        const apiKeys = apiKeysString.includes(",")
-          ? apiKeysString.split(",").map(k => k.trim())
-          : [apiKeysString];
+        const apiKeys = parseApiKeys(apiKeysString);
 
         if (failedKeys.size >= apiKeys.length) {
           return NextResponse.json({
