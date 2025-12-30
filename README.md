@@ -4,6 +4,7 @@
 - 上傳或拍攝題目圖片，維持圖片上下文，連續追問同張圖片的多個問題
 - 文字/圖片任一即可送出
 - KaTeX 數學公式渲染
+- **IndexedDB 對話紀錄**：自動儲存對話到瀏覽器本機，可隨時切換歷史對話
 - 首則系統提示：用條列、繁體中文詳細解題
 - 多把 Gemini API Key 自動輪替，避免 429 配額問題
 
@@ -32,27 +33,36 @@ npm run dev
 4) Build Command 預設 `npm run build`，Output `.next`，部署後取得 `*.vercel.app` 網址。
 
 ## 使用方式
-1) 首次上傳/拍攝題目圖片並輸入問題（可只傳圖片或只文字）。
+1) 首次上傳/拍攝題目圖片並輸入問題(可只傳圖片或只文字)。
 2) AI 回答後，後續追問同張圖片的其他題目，無需再次上傳圖片。
 3) 數學公式會自動以 KaTeX 顯示。
 4) 錯誤時，輸入框會自動還原剛送出的問題，方便重試。
+5) **對話紀錄**：
+   - 所有對話自動儲存到瀏覽器 IndexedDB
+   - 點擊左上角選單圖示開啟側邊欄，查看歷史對話
+   - 點擊歷史對話可切換，點擊「新對話」開始新的問答
+   - 最多保留 5 個對話，超過會自動刪除最舊的(LRU 策略)
 
 ## 常見問題
 - 429 / Too Many Requests：已內建多 key 輪替；若所有 key 用完，請等配額重置或增補新 key。
 - 403 / SERVICE_DISABLED：到該 key 所屬專案啟用「Generative Language API」，等 1-3 分鐘再試。
 - 手機只能拍照不能選相簿：已移除 capture 屬性，可從相簿選取。
+- **對話紀錄不見了**：對話儲存在瀏覽器本機 IndexedDB，清除瀏覽器資料會一併刪除。不同瀏覽器或無痕模式無法共用對話紀錄。
 
 ## 指令速查
 ```bash
 npm run dev     # 本地開發
 npm run build   # 生產建置
 npm run start   # 本地啟動生產版
+npm test        # 執行單元測試 (80 tests)
 ```
 
 ## 目錄摘要
-- `src/app/page.tsx`：前端主介面、上傳/聊天邏輯、捲動控制、KaTeX 轉換。
+- `src/app/page.tsx`：前端主介面、上傳/聊天邏輯、對話紀錄側邊欄、捲動控制、KaTeX 轉換。
 - `src/app/api/gemini/route.ts`：後端 API，處理圖片/base64、對話歷史、API key 輪替。
-- `.env.local`：放 `GEMINI_API_KEYS`（不提交）。
+- `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯。
+- `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表。
+- `.env.local`：放 `GEMINI_API_KEYS`(不提交)。
 
 ## 安全提示
 - 請勿將 `.env.local` 推上 GitHub。
