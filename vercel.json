@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm run test && npm run build",
+  "outputDirectory": ".next"
+}
