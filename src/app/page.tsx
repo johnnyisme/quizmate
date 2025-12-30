@@ -492,7 +492,7 @@ export default function HomePage() {
         {/* Input Area */}
         <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
           {error && <p className="text-red-500 text-xs text-center mb-2">{error}</p>}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <input
               ref={fileInputRef}
               id="dropzone-file"
@@ -511,11 +511,19 @@ export default function HomePage() {
               capture="environment"
               onChange={handleImageChange}
             />
-            <button title="上傳圖片" onClick={handleUploadClick} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1.586-1.586a2 2 0 00-2.828 0L6 14" /></svg>
+            <button 
+              title="上傳圖片" 
+              onClick={handleUploadClick} 
+              className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1.586-1.586a2 2 0 00-2.828 0L6 14" /></svg>
             </button>
-            <button title="拍照" onClick={() => cameraInputRef.current?.click()} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v12H3V7zm9 2a5 5 0 110 10 5 5 0 010-10z" /></svg>
+            <button 
+              title="拍照" 
+              onClick={() => cameraInputRef.current?.click()} 
+              className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v12H3V7zm9 2a5 5 0 110 10 5 5 0 010-10z" /></svg>
             </button>
             <input
               type="text"
@@ -525,12 +533,12 @@ export default function HomePage() {
               onChange={(e) => setCurrentPrompt(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSubmit()}
               placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或直接上傳圖片"}
-              className="flex-1 min-w-0 p-2 border dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="flex-1 min-w-0 h-10 px-4 py-2 border dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow"
             />
             <button
               onClick={handleSubmit}
               disabled={isLoading || (!currentPrompt.trim() && !image)}
-              className="px-3 sm:px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-full font-semibold whitespace-nowrap flex-shrink-0 hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600"
+              className="flex-shrink-0 h-10 px-4 sm:px-5 bg-blue-500 dark:bg-blue-600 text-white rounded-full font-semibold whitespace-nowrap hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             >
               傳送
             </button>
