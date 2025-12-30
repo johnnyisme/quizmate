@@ -488,7 +488,7 @@ export default function HomePage() {
       </div>
 
       {/* Overlay for mobile */}
-      {showSidebar && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black bg-opacity-50 z-[60] lg:hidden" />}
+      {showSidebar && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
     </div>
   );
 }
