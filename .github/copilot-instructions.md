@@ -78,20 +78,30 @@ npm run start       # Local production server
 ```
 src/app/
 ├── page.tsx          # Client component: conversation UI, image upload, KaTeX rendering
-├── layout.tsx        # Root layout (TBD: global styles, metadata)
+├── layout.tsx        # Root layout: global styles, metadata, PWA manifest
 ├── globals.css       # Tailwind directives
 └── api/
     └── gemini/
         └── route.ts  # Server-side Gemini integration, key rotation logic
+src/lib/
+├── db.ts                    # IndexedDB utilities for session storage
+├── useSessionStorage.ts     # React hooks: useSessionStorage, useSessionHistory
+└── useAsyncState.ts         # Utility hook for async state management
 ```
 
-No separate hooks, utils, or components extracted yet—keep as-is unless adding shared logic across multiple pages.
+### IndexedDB Session Storage
+- **Database**: `quizmate-db` with `sessions` object store
+- **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 5 (MAX_SESSIONS)
+- **Schema**: Each session includes `id`, `title`, `createdAt`, `updatedAt`, `messages[]`, `imageBase64` (optional)
+- **Operations**: createSession, getSession, appendMessages, updateSessionTitle, listSessions, deleteSession, pruneOldSessions
 
 ## Configuration & Dependencies
 - **Next.js 16.1.1**: App Router with server routes at `app/api/**`
 - **@google/generative-ai ^0.24.1**: Gemini SDK
 - **Tailwind v4 + @tailwindcss/postcss**: Styling
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
+- **idb ^8.0.3**: Promise-based IndexedDB wrapper
+- **Vitest**: Unit testing framework with 77+ tests (utils, route, page, db)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents
