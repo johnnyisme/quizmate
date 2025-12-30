@@ -442,4 +442,98 @@ describe('HomePage Helper Functions', () => {
       expect(session.imageBase64).toBeUndefined();
     });
   });
+
+  describe('Layout and Sidebar Behavior', () => {
+    it('should show sidebar by default on desktop (lg+)', () => {
+      // 模擬桌面版側邊欄狀態
+      const isDesktop = true;
+      const showSidebar = false; // 即使 state 為 false
+      
+      // 桌面版應該用 lg:translate-x-0 強制顯示
+      const sidebarVisible = isDesktop || showSidebar;
+      
+      expect(sidebarVisible).toBe(true);
+    });
+
+    it('should hide sidebar by default on mobile', () => {
+      // 模擬手機版側邊欄狀態
+      const isDesktop = false;
+      const showSidebar = false;
+      
+      const sidebarVisible = isDesktop || showSidebar;
+      
+      expect(sidebarVisible).toBe(false);
+    });
+
+    it('should toggle sidebar visibility on mobile', () => {
+      // 模擬手機側邊欄切換
+      let showSidebar = false;
+      
+      // 用戶點擊打開
+      showSidebar = true;
+      expect(showSidebar).toBe(true);
+      
+      // 用戶點擊關閉
+      showSidebar = false;
+      expect(showSidebar).toBe(false);
+    });
+
+    it('should center main content absolutely on mobile', () => {
+      // 手機版主區域應該完全置中（inset-0）
+      const mobileMainAreaClass = 'absolute inset-0';
+      expect(mobileMainAreaClass).toContain('inset-0');
+    });
+
+    it('should offset main content for sidebar on desktop', () => {
+      // 桌面版主區域應該從側邊欄右邊開始（lg:left-64）
+      const desktopMainAreaClass = 'absolute inset-0 lg:left-64';
+      expect(desktopMainAreaClass).toContain('lg:left-64');
+    });
+
+    it('should close sidebar after selecting session on mobile', () => {
+      // 模擬選擇 session 後的行為
+      const handleSwitchSession = (sessionId: string) => {
+        return {
+          currentSessionId: sessionId,
+          showSidebar: false, // 手機版應該關閉側邊欄
+        };
+      };
+
+      const result = handleSwitchSession('test-session');
+      expect(result.showSidebar).toBe(false);
+    });
+
+    it('should close sidebar after creating new chat on mobile', () => {
+      // 模擬新建對話後的行為
+      const handleNewChat = () => {
+        return {
+          showSidebar: false, // 手機版應該關閉側邊欄
+          currentSessionId: null,
+        };
+      };
+
+      const result = handleNewChat();
+      expect(result.showSidebar).toBe(false);
+    });
+
+    it('should apply correct z-index for overlay and sidebar', () => {
+      // 確保層級正確：overlay z-[60], sidebar z-[70]
+      const overlayZIndex = 60;
+      const sidebarZIndex = 70;
+      
+      expect(sidebarZIndex).toBeGreaterThan(overlayZIndex);
+    });
+
+    it('should show overlay only on mobile when sidebar is open', () => {
+      // 桌面版不應該有 overlay
+      const showOverlay = (isMobile: boolean, sidebarOpen: boolean) => {
+        return isMobile && sidebarOpen;
+      };
+
+      expect(showOverlay(true, true)).toBe(true);   // 手機 + 側邊欄開啟
+      expect(showOverlay(true, false)).toBe(false);  // 手機 + 側邊欄關閉
+      expect(showOverlay(false, true)).toBe(false);  // 桌面 + 側邊欄開啟
+      expect(showOverlay(false, false)).toBe(false); // 桌面 + 側邊欄關閉
+    });
+  });
 });

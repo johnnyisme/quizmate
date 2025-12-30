@@ -349,7 +349,7 @@ export default function HomePage() {
   return (
     <div className="fixed inset-0 bg-gray-100 flex overflow-hidden">
       {/* Sidebar */}
-      <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col`}>
+      <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
         <div className="p-4 border-b flex items-center justify-between">
           <h2 className="font-bold text-gray-800">對話歷史</h2>
           <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900">
@@ -384,20 +384,18 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Overlay for mobile */}
-      {showSidebar && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" />}
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden relative z-0 lg:ml-64 pointer-events-auto">
+      {/* Main Content - Centered with sidebar consideration */}
+      <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
+        {/* Sidebar toggle button for mobile */}
+        <button onClick={() => setShowSidebar(true)} className="absolute top-4 left-4 lg:hidden p-2 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900 z-[60]">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+        
         <div className="w-full max-w-2xl h-full bg-white rounded-lg shadow-lg flex flex-col">
           <div className="p-4 border-b flex-shrink-0 flex items-center justify-between">
-            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
             <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 flex-1">
               🤖 QuizMate - AI 互動家教
             </h1>
-            <div className="w-10" /> {/* Spacer for centering */}
           </div>
 
         {/* Chat Area */}
@@ -488,6 +486,9 @@ export default function HomePage() {
         </div>
         </div>
       </div>
+
+      {/* Overlay for mobile */}
+      {showSidebar && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black bg-opacity-50 z-[60] lg:hidden" />}
     </div>
   );
 }
