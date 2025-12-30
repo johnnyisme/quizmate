@@ -321,7 +321,7 @@ export default function HomePage() {
       <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col`}>
         <div className="p-4 border-b flex items-center justify-between">
           <h2 className="font-bold text-gray-800">對話歷史</h2>
-          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded">
+          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -360,7 +360,7 @@ export default function HomePage() {
       <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden relative z-0 lg:ml-64 pointer-events-auto">
         <div className="w-full max-w-2xl h-full bg-white rounded-lg shadow-lg flex flex-col">
           <div className="p-4 border-b flex-shrink-0 flex items-center justify-between">
-            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded">
+            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 flex-1">
