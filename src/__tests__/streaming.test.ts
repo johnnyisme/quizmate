@@ -133,16 +133,16 @@ describe('Streaming Response Logic', () => {
 
   describe('maxOutputTokens optimization', () => {
     it('should enforce token limit in generation config', () => {
-      const maxTokens = 8000;
+      const maxTokens = 12000;
       const generationConfig = { maxOutputTokens: maxTokens };
 
-      expect(generationConfig.maxOutputTokens).toBe(8000);
+      expect(generationConfig.maxOutputTokens).toBe(12000);
       expect(generationConfig.maxOutputTokens).toBeLessThan(65536); // 確實降低了
     });
 
     it('should balance response quality and speed', () => {
       // 驗證新的 token 限制不會過低
-      const maxTokens = 8000;
+      const maxTokens = 12000;
 
       expect(maxTokens).toBeGreaterThanOrEqual(4000); // 最少要有合理的答案空間
       expect(maxTokens).toBeLessThan(20000); // 但不要太大影響速度
@@ -150,12 +150,12 @@ describe('Streaming Response Logic', () => {
 
     it('should calculate approximate response time reduction', () => {
       const oldTokens = 65536;
-      const newTokens = 8000;
+      const newTokens = 12000;
       const reductionRatio = newTokens / oldTokens;
 
-      // 預計速度提升約 8 倍
-      expect(reductionRatio).toBeCloseTo(0.122, 2);
-      expect(reductionRatio).toBeLessThan(0.15);
+      // 預計速度提升約 5 倍
+      expect(reductionRatio).toBeCloseTo(0.183, 2);
+      expect(reductionRatio).toBeLessThan(0.20);
     });
   });
 
