@@ -25,6 +25,7 @@ export default function HomePage() {
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
   const [isDark, setIsDark] = useState<boolean>(false);
   const [isThemeReady, setIsThemeReady] = useState<boolean>(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -510,7 +511,14 @@ export default function HomePage() {
             {displayConversation.map((msg, index) => (
               <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
-                  {msg.image && <img src={msg.image} alt="User upload" className="rounded-lg mb-2 max-h-60" />}
+                  {msg.image && (
+                    <img 
+                      src={msg.image} 
+                      alt="User upload" 
+                      className="rounded-lg mb-2 max-h-60 cursor-pointer hover:opacity-90 transition-opacity" 
+                      onClick={() => setPreviewImage(msg.image!)}
+                    />
+                  )}
                   <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInText(msg.text) }} />
                 </div>
               </div>
@@ -585,6 +593,32 @@ export default function HomePage() {
 
       {/* Overlay for mobile */}
       {showSidebar && isThemeReady && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
+      
+      {/* Image preview modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-7xl max-h-full">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              title="關閉"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
