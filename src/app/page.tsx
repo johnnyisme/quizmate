@@ -346,8 +346,6 @@ export default function HomePage() {
               contents: apiHistory.length === 0 && systemPrompt
                 ? [{ role: "user", parts: [{ text: systemPrompt }] }, { role: "user", parts }]
                 : [...apiHistory, { role: "user", parts }],
-            },
-            {
               generationConfig,
             }
           );
