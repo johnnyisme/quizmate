@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { Content } from "@google/generative-ai";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
+import type { Message as DBMessage } from "@/lib/db";
 
 // 定義顯示在介面上的訊息類型
 type DisplayMessage = {
@@ -19,10 +21,65 @@ export default function HomePage() {
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Session management hooks
+  const { session, createNewSession, addMessages } = useSessionStorage(currentSessionId);
+  const { sessions: sessionList, loadSessions, removeSession, performCleanup } = useSessionHistory();
+
+  // Load session when switching
+  useEffect(() => {
+    if (session) {
+      // Convert DB messages to display format
+      const displayMsgs: DisplayMessage[] = session.messages.map((msg) => ({
+        role: msg.role,
+        text: msg.content,
+        image: msg.imageBase64,
+      }));
+      setDisplayConversation(displayMsgs);
+
+      // Rebuild API history
+      const apiMsgs: Content[] = [];
+      for (let i = 0; i < session.messages.length; i++) {
+        const msg = session.messages[i];
+        if (msg.role === "user") {
+          const parts: any[] = [];
+          if (i === 0 && msg.imageBase64) {
+            // First message with image
+            const base64Data = msg.imageBase64.split(",")[1] || msg.imageBase64;
+            parts.push({
+              inlineData: {
+                data: base64Data,
+                mimeType: "image/jpeg", // Default, ideally store in DB
+              },
+            });
+          }
+          parts.push({ text: msg.content });
+          apiMsgs.push({ role: "user", parts });
+        } else {
+          apiMsgs.push({ role: "model", parts: [{ text: msg.content }] });
+        }
+      }
+      setApiHistory(apiMsgs);
+
+      // Restore image if available
+      if (session.imageBase64) {
+        setImageUrl(session.imageBase64);
+        // Note: Cannot fully restore File object, but imageUrl is sufficient for display
+      }
+    }
+  }, [session]);
+
+  // Generate title from first user message
+  const generateTitle = (text: string): string => {
+    const cleaned = text.replace(/[*$\n]/g, " ").trim();
+    return cleaned.length > 30 ? cleaned.slice(0, 30) + "..." : cleaned;
+  };
 
   // 渲染包含數學公式的文字
   const renderMathInText = (text: string): string => {
@@ -83,10 +140,41 @@ export default function HomePage() {
       const file = e.target.files[0];
       setImage(file);
       setImageUrl(URL.createObjectURL(file));
-      // 重置對話
+      // 重置對話並開始新 session
       setDisplayConversation([]);
       setApiHistory([]);
+      setCurrentSessionId(null);
       setError("");
+    }
+  };
+
+  // Start new conversation
+  const handleNewChat = () => {
+    setImage(null);
+    setImageUrl("");
+    setDisplayConversation([]);
+    setApiHistory([]);
+    setCurrentSessionId(null);
+    setError("");
+    setShowSidebar(false); // collapse sidebar on mobile; desktop layout unaffected (lg override)
+  };
+
+  // Switch to existing session
+  const handleSwitchSession = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setShowSidebar(false);
+  };
+
+  // Delete session
+  const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await removeSession(sessionId);
+      if (currentSessionId === sessionId) {
+        handleNewChat();
+      }
+    } catch (err) {
+      console.error("Failed to delete session:", err);
     }
   };
 
@@ -155,6 +243,43 @@ export default function HomePage() {
       const modelMessage: DisplayMessage = { role: "model", text: modelResponseText };
       setDisplayConversation(prev => [...prev, modelMessage]);
 
+      // --- 保存到 IndexedDB ---
+      const userDBMsg: DBMessage = {
+        role: "user",
+        content: promptText || "[圖片問題]",
+        timestamp: Date.now(),
+      };
+      const modelDBMsg: DBMessage = {
+        role: "model",
+        content: modelResponseText,
+        timestamp: Date.now(),
+      };
+
+      if (!currentSessionId) {
+        // Create new session
+        const title = generateTitle(promptText || "圖片問題");
+        
+        // Convert image to base64 for storage
+        let imageB64: string | undefined;
+        if (apiHistory.length === 0 && image) {
+          try {
+            const base64Data = await fileToBase64(image);
+            imageB64 = `data:${image.type};base64,${base64Data}`;
+            userDBMsg.imageBase64 = imageB64;
+          } catch (e) {
+            console.error("Failed to convert image to base64:", e);
+          }
+        }
+        
+        const newSession = await createNewSession(title, [userDBMsg, modelDBMsg], imageB64);
+        setCurrentSessionId(newSession.id);
+        await performCleanup(); // LRU cleanup
+        await loadSessions(); // Refresh list
+      } else {
+        // Append to existing session
+        await addMessages([userDBMsg, modelDBMsg]);
+      }
+
       // --- 更新用於傳送給 API 的歷史紀錄 ---
       const modelApiPart = { role: "model", parts: [{ text: modelResponseText }] };
       // 若是第一則對話且有圖片，將圖片的 inlineData 一併放入歷史，讓後續追問仍可引用圖片
@@ -191,11 +316,58 @@ export default function HomePage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden">
-      <div className="w-full max-w-2xl h-full bg-white rounded-lg shadow-lg flex flex-col">
-        <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 p-4 border-b flex-shrink-0">
-          🤖 QuizMate - AI 互動家教
-        </h1>
+    <div className="fixed inset-0 bg-gray-100 flex overflow-hidden">
+      {/* Sidebar */}
+      <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col`}>
+        <div className="p-4 border-b flex items-center justify-between">
+          <h2 className="font-bold text-gray-800">對話歷史</h2>
+          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="p-2">
+          <button
+            type="button"
+            onClick={handleNewChat}
+            onTouchStart={(e) => { e.stopPropagation(); handleNewChat(); }}
+            className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2 relative z-[80] touch-action-manipulation pointer-events-auto"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <span>新對話</span>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {sessionList.map((s) => (
+            <div key={s.id} onClick={() => handleSwitchSession(s.id)} className={`p-3 rounded-lg cursor-pointer hover:bg-gray-100 ${currentSessionId === s.id ? 'bg-blue-50 border border-blue-200' : 'bg-white border border-gray-200'}`}>
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{s.title}</p>
+                  <p className="text-xs text-gray-500">{new Date(s.updatedAt).toLocaleDateString('zh-TW')}</p>
+                </div>
+                <button onClick={(e) => handleDeleteSession(s.id, e)} className="ml-2 p-1 hover:bg-red-100 rounded text-red-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Overlay for mobile */}
+      {showSidebar && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" />}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden relative z-0 lg:ml-64 pointer-events-auto">
+        <div className="w-full max-w-2xl h-full bg-white rounded-lg shadow-lg flex flex-col">
+          <div className="p-4 border-b flex-shrink-0 flex items-center justify-between">
+            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 flex-1">
+              🤖 QuizMate - AI 互動家教
+            </h1>
+            <div className="w-10" /> {/* Spacer for centering */}
+          </div>
 
         {/* Chat Area */}
         <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto overflow-x-hidden">
@@ -283,9 +455,9 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+        </div>
       </div>
     </div>
   );
 }
-
 

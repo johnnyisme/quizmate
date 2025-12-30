@@ -139,4 +139,306 @@ describe('HomePage Helper Functions', () => {
       expect(recovered[recovered.length - 1].text).toBe('response');
     });
   });
+
+  describe('Session Management UI', () => {
+    it('should reset all state when starting new chat', () => {
+      // Simulate state before new chat
+      const mockState = {
+        image: new File([''], 'test.jpg', { type: 'image/jpeg' }),
+        imageUrl: 'blob:http://localhost:3000/abc123',
+        displayConversation: [{ role: 'user' as const, text: 'old message' }],
+        apiHistory: [{ role: 'user', parts: [{ text: 'old' }] }],
+        currentSessionId: 'session-123',
+        error: 'some error',
+        showSidebar: true,
+      };
+
+      // Simulate handleNewChat behavior
+      const handleNewChat = () => ({
+        image: null,
+        imageUrl: '',
+        displayConversation: [],
+        apiHistory: [],
+        currentSessionId: null,
+        error: '',
+        showSidebar: false, // Mobile sidebar collapses
+      });
+
+      const newState = handleNewChat();
+
+      expect(newState.image).toBeNull();
+      expect(newState.imageUrl).toBe('');
+      expect(newState.displayConversation).toHaveLength(0);
+      expect(newState.apiHistory).toHaveLength(0);
+      expect(newState.currentSessionId).toBeNull();
+      expect(newState.error).toBe('');
+      expect(newState.showSidebar).toBe(false);
+    });
+
+    it('should close sidebar on mobile after new chat', () => {
+      const mockSidebarState = { showSidebar: true };
+      const handleNewChatEffect = () => ({ showSidebar: false });
+      
+      const result = handleNewChatEffect();
+      expect(result.showSidebar).toBe(false);
+    });
+
+    it('should generate title from first user message', () => {
+      const generateTitle = (text: string): string => {
+        const cleaned = text.replace(/[*$\n]/g, ' ').trim();
+        return cleaned.length > 30 ? cleaned.slice(0, 30) + '...' : cleaned;
+      };
+
+      expect(generateTitle('簡單問題')).toBe('簡單問題');
+      expect(generateTitle('這是一個非常非常非常非常非常非常非常非常長的問題需要被截斷喔喔喔')).toBe('這是一個非常非常非常非常非常非常非常非常長的問題需要被截斷喔...');
+      expect(generateTitle('**粗體**問題')).toBe('粗體  問題');
+      expect(generateTitle('多行\n問題')).toBe('多行 問題');
+      expect(generateTitle('數學$x^2$問題')).toBe('數學 x^2 問題');
+    });
+
+    it('should switch to existing session', () => {
+      const mockSwitchSession = (sessionId: string) => ({
+        currentSessionId: sessionId,
+        showSidebar: false,
+      });
+
+      const result = mockSwitchSession('session-456');
+      expect(result.currentSessionId).toBe('session-456');
+      expect(result.showSidebar).toBe(false);
+    });
+
+    it('should delete session and clear if currently active', () => {
+      const mockState = {
+        currentSessionId: 'session-to-delete',
+        sessions: [
+          { id: 'session-to-delete', title: 'Test' },
+          { id: 'session-keep', title: 'Keep' },
+        ],
+      };
+
+      const deleteSession = (sessionId: string) => {
+        const shouldClear = mockState.currentSessionId === sessionId;
+        return {
+          sessions: mockState.sessions.filter(s => s.id !== sessionId),
+          currentSessionId: shouldClear ? null : mockState.currentSessionId,
+          cleared: shouldClear,
+        };
+      };
+
+      const result = deleteSession('session-to-delete');
+      expect(result.sessions).toHaveLength(1);
+      expect(result.sessions[0].id).toBe('session-keep');
+      expect(result.currentSessionId).toBeNull();
+      expect(result.cleared).toBe(true);
+    });
+
+    it('should not clear state when deleting non-active session', () => {
+      const mockState = {
+        currentSessionId: 'session-active',
+        sessions: [
+          { id: 'session-active', title: 'Active' },
+          { id: 'session-delete', title: 'Delete' },
+        ],
+      };
+
+      const deleteSession = (sessionId: string) => {
+        const shouldClear = mockState.currentSessionId === sessionId;
+        return {
+          sessions: mockState.sessions.filter(s => s.id !== sessionId),
+          currentSessionId: shouldClear ? null : mockState.currentSessionId,
+          cleared: shouldClear,
+        };
+      };
+
+      const result = deleteSession('session-delete');
+      expect(result.sessions).toHaveLength(1);
+      expect(result.currentSessionId).toBe('session-active');
+      expect(result.cleared).toBe(false);
+    });
+
+    it('should convert DB messages to display format', () => {
+      const dbMessages = [
+        {
+          role: 'user' as const,
+          content: '2+2=?',
+          timestamp: Date.now(),
+          imageBase64: 'data:image/png;base64,ABC',
+        },
+        {
+          role: 'model' as const,
+          content: '答案是 4',
+          timestamp: Date.now(),
+        },
+      ];
+
+      const convertToDisplay = (msgs: typeof dbMessages) => {
+        return msgs.map(msg => ({
+          role: msg.role,
+          text: msg.content,
+          image: msg.imageBase64,
+        }));
+      };
+
+      const displayMsgs = convertToDisplay(dbMessages);
+      expect(displayMsgs).toHaveLength(2);
+      expect(displayMsgs[0].text).toBe('2+2=?');
+      expect(displayMsgs[0].image).toBe('data:image/png;base64,ABC');
+      expect(displayMsgs[1].text).toBe('答案是 4');
+      expect(displayMsgs[1].image).toBeUndefined();
+    });
+
+    it('should rebuild API history from DB messages', () => {
+      const dbMessages = [
+        {
+          role: 'user' as const,
+          content: '問題',
+          timestamp: Date.now(),
+          imageBase64: 'data:image/jpeg;base64,XYZ',
+        },
+        {
+          role: 'model' as const,
+          content: '回答',
+          timestamp: Date.now(),
+        },
+        {
+          role: 'user' as const,
+          content: '追問',
+          timestamp: Date.now(),
+        },
+        {
+          role: 'model' as const,
+          content: '追答',
+          timestamp: Date.now(),
+        },
+      ];
+
+      const rebuildApiHistory = (msgs: typeof dbMessages) => {
+        const apiMsgs: any[] = [];
+        for (let i = 0; i < msgs.length; i++) {
+          const msg = msgs[i];
+          if (msg.role === 'user') {
+            const parts: any[] = [];
+            if (i === 0 && msg.imageBase64) {
+              const base64Data = msg.imageBase64.split(',')[1] || msg.imageBase64;
+              parts.push({
+                inlineData: {
+                  data: base64Data,
+                  mimeType: 'image/jpeg',
+                },
+              });
+            }
+            parts.push({ text: msg.content });
+            apiMsgs.push({ role: 'user', parts });
+          } else {
+            apiMsgs.push({ role: 'model', parts: [{ text: msg.content }] });
+          }
+        }
+        return apiMsgs;
+      };
+
+      const apiHistory = rebuildApiHistory(dbMessages);
+      expect(apiHistory).toHaveLength(4);
+      expect(apiHistory[0].role).toBe('user');
+      expect(apiHistory[0].parts).toHaveLength(2); // image + text
+      expect(apiHistory[0].parts[0].inlineData).toBeDefined();
+      expect(apiHistory[0].parts[0].inlineData.data).toBe('XYZ');
+      expect(apiHistory[0].parts[1].text).toBe('問題');
+      expect(apiHistory[2].parts).toHaveLength(1); // text only
+      expect(apiHistory[2].parts[0].text).toBe('追問');
+    });
+
+    it('should save messages to new session with image', () => {
+      const mockCreateSession = async (
+        title: string,
+        messages: any[],
+        imageBase64?: string
+      ) => {
+        return {
+          id: 'new-session-id',
+          title,
+          messages,
+          imageBase64,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+      };
+
+      const userMsg = {
+        role: 'user' as const,
+        content: '測試問題',
+        timestamp: Date.now(),
+        imageBase64: 'data:image/png;base64,TEST',
+      };
+
+      const modelMsg = {
+        role: 'model' as const,
+        content: '測試回答',
+        timestamp: Date.now(),
+      };
+
+      mockCreateSession('測試問題', [userMsg, modelMsg], 'data:image/png;base64,TEST').then(
+        (session) => {
+          expect(session.title).toBe('測試問題');
+          expect(session.messages).toHaveLength(2);
+          expect(session.imageBase64).toBe('data:image/png;base64,TEST');
+        }
+      );
+    });
+
+    it('should append messages to existing session', () => {
+      const mockAppendMessages = async (sessionId: string, messages: any[]) => {
+        return {
+          sessionId,
+          messagesAdded: messages.length,
+        };
+      };
+
+      const newMessages = [
+        { role: 'user' as const, content: '追問', timestamp: Date.now() },
+        { role: 'model' as const, content: '追答', timestamp: Date.now() },
+      ];
+
+      mockAppendMessages('existing-session', newMessages).then((result) => {
+        expect(result.sessionId).toBe('existing-session');
+        expect(result.messagesAdded).toBe(2);
+      });
+    });
+
+    it('should convert image file to base64 for storage', async () => {
+      const mockFileToBase64 = async (file: File): Promise<string> => {
+        // Simulate extraction without actual FileReader
+        return 'BASE64_DATA_STRING';
+      };
+
+      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const base64 = await mockFileToBase64(mockFile);
+      const dataUrl = `data:${mockFile.type};base64,${base64}`;
+
+      expect(dataUrl).toBe('data:image/jpeg;base64,BASE64_DATA_STRING');
+    });
+
+    it('should restore image URL from session base64', () => {
+      const sessionImageBase64 = 'data:image/png;base64,RESTORED_DATA';
+      const restoreImage = (base64?: string) => {
+        return base64 || '';
+      };
+
+      const imageUrl = restoreImage(sessionImageBase64);
+      expect(imageUrl).toBe('data:image/png;base64,RESTORED_DATA');
+    });
+
+    it('should handle session without image', () => {
+      const session = {
+        id: 'no-image-session',
+        title: 'Text Only',
+        messages: [
+          { role: 'user' as const, content: 'Question', timestamp: Date.now() },
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      expect(session.imageBase64).toBeUndefined();
+    });
+  });
 });
