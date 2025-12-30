@@ -48,7 +48,7 @@ describe('Streaming Response Logic', () => {
 
     it('should update UI messages incrementally', () => {
       // 模擬流式更新的邏輯
-      const mockConversation = [
+      const mockConversation: Array<{ role: 'user' | 'model'; text: string }> = [
         { role: 'user' as const, text: '問題' },
       ];
 
