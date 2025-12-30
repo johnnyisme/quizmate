@@ -153,7 +153,8 @@ describe('Streaming Response Logic', () => {
       const newTokens = 12000;
       const reductionRatio = newTokens / oldTokens;
 
-      // 預計速度提升約 5 倍
+      // 理論上限比例降低 82%，但實際速度提升取決於回答長度
+      // 大多數數學題目回答遠低於上限，故實際提速有限
       expect(reductionRatio).toBeCloseTo(0.183, 2);
       expect(reductionRatio).toBeLessThan(0.20);
     });
