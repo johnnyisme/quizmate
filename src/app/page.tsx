@@ -23,10 +23,37 @@ export default function HomePage() {
   const [error, setError] = useState<string>("");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
+  const [isDark, setIsDark] = useState<boolean>(false);
+  const [isThemeReady, setIsThemeReady] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // 初始化主題
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldBeDark = stored === 'dark' || (stored !== 'light' && prefersDark);
+    
+    setIsDark(shouldBeDark);
+    document.documentElement.classList.toggle('dark', shouldBeDark);
+    document.documentElement.classList.toggle('light', !shouldBeDark);
+    
+    // 短暫延遲後顯示內容，避免閃爍
+    setTimeout(() => setIsThemeReady(true), 50);
+  }, []);
+
+  // 切換主題
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    
+    const root = document.documentElement;
+    root.classList.toggle('dark', newTheme);
+    root.classList.toggle('light', !newTheme);
+  };
 
   // Session management hooks
   const { session, createNewSession, addMessages } = useSessionStorage(currentSessionId);
@@ -346,13 +373,25 @@ export default function HomePage() {
     }
   };
 
+  // Loading screen while theme initializes
+  if (!isThemeReady) {
+    return (
+      <div className="fixed inset-0 bg-gray-300 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-700">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-gray-100 flex overflow-hidden">
+    <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
       {/* Sidebar */}
-      <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="font-bold text-gray-800">對話歷史</h2>
-          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900">
+      <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
+        <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
+          <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
+          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -361,7 +400,7 @@ export default function HomePage() {
             type="button"
             onClick={handleNewChat}
             onTouchStart={(e) => { e.stopPropagation(); handleNewChat(); }}
-            className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2 relative z-[80] touch-action-manipulation pointer-events-auto"
+            className="w-full p-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 flex items-center justify-center space-x-2 relative z-[80] touch-action-manipulation pointer-events-auto"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             <span>新對話</span>
@@ -369,13 +408,13 @@ export default function HomePage() {
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {sessionList.map((s) => (
-            <div key={s.id} onClick={() => handleSwitchSession(s.id)} className={`p-3 rounded-lg cursor-pointer hover:bg-gray-100 ${currentSessionId === s.id ? 'bg-blue-50 border border-blue-200' : 'bg-white border border-gray-200'}`}>
+            <div key={s.id} onClick={() => handleSwitchSession(s.id)} className={`p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${currentSessionId === s.id ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{s.title}</p>
-                  <p className="text-xs text-gray-500">{new Date(s.updatedAt).toLocaleDateString('zh-TW')}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{s.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(s.updatedAt).toLocaleDateString('zh-TW')}</p>
                 </div>
-                <button onClick={(e) => handleDeleteSession(s.id, e)} className="ml-2 p-1 hover:bg-red-100 rounded text-red-500">
+                <button onClick={(e) => handleDeleteSession(s.id, e)} className="ml-2 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500 dark:text-red-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
               </div>
@@ -387,24 +426,35 @@ export default function HomePage() {
       {/* Main Content - Centered with sidebar consideration */}
       <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
         {/* Sidebar toggle button for mobile */}
-        <button onClick={() => setShowSidebar(true)} className="absolute top-4 left-4 lg:hidden p-2 hover:bg-gray-100 rounded text-gray-700 hover:text-gray-900 z-[60]">
+        <button onClick={() => setShowSidebar(true)} className="absolute top-4 left-4 lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 z-[60]">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
         
-        <div className="w-full max-w-2xl h-full bg-white rounded-lg shadow-lg flex flex-col">
-          <div className="p-4 border-b flex-shrink-0 flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 flex-1">
+        <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
+          <div className="p-4 border-b dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
+            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 dark:text-gray-200 flex-1">
               🤖 QuizMate - AI 互動家教
             </h1>
+            <button 
+              onClick={toggleTheme}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-700 dark:text-gray-300"
+              title={isDark ? '切換至淺色模式' : '切換至深色模式'}
+            >
+              {isDark ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
           </div>
 
         {/* Chat Area */}
         <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto overflow-x-hidden">
           {displayConversation.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <div
                   onClick={handleUploadClick}
-                  className="flex flex-col items-center justify-center w-full max-w-md h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                  className="flex flex-col items-center justify-center w-full max-w-md h-64 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
                 >
                   {imageUrl ? (
                     <img src={imageUrl} alt="Preview" className="h-full w-full object-contain rounded-lg p-2"/>
@@ -423,7 +473,7 @@ export default function HomePage() {
           <div className="space-y-4">
             {displayConversation.map((msg, index) => (
               <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`}>
+                <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
                   {msg.image && <img src={msg.image} alt="User upload" className="rounded-lg mb-2 max-h-60" />}
                   <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInText(msg.text) }} />
                 </div>
@@ -431,7 +481,7 @@ export default function HomePage() {
             ))}
             {isLoading && (
                 <div className="flex justify-start">
-                    <div className="max-w-lg p-3 rounded-lg shadow-md bg-gray-200 text-gray-800">
+                    <div className="max-w-lg p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                         <p className="text-sm animate-pulse">AI 正在思考中...</p>
                     </div>
                 </div>
@@ -440,7 +490,7 @@ export default function HomePage() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t bg-white flex-shrink-0">
+        <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
           {error && <p className="text-red-500 text-xs text-center mb-2">{error}</p>}
           <div className="flex items-center space-x-2">
             <input
@@ -461,24 +511,26 @@ export default function HomePage() {
               capture="environment"
               onChange={handleImageChange}
             />
-            <button title="上傳圖片" onClick={handleUploadClick} className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100">
+            <button title="上傳圖片" onClick={handleUploadClick} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1.586-1.586a2 2 0 00-2.828 0L6 14" /></svg>
             </button>
-            <button title="拍照" onClick={() => cameraInputRef.current?.click()} className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100">
+            <button title="拍照" onClick={() => cameraInputRef.current?.click()} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v12H3V7zm9 2a5 5 0 110 10 5 5 0 010-10z" /></svg>
             </button>
             <input
               type="text"
+              id="prompt-input"
+              name="prompt"
               value={currentPrompt}
               onChange={(e) => setCurrentPrompt(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSubmit()}
               placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或直接上傳圖片"}
-              className="flex-1 min-w-0 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-900"
+              className="flex-1 min-w-0 p-2 border dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
             />
             <button
               onClick={handleSubmit}
               disabled={isLoading || (!currentPrompt.trim() && !image)}
-              className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-full font-semibold whitespace-nowrap flex-shrink-0 hover:bg-blue-600 disabled:bg-gray-300"
+              className="px-3 sm:px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-full font-semibold whitespace-nowrap flex-shrink-0 hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600"
             >
               傳送
             </button>
