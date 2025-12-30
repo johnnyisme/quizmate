@@ -436,6 +436,7 @@ describe('HomePage Helper Functions', () => {
         ],
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        imageBase64: undefined,
       };
 
       expect(session.imageBase64).toBeUndefined();
