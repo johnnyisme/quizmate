@@ -15,13 +15,11 @@ type DisplayMessage = {
 };
 
 type ModelType = "gemini-3-flash-preview" | "gemini-2.5-flash" | "gemini-2.5-pro";
-type ThinkingLevel = "low" | "high";
 
 export default function HomePage() {
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
   const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-3-flash-preview");
-  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>("low");
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -76,8 +74,8 @@ export default function HomePage() {
     document.documentElement.classList.toggle('dark', shouldBeDark);
     document.documentElement.classList.toggle('light', !shouldBeDark);
     
-    // 短暫延遲後顯示內容，避免閃爍
-    setTimeout(() => setIsThemeReady(true), 50);
+    // 立即顯示內容，讓灰色加載畫面能正常顯示
+    setIsThemeReady(true);
   }, []);
 
   // 切換主題
@@ -333,14 +331,6 @@ export default function HomePage() {
             maxOutputTokens: 65536,
           };
 
-          // 只有 Gemini 3 Preview 支援 thinkingConfig
-          // 使用 snake_case 格式與 REST API 相容
-          if (selectedModel.includes("gemini-3")) {
-            generationConfig.thinkingConfig = {
-              includeThinkingProcess: thinkingLevel === "high",
-            };
-          }
-
           const response = await model.generateContent(
             {
               contents: apiHistory.length === 0 && systemPrompt
@@ -559,23 +549,6 @@ export default function HomePage() {
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
               </select>
-              
-              {/* Thinking Level Selector - only for Gemini 3 */}
-              {selectedModel.includes("gemini-3") && (
-                <select 
-                  value={thinkingLevel}
-                  onChange={(e) => setThinkingLevel(e.target.value as ThinkingLevel)}
-                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded border h-8 sm:h-10 transition-colors ${
-                    isDark
-                      ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
-                      : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  title="推理深度"
-                >
-                  <option value="low">快速</option>
-                  <option value="high">深度</option>
-                </select>
-              )}
               
               <button 
                 onClick={() => setShowApiKeySetup(true)}

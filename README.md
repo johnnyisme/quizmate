@@ -110,11 +110,11 @@ npm run test:watch  # 監視模式執行測試
 - 側邊欄快速切換歷史對話
 - 對話標題自動生成（取自首則問題）
 
-### 🤖 多模型與推理控制
-- 三種 Gemini 模型可選
-- Gemini 3 Flash 支援推理深度控制：
-  - **快速**：標準回答速度
-  - **深度**：啟用完整推理過程（includeThinkingProcess）
+### 🤖 多模型選擇
+- 三種 Gemini 模型可選：
+  - **Gemini 3 Flash Preview**（預設）
+  - **Gemini 2.5 Flash**
+  - **Gemini 2.5 Pro**
 
 ### 🔑 API Key 管理
 - 瀏覽器端完整 CRUD 介面
