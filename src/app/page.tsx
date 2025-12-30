@@ -603,7 +603,7 @@ export default function HomePage() {
           <div className="relative max-w-7xl max-h-full w-full flex flex-col">
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-4 right-4 w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors z-10"
+              className="absolute top-4 right-4 w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors z-10 shadow-lg"
               title="關閉"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
