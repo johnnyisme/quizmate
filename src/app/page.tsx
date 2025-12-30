@@ -426,7 +426,7 @@ export default function HomePage() {
         <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
           <div className="px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
             {/* Left: Sidebar toggle button (mobile only) */}
-            <div className="flex items-center w-10">
+            <div className="flex items-center justify-start w-10 h-10">
               <button 
                 onClick={() => setShowSidebar(true)} 
                 className="lg:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
@@ -438,7 +438,7 @@ export default function HomePage() {
             
             {/* Center: Logo and Title */}
             <div className="flex items-center gap-2 justify-center flex-1">
-              <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9">
+              <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                   <defs>
                     <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -463,13 +463,13 @@ export default function HomePage() {
                   <rect x="75" y="42" width="7" height="12" rx="3" fill="url(#robotGradient)" opacity="0.8" />
                 </svg>
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200 leading-none">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200">
                 QuizMate - AI 互動家教
               </h1>
             </div>
             
             {/* Right: Theme toggle button */}
-            <div className="flex items-center justify-end w-10">
+            <div className="flex items-center justify-end w-10 h-10">
               <button 
                 onClick={toggleTheme}
                 className="flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
