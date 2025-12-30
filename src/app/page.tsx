@@ -236,12 +236,43 @@ export default function HomePage() {
         throw new Error(errorData.error || "API 請求失敗");
       }
 
-      const data = await response.json();
-      const modelResponseText = data.result;
+      // 處理流式回應
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("無法讀取回應流");
+      }
 
-      // --- 更新介面對話 ---
-      const modelMessage: DisplayMessage = { role: "model", text: modelResponseText };
+      const decoder = new TextDecoder();
+      let modelResponseText = "";
+
+      // 先添加一個空的 AI 回應訊息，然後逐步更新
+      const modelMessage: DisplayMessage = { role: "model", text: "" };
       setDisplayConversation(prev => [...prev, modelMessage]);
+
+      // 讀取流式回應並逐字更新 UI
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        modelResponseText += chunk;
+
+        // 實時更新最後一條 AI 訊息
+        setDisplayConversation(prev => {
+          const updated = [...prev];
+          if (updated.length > 0 && updated[updated.length - 1].role === "model") {
+            updated[updated.length - 1].text = modelResponseText;
+          }
+          return updated;
+        });
+
+        // 滾動到最新訊息
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
+          }
+        }, 0);
+      }
 
       // --- 保存到 IndexedDB ---
       const userDBMsg: DBMessage = {

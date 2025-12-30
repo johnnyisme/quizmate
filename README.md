@@ -59,7 +59,7 @@ npm test        # 執行單元測試 (80 tests)
 
 ## 目錄摘要
 - `src/app/page.tsx`：前端主介面、上傳/聊天邏輯、對話紀錄側邊欄、捲動控制、KaTeX 轉換。
-- `src/app/api/gemini/route.ts`：後端 API，處理圖片/base64、對話歷史、API key 輪替。
+- `src/app/api/gemini/`：後端 API，處理圖片/base64、對話歷史、API key 輪替。
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯。
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表。
 - `.env.local`：放 `GEMINI_API_KEYS`(不提交)。

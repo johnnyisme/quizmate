@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
     const chat = model.startChat({
       history: history,
       generationConfig: {
-        maxOutputTokens: 65536,
+        maxOutputTokens: 8000,
       },
     });
 
@@ -126,14 +126,31 @@ export async function POST(req: NextRequest) {
     // Add the user's text prompt
     userParts.push({ text: prompt });
     
-    const result = await chat.sendMessage(userParts);
-    const response = result.response;
-    const text = response.text();
+    // 使用流式回應
+    const stream = await chat.sendMessageStream(userParts);
+    
+    // 建立一個 ReadableStream 來流式傳送回應
+    const responseStream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        for await (const chunk of stream.stream) {
+          const chunkText = chunk.text();
+          // 每個 chunk 都發送給客戶端，讓它逐字顯示
+          controller.enqueue(new TextEncoder().encode(chunkText));
+        }
+        controller.close();
+      },
+    });
 
     // 如果成功，移動到下一個 key 以負載均衡
     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
 
-    return NextResponse.json({ result: text });
+    return new NextResponse(responseStream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
+    });
 
   } catch (error: any) {
     console.error("Error in Gemini API route:", error);
@@ -172,7 +189,7 @@ export async function POST(req: NextRequest) {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const chat = model.startChat({
           history: history,
-          generationConfig: { maxOutputTokens: 65536 },
+          generationConfig: { maxOutputTokens: 12000 },
         });
 
         const userParts: Part[] = [];
@@ -199,11 +216,27 @@ export async function POST(req: NextRequest) {
         }
         userParts.push({ text: prompt });
 
-        const retryResult = await chat.sendMessage(userParts);
-        const retryText = retryResult.response.text();
+        // 使用流式回應進行重試
+        const retryStream = await chat.sendMessageStream(userParts);
+        
+        const responseStream = new ReadableStream<Uint8Array>({
+          async start(controller) {
+            for await (const chunk of retryStream.stream) {
+              const chunkText = chunk.text();
+              controller.enqueue(new TextEncoder().encode(chunkText));
+            }
+            controller.close();
+          },
+        });
 
         currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
-        return NextResponse.json({ result: retryText });
+        return new NextResponse(responseStream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+          },
+        });
       } catch (retryError) {
         console.error("Retry also failed:", retryError);
       }
