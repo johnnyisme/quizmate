@@ -373,28 +373,26 @@ export default function HomePage() {
     }
   };
 
-  // Loading screen while theme initializes
-  if (!isThemeReady) {
-    return (
-      <div className="fixed inset-0 bg-gray-300 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-700">載入中...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
+      {/* Loading overlay */}
+      {!isThemeReady && (
+        <div className="fixed inset-0 bg-gray-300 dark:bg-gray-800 flex items-center justify-center z-[100]">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-700 dark:text-gray-300">載入中...</p>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
         <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-          <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
-          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
+            <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
+            <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
         <div className="p-2">
           <button
             type="button"
@@ -426,34 +424,64 @@ export default function HomePage() {
       {/* Main Content - Centered with sidebar consideration */}
       <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
         <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
-          <div className="px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
-            {/* Sidebar toggle button for mobile */}
-            <button 
-              onClick={() => setShowSidebar(true)} 
-              className="lg:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-              title="開啟側邊欄"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
+          <div className="px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
+            {/* Left: Sidebar toggle button (mobile only) */}
+            <div className="flex items-center w-10">
+              <button 
+                onClick={() => setShowSidebar(true)} 
+                className="lg:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                title="開啟側邊欄"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              </button>
+            </div>
             
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-2xl flex-shrink-0 leading-none">🤖</span>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200 truncate leading-none">
+            {/* Center: Logo and Title */}
+            <div className="flex items-center gap-2 justify-center flex-1">
+              <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <defs>
+                    <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" className="dark:stop-color-blue-400" style={{stopColor: '#60A5FA'}} />
+                      <stop offset="100%" className="dark:stop-color-purple-500" style={{stopColor: '#A78BFA'}} />
+                    </linearGradient>
+                  </defs>
+                  {/* Robot head */}
+                  <rect x="25" y="30" width="50" height="45" rx="8" fill="url(#robotGradient)" />
+                  {/* Antenna */}
+                  <line x1="50" y1="30" x2="50" y2="20" stroke="url(#robotGradient)" strokeWidth="3" strokeLinecap="round" />
+                  <circle cx="50" cy="17" r="4" fill="url(#robotGradient)" />
+                  {/* Eyes */}
+                  <circle cx="40" cy="45" r="5" fill="white" opacity="0.9" />
+                  <circle cx="60" cy="45" r="5" fill="white" opacity="0.9" />
+                  <circle cx="41" cy="45" r="2.5" fill="#1E293B" />
+                  <circle cx="61" cy="45" r="2.5" fill="#1E293B" />
+                  {/* Smile */}
+                  <path d="M 38 58 Q 50 65 62 58" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.9" />
+                  {/* Ears */}
+                  <rect x="18" y="42" width="7" height="12" rx="3" fill="url(#robotGradient)" opacity="0.8" />
+                  <rect x="75" y="42" width="7" height="12" rx="3" fill="url(#robotGradient)" opacity="0.8" />
+                </svg>
+              </div>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200 leading-none">
                 QuizMate - AI 互動家教
               </h1>
             </div>
             
-            <button 
-              onClick={toggleTheme}
-              className="flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-              title={isDark ? '切換至淺色模式' : '切換至深色模式'}
-            >
-              {isDark ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              )}
-            </button>
+            {/* Right: Theme toggle button */}
+            <div className="flex items-center justify-end w-10">
+              <button 
+                onClick={toggleTheme}
+                className="flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                title={isDark ? '切換至淺色模式' : '切換至深色模式'}
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                )}
+              </button>
+            </div>
           </div>
 
         {/* Chat Area */}
@@ -556,7 +584,7 @@ export default function HomePage() {
       </div>
 
       {/* Overlay for mobile */}
-      {showSidebar && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
+      {showSidebar && isThemeReady && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
     </div>
   );
 }
