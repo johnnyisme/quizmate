@@ -425,19 +425,27 @@ export default function HomePage() {
 
       {/* Main Content - Centered with sidebar consideration */}
       <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
-        {/* Sidebar toggle button for mobile */}
-        <button onClick={() => setShowSidebar(true)} className="absolute top-4 left-4 lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 z-[60]">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-        
         <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
-          <div className="p-4 border-b dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 dark:text-gray-200 flex-1">
-              🤖 QuizMate - AI 互動家教
-            </h1>
+          <div className="px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
+            {/* Sidebar toggle button for mobile */}
+            <button 
+              onClick={() => setShowSidebar(true)} 
+              className="lg:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+              title="開啟側邊欄"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-2xl flex-shrink-0 leading-none">🤖</span>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200 truncate leading-none">
+                QuizMate - AI 互動家教
+              </h1>
+            </div>
+            
             <button 
               onClick={toggleTheme}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-700 dark:text-gray-300"
+              className="flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
               title={isDark ? '切換至淺色模式' : '切換至深色模式'}
             >
               {isDark ? (
