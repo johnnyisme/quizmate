@@ -1,10 +1,11 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Content } from "@google/generative-ai";
+import { GoogleGenerativeAI, Content } from "@google/generative-ai";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
 import type { Message as DBMessage } from "@/lib/db";
+import ApiKeySetup from "@/components/ApiKeySetup";
 
 // 定義顯示在介面上的訊息類型
 type DisplayMessage = {
@@ -13,7 +14,15 @@ type DisplayMessage = {
   image?: string;
 };
 
+type ModelType = "gemini-3-flash-preview" | "gemini-2.5-flash" | "gemini-2.5-pro";
+type ThinkingLevel = "low" | "high";
+
 export default function HomePage() {
+  const [apiKeys, setApiKeys] = useState<string[]>([]);
+  const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
+  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-3-flash-preview");
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>("low");
+  const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [displayConversation, setDisplayConversation] = useState<DisplayMessage[]>([]);
@@ -30,6 +39,32 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // 初始化 API keys 和模型選擇
+  useEffect(() => {
+    const storedKeys = localStorage.getItem("gemini-api-keys");
+    if (storedKeys) {
+      try {
+        const keys = JSON.parse(storedKeys);
+        setApiKeys(keys);
+      } catch (e) {
+        console.error("Failed to parse API keys:", e);
+      }
+    }
+
+    const storedModel = localStorage.getItem("selected-model") as ModelType | null;
+    const validModels: ModelType[] = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-pro"];
+    
+    // 驗證存儲的模型是否仍然有效
+    if (storedModel && validModels.includes(storedModel)) {
+      setSelectedModel(storedModel);
+    } else {
+      // 如果沒有儲存的模型或模型已失效，使用預設值並儲存
+      const defaultModel: ModelType = "gemini-3-flash-preview";
+      setSelectedModel(defaultModel);
+      localStorage.setItem("selected-model", defaultModel);
+    }
+  }, []);
 
   // 初始化主題
   useEffect(() => {
@@ -54,6 +89,12 @@ export default function HomePage() {
     const root = document.documentElement;
     root.classList.toggle('dark', newTheme);
     root.classList.toggle('light', !newTheme);
+  };
+
+  // 切換模型
+  const handleModelChange = (model: ModelType) => {
+    setSelectedModel(model);
+    localStorage.setItem('selected-model', model);
   };
 
   // Session management hooks
@@ -211,12 +252,16 @@ export default function HomePage() {
     fileInputRef.current?.click();
   };
 
-  // 處理表單提交 (傳送訊息)
+  // 處理表單提交 (傳送訊息) - 直接使用前端 Gemini API + 模型選擇 + key 輪轉
   const handleSubmit = async () => {
-    const promptText = currentPrompt.trim();
-    const promptForRetry = promptText; // 保留原始輸入，若失敗可還原
+    if (apiKeys.length === 0) {
+      setError("請先設置 API keys");
+      return;
+    }
 
-    // 允許只有圖片或只有文字，但至少要有一個
+    const promptText = currentPrompt.trim();
+    const promptForRetry = promptText;
+
     if (!promptText && !image) {
       setError("請輸入問題或上傳圖片");
       return;
@@ -228,79 +273,114 @@ export default function HomePage() {
     // --- 更新介面對話 ---
     const displayText = promptText || "[圖片問題]";
     const userMessage: DisplayMessage = { role: "user", text: displayText };
-    // 只有第一則訊息需要顯示圖片
     if (apiHistory.length === 0 && image) {
       userMessage.image = imageUrl;
     }
     setDisplayConversation(prev => [...prev, userMessage]);
-    // 讓視窗在使用者送出新問題時捲到該訊息位置（不影響後續 AI 回覆的閱讀）
     setTimeout(() => {
       if (chatContainerRef.current) {
         chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
       }
     }, 0);
-    
-    // --- 準備傳送給 API 的資料 ---
-    const formData = new FormData();
-    const apiPrompt = promptText || "請分析這張圖片並解答題目";
-    formData.append("prompt", apiPrompt);
-    formData.append("history", JSON.stringify(apiHistory));
-    // 只有第一則訊息需要傳送圖片檔案
-    if (apiHistory.length === 0 && image) {
-      formData.append("image", image);
-    }
 
-    // 清空輸入框，但保持圖片以供後續對話使用
+    const apiPrompt = promptText || "請分析這張圖片並解答題目";
     setCurrentPrompt("");
 
     try {
-      const response = await fetch("/api/gemini", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "API 請求失敗");
-      }
-
-      // 處理流式回應
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("無法讀取回應流");
-      }
-
-      const decoder = new TextDecoder();
+      // 嘗試使用當前 API key，如果失敗則輪轉
       let modelResponseText = "";
+      let success = false;
+      let lastError: any = null;
 
-      // 先添加一個空的 AI 回應訊息，然後逐步更新
-      const modelMessage: DisplayMessage = { role: "model", text: "" };
+      for (let i = 0; i < apiKeys.length; i++) {
+        const keyIndex = (currentKeyIndex + i) % apiKeys.length;
+        try {
+          const client = new GoogleGenerativeAI(apiKeys[keyIndex]);
+          const model = client.getGenerativeModel({ model: selectedModel });
+
+          // 準備請求的內容
+          const parts: any[] = [];
+
+          // 如果是第一則訊息且有圖片，加入圖片
+          if (apiHistory.length === 0 && image) {
+            const base64 = await fileToBase64(image);
+            parts.push({
+              inlineData: {
+                data: base64,
+                mimeType: image.type || "image/jpeg",
+              },
+            });
+          }
+
+          parts.push({ text: apiPrompt });
+
+          // 準備系統指令（在第一則訊息時加入）
+          let systemPrompt = "";
+          if (apiHistory.length === 0) {
+            systemPrompt = `你是一位專業且有耐心的國中全科老師。請詳細分析題目並**嚴格按照以下順序**提供資訊：
+
+1.  **最終答案**：清楚標示最後的答案。    
+2.  **題目主旨**：這題在考什麼觀念？
+3.  **解題步驟**：一步一步帶領學生解題，說明每一步的思考邏輯。
+4.  **相關公式**：列出解這題會用到的所有公式，並簡單說明。
+
+**重要**：請務必按照 1→2→3→4 的順序回答，不要調整順序。使用繁體中文、條列式回答。如果使用者有額外指定題目（例如：請解第三題），請優先處理。`;
+          }
+
+          // 呼叫 Gemini API
+          const generationConfig: any = {
+            temperature: 1.0,
+            maxOutputTokens: 65536,
+          };
+
+          // 只有 Gemini 3 Preview 支援 thinkingConfig
+          // 使用 snake_case 格式與 REST API 相容
+          if (selectedModel.includes("gemini-3")) {
+            generationConfig.thinkingConfig = {
+              includeThinkingProcess: thinkingLevel === "high",
+            };
+          }
+
+          const response = await model.generateContent(
+            {
+              contents: apiHistory.length === 0 && systemPrompt
+                ? [{ role: "user", parts: [{ text: systemPrompt }] }, { role: "user", parts }]
+                : [...apiHistory, { role: "user", parts }],
+              generationConfig,
+            }
+          );
+
+          const responseText = response.response.text();
+          modelResponseText = responseText;
+          success = true;
+          setCurrentKeyIndex(keyIndex); // 更新為成功的 key index
+          break;
+        } catch (err: any) {
+          lastError = err;
+          console.error(`API key ${keyIndex} failed:`, err.message);
+          // 繼續嘗試下一個 key
+          continue;
+        }
+      }
+
+      if (!success) {
+        throw new Error(
+          `所有 API keys 都失敗。最後錯誤: ${lastError?.message || "未知錯誤"}`
+        );
+      }
+
+      // 添加 AI 回應到顯示對話
+      const modelMessage: DisplayMessage = {
+        role: "model",
+        text: modelResponseText,
+      };
       setDisplayConversation(prev => [...prev, modelMessage]);
 
-      // 讀取流式回應並逐字更新 UI
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        modelResponseText += chunk;
-
-        // 實時更新最後一條 AI 訊息
-        setDisplayConversation(prev => {
-          const updated = [...prev];
-          if (updated.length > 0 && updated[updated.length - 1].role === "model") {
-            updated[updated.length - 1].text = modelResponseText;
-          }
-          return updated;
-        });
-
-        // 滾動到最新訊息
-        setTimeout(() => {
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
-          }
-        }, 0);
-      }
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
+        }
+      }, 0);
 
       // --- 保存到 IndexedDB ---
       const userDBMsg: DBMessage = {
@@ -315,10 +395,7 @@ export default function HomePage() {
       };
 
       if (!currentSessionId) {
-        // Create new session
         const title = generateTitle(promptText || "圖片問題");
-        
-        // Convert image to base64 for storage
         let imageB64: string | undefined;
         if (apiHistory.length === 0 && image) {
           try {
@@ -329,32 +406,29 @@ export default function HomePage() {
             console.error("Failed to convert image to base64:", e);
           }
         }
-        
+
         const newSession = await createNewSession(title, [userDBMsg, modelDBMsg], imageB64);
         setCurrentSessionId(newSession.id);
-        await performCleanup(); // LRU cleanup
-        await loadSessions(); // Refresh list
+        await performCleanup();
+        await loadSessions();
       } else {
-        // Append to existing session
         await addMessages([userDBMsg, modelDBMsg]);
       }
 
-      // --- 更新用於傳送給 API 的歷史紀錄 ---
+      // --- 更新 API history ---
       const modelApiPart = { role: "model", parts: [{ text: modelResponseText }] };
-      // 若是第一則對話且有圖片，將圖片的 inlineData 一併放入歷史，讓後續追問仍可引用圖片
       if (apiHistory.length === 0 && image) {
         try {
           const base64 = await fileToBase64(image);
           const initialUserWithImage = {
             role: "user",
             parts: [
-              { inlineData: { data: base64, mimeType: image.type } },
+              { inlineData: { data: base64, mimeType: image.type || "image/jpeg" } },
               { text: apiPrompt },
             ],
           };
           setApiHistory([initialUserWithImage, modelApiPart]);
         } catch (e) {
-          // 如果轉檔失敗，至少保留文字歷史
           const fallbackUser = { role: "user", parts: [{ text: apiPrompt }] };
           setApiHistory([fallbackUser, modelApiPart]);
         }
@@ -362,12 +436,9 @@ export default function HomePage() {
         const userApiPart = { role: "user", parts: [{ text: apiPrompt }] };
         setApiHistory(prev => [...prev, userApiPart, modelApiPart]);
       }
-
     } catch (err: any) {
       setError(err.message);
-      // 如果出錯，將剛才送出的訊息從對話中移除，讓使用者可以重試
       setDisplayConversation(prev => prev.slice(0, -1));
-      // 將原本的提問放回輸入框，方便再次送出
       setCurrentPrompt(promptForRetry);
     } finally {
       setIsLoading(false);
@@ -375,8 +446,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
-      {/* Loading overlay */}
+    <>
+      {/* Loading overlay - 顯示在最頂層 */}
       {!isThemeReady && (
         <div className="fixed inset-0 bg-gray-300 dark:bg-gray-800 flex items-center justify-center z-[100]">
           <div className="flex flex-col items-center space-y-4">
@@ -386,12 +457,17 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Sidebar */}
-      <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
-        <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-            <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
-            <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+      {apiKeys.length === 0 ? (
+        <ApiKeySetup onKeysSaved={setApiKeys} isDark={isDark} />
+      ) : (
+        <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
+
+          {/* Sidebar */}
+          <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
+            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
+                <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
+                <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
         <div className="p-2">
@@ -425,21 +501,19 @@ export default function HomePage() {
       {/* Main Content - Centered with sidebar consideration */}
       <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
         <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
-          <div className="px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
+          <div className="px-2 sm:px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center gap-2 sm:gap-3">
             {/* Left: Sidebar toggle button (mobile only) */}
-            <div className="flex items-center justify-start w-10 h-10">
-              <button 
-                onClick={() => setShowSidebar(true)} 
-                className="lg:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-                title="開啟側邊欄"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-              </button>
-            </div>
+            <button 
+              onClick={() => setShowSidebar(true)} 
+              className="lg:hidden flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+              title="開啟側邊欄"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
             
             {/* Center: Logo and Title */}
-            <div className="flex items-center gap-2 justify-center flex-1">
-              <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                   <defs>
                     <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -464,22 +538,61 @@ export default function HomePage() {
                   <rect x="75" y="42" width="7" height="12" rx="3" fill="url(#robotGradient)" opacity="0.8" />
                 </svg>
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200">
+              <h1 className="hidden sm:block text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200 truncate">
                 QuizMate - AI 互動家教
               </h1>
             </div>
             
-            {/* Right: Theme toggle button */}
-            <div className="flex items-center justify-end w-10 h-10">
+            {/* Right: Model selector and control buttons */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <select 
+                value={selectedModel}
+                onChange={(e) => handleModelChange(e.target.value as ModelType)}
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded border h-8 sm:h-10 transition-colors ${
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
+                    : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                title="選擇 AI 模型"
+              >
+                <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              </select>
+              
+              {/* Thinking Level Selector - only for Gemini 3 */}
+              {selectedModel.includes("gemini-3") && (
+                <select 
+                  value={thinkingLevel}
+                  onChange={(e) => setThinkingLevel(e.target.value as ThinkingLevel)}
+                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded border h-8 sm:h-10 transition-colors ${
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
+                      : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  title="推理深度"
+                >
+                  <option value="low">快速</option>
+                  <option value="high">深度</option>
+                </select>
+              )}
+              
+              <button 
+                onClick={() => setShowApiKeySetup(true)}
+                className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                title="API 金鑰設定"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
               <button 
                 onClick={toggleTheme}
-                className="flex-shrink-0 w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
                 title={isDark ? '切換至淺色模式' : '切換至深色模式'}
               >
                 {isDark ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                 )}
               </button>
             </div>
@@ -622,7 +735,23 @@ export default function HomePage() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      )}
+
+      {/* API Key Setup Modal */}
+      {showApiKeySetup && apiKeys.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[80]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <ApiKeySetup 
+              onKeysSaved={setApiKeys} 
+              isDark={isDark}
+              onClose={() => setShowApiKeySetup(false)}
+              isModal={true}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
