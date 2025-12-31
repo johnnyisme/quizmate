@@ -428,12 +428,19 @@ export default function HomePage() {
     setApiHistory([]);
     setCurrentSessionId(null);
     setError(null);
-    setShowSidebar(false); // collapse sidebar on mobile; desktop layout unaffected (lg override)
+    // Close sidebar on mobile only
+    if (window.innerWidth < 1024) {
+      setShowSidebar(false);
+    }
   };
 
   // Switch to existing session
   const handleSwitchSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
+    // Close sidebar on mobile only
+    if (window.innerWidth < 1024) {
+      setShowSidebar(false);
+    }
   };
 
   // Delete session

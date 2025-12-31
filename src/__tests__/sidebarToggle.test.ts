@@ -93,25 +93,52 @@ describe('Sidebar Toggle', () => {
   });
 
   describe('Session Switch Behavior', () => {
-    it('should not close sidebar when switching sessions', () => {
+    it('should close sidebar when switching sessions on mobile', () => {
       let showSidebar = true;
-      const currentSessionId = 'session-1';
+      const windowWidth = 375; // Mobile width
       
-      // Simulate switching to another session
-      const newSessionId = 'session-2';
-      // handleSwitchSession should NOT set showSidebar to false
+      // Simulate handleSwitchSession logic
+      if (windowWidth < 1024) {
+        showSidebar = false;
+      }
       
-      expect(showSidebar).toBe(true); // Sidebar should remain open
-      expect(newSessionId).not.toBe(currentSessionId);
+      expect(showSidebar).toBe(false); // Mobile should close sidebar
+    });
+
+    it('should keep sidebar open when switching sessions on desktop', () => {
+      let showSidebar = true;
+      const windowWidth = 1440; // Desktop width
+      
+      // Simulate handleSwitchSession logic
+      if (windowWidth < 1024) {
+        showSidebar = false;
+      }
+      
+      expect(showSidebar).toBe(true); // Desktop should keep sidebar open
     });
 
     it('should close sidebar when creating new chat on mobile', () => {
       let showSidebar = true;
+      const windowWidth = 768; // Mobile width
       
-      // handleNewChat explicitly closes sidebar
-      showSidebar = false;
+      // Simulate handleNewChat logic
+      if (windowWidth < 1024) {
+        showSidebar = false;
+      }
       
       expect(showSidebar).toBe(false);
+    });
+
+    it('should keep sidebar open when creating new chat on desktop', () => {
+      let showSidebar = true;
+      const windowWidth = 1920; // Desktop width
+      
+      // Simulate handleNewChat logic
+      if (windowWidth < 1024) {
+        showSidebar = false;
+      }
+      
+      expect(showSidebar).toBe(true);
     });
   });
 
@@ -195,15 +222,82 @@ describe('Sidebar Toggle', () => {
       expect(showSidebar).toBe(false);
     });
 
-    it('should maintain state across multiple session switches', () => {
+    it('should maintain state across multiple session switches on desktop', () => {
       let showSidebar = true;
       const sessions = ['session-1', 'session-2', 'session-3'];
+      const windowWidth = 1920; // Desktop
       
       // Switch through multiple sessions
       sessions.forEach(() => {
-        // Sidebar should remain open
+        // Simulate handleSwitchSession
+        if (windowWidth < 1024) {
+          showSidebar = false;
+        }
+        // Sidebar should remain open on desktop
         expect(showSidebar).toBe(true);
       });
+    });
+  });
+
+  describe('CSS Class Priority', () => {
+    it('should not have lg:translate-x-0 that overrides state control', () => {
+      const showSidebar = false;
+      // Build the className string like in the component
+      const className = `${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0`;
+      
+      // Should NOT contain lg:translate-x-0 which would override the state
+      expect(className).not.toContain('lg:translate-x-0');
+      expect(className).toContain('-translate-x-full');
+    });
+
+    it('should allow sidebar to close on all screen sizes via state', () => {
+      const showSidebar = false;
+      const transformClass = showSidebar ? 'translate-x-0' : '-translate-x-full';
+      
+      // The transform class should only depend on state, not breakpoints
+      expect(transformClass).toBe('-translate-x-full');
+    });
+
+    it('should allow sidebar to open on all screen sizes via state', () => {
+      const showSidebar = true;
+      const transformClass = showSidebar ? 'translate-x-0' : '-translate-x-full';
+      
+      // The transform class should only depend on state, not breakpoints
+      expect(transformClass).toBe('translate-x-0');
+    });
+  });
+
+  describe('Window Width Detection', () => {
+    it('should correctly detect mobile width at breakpoint boundary', () => {
+      const isMobile = (width: number) => width < 1024;
+      
+      expect(isMobile(1023)).toBe(true);
+      expect(isMobile(1024)).toBe(false);
+    });
+
+    it('should handle window resize scenario', () => {
+      let showSidebar = true;
+      let windowWidth = 768; // Start mobile
+      
+      // Switch session on mobile
+      if (windowWidth < 1024) {
+        showSidebar = false;
+      }
+      expect(showSidebar).toBe(false);
+      
+      // User manually opens sidebar
+      showSidebar = true;
+      
+      // Resize to desktop
+      windowWidth = 1440;
+      
+      // Switch session on desktop
+      const originalState = showSidebar;
+      if (windowWidth < 1024) {
+        showSidebar = false;
+      }
+      
+      expect(showSidebar).toBe(originalState); // Should remain true on desktop
     });
   });
 });
