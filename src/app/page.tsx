@@ -20,6 +20,81 @@ type ModelType = "gemini-3-flash-preview" | "gemini-2.5-flash" | "gemini-2.5-pro
 
 type ThinkingMode = "fast" | "thinking";
 
+// 將技術性錯誤轉換為使用者友善的訊息
+const getFriendlyErrorMessage = (error: any): { message: string; suggestion: string } => {
+  const errorStr = error?.message || JSON.stringify(error) || '';
+  
+  // 429 - 配額用完
+  if (errorStr.includes("429") || errorStr.toLowerCase().includes("quota") || errorStr.toLowerCase().includes("resource_exhausted")) {
+    return {
+      message: "API 配額已用完",
+      suggestion: "免費額度已經用完。建議：\n1. 嘗試換不同的 Gemini agent\n2. 用不同 Google 帳號申請新的 API Key 並加入輪替\n3. 等待配額重置（通常每天重置)\n4. 升級到付費方案以獲得更高配額"
+    };
+  }
+  
+  // 403 - 權限問題
+  if (errorStr.includes("403") || errorStr.toLowerCase().includes("permission_denied")) {
+    return {
+      message: "API 權限不足",
+      suggestion: "可能原因：\n1. API Key 沒有存取權限\n2. 需要在 Google Cloud Console 啟用 'Generative Language API'\n3. API Key 可能有 IP 或 HTTP referrer 限制\n\n請到 Google Cloud Console 檢查設定"
+    };
+  }
+  
+  // 401 - 認證失敗
+  if (errorStr.includes("401") || errorStr.toLowerCase().includes("unauthorized") || errorStr.toLowerCase().includes("invalid_api_key")) {
+    return {
+      message: "API Key 無效",
+      suggestion: "請檢查：\n1. API Key 是否正確複製（沒有多餘空格）\n2. API Key 是否已過期或被刪除\n3. 到 Google AI Studio 重新生成新的 API Key"
+    };
+  }
+  
+  // 400 - 請求錯誤
+  if (errorStr.includes("400") || errorStr.toLowerCase().includes("invalid_argument")) {
+    return {
+      message: "請求格式錯誤",
+      suggestion: "可能原因：\n1. 圖片格式不支援（請使用 JPG、PNG、GIF、WebP）\n2. 圖片太大（建議小於 4MB）\n3. 問題內容包含不支援的字元\n\n請嘗試重新上傳圖片或修改問題"
+    };
+  }
+  
+  // 503 - 服務暫時無法使用
+  if (errorStr.includes("503") || errorStr.toLowerCase().includes("unavailable")) {
+    return {
+      message: "服務暫時無法使用",
+      suggestion: "Google AI 服務目前負載過高或維護中。\n請稍後再試，通常幾分鐘內就會恢復"
+    };
+  }
+  
+  // 500 - 伺服器錯誤
+  if (errorStr.includes("500") || errorStr.toLowerCase().includes("internal")) {
+    return {
+      message: "伺服器發生錯誤",
+      suggestion: "Google AI 服務發生內部錯誤。\n這通常是暫時性問題，請稍後再試"
+    };
+  }
+  
+  // Network errors
+  if (errorStr.toLowerCase().includes("network") || errorStr.toLowerCase().includes("fetch")) {
+    return {
+      message: "網路連線問題",
+      suggestion: "請檢查：\n1. 網路連線是否正常\n2. 是否有防火牆或代理伺服器阻擋\n3. 嘗試重新整理頁面"
+    };
+  }
+  
+  // 模型不支援
+  if (errorStr.toLowerCase().includes("model") && errorStr.toLowerCase().includes("not found")) {
+    return {
+      message: "模型不可用",
+      suggestion: "選擇的 AI 模型可能：\n1. 尚未開放使用\n2. 需要付費方案\n3. 已被停用\n\n建議切換到其他模型（如 Gemini 2.5 Flash）"
+    };
+  }
+  
+  // 預設錯誤訊息
+  return {
+    message: "發生未預期的錯誤",
+    suggestion: "請嘗試：\n1. 重新整理頁面\n2. 清除瀏覽器快取\n3. 檢查 API Key 是否正確\n4. 點擊下方箭頭查看詳細錯誤訊息\n\n如問題持續，請回報給開發者"
+  };
+};
+
 export default function HomePage() {
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
@@ -34,7 +109,9 @@ export default function HomePage() {
   const [apiHistory, setApiHistory] = useState<Content[]>([]); // 用於傳送給 API
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<{ message: string; suggestion?: string; technicalDetails?: string } | null>(null);
+  const [showErrorSuggestion, setShowErrorSuggestion] = useState<boolean>(false);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
   const [isDark, setIsDark] = useState<boolean>(false);
@@ -45,6 +122,8 @@ export default function HomePage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const modelMessageIndexRef = useRef<number | null>(null);
+  const errorSuggestionRef = useRef<HTMLDivElement>(null);
+  const errorTechnicalRef = useRef<HTMLDivElement>(null);
 
   // 根據語言自適應截斷 prompt 名稱
   const truncatePromptName = (name: string) => {
@@ -55,6 +134,40 @@ export default function HomePage() {
     
     return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
   };
+
+  // 展開錯誤詳情時自動滾動到內容
+  useEffect(() => {
+    if (showErrorSuggestion && errorSuggestionRef.current) {
+      setTimeout(() => {
+        errorSuggestionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [showErrorSuggestion]);
+
+  useEffect(() => {
+    if (showTechnicalDetails && errorTechnicalRef.current) {
+      setTimeout(() => {
+        errorTechnicalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [showTechnicalDetails]);
+
+  // 展開錯誤詳情時自動滾動到內容
+  useEffect(() => {
+    if (showErrorSuggestion && errorSuggestionRef.current) {
+      setTimeout(() => {
+        errorSuggestionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [showErrorSuggestion]);
+
+  useEffect(() => {
+    if (showTechnicalDetails && errorTechnicalRef.current) {
+      setTimeout(() => {
+        errorTechnicalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [showTechnicalDetails]);
 
   // 初始化 API keys、模型選擇和 prompts
   useEffect(() => {
@@ -280,7 +393,7 @@ export default function HomePage() {
       setDisplayConversation([]);
       setApiHistory([]);
       setCurrentSessionId(null);
-      setError("");
+      setError(null);
     }
   };
 
@@ -291,7 +404,7 @@ export default function HomePage() {
     setDisplayConversation([]);
     setApiHistory([]);
     setCurrentSessionId(null);
-    setError("");
+    setError(null);
     setShowSidebar(false); // collapse sidebar on mobile; desktop layout unaffected (lg override)
   };
 
@@ -322,7 +435,7 @@ export default function HomePage() {
   // 處理表單提交 (傳送訊息) - 直接使用前端 Gemini API + 模型選擇 + key 輪轉
   const handleSubmit = async () => {
     if (apiKeys.length === 0) {
-      setError("請先設置 API keys");
+      setError({ message: "請先設置 API keys" });
       return;
     }
 
@@ -330,12 +443,12 @@ export default function HomePage() {
     const promptForRetry = promptText;
 
     if (!promptText && !image) {
-      setError("請輸入問題或上傳圖片");
+      setError({ message: "請輸入問題或上傳圖片" });
       return;
     }
 
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     // --- 更新介面對話 ---
     const displayText = promptText || "[圖片問題]";
@@ -536,7 +649,15 @@ export default function HomePage() {
         setApiHistory(prev => [...prev, userApiPart, modelApiPart]);
       }
     } catch (err: any) {
-      setError(err.message);
+      const friendlyError = getFriendlyErrorMessage(err);
+      const technicalDetails = err?.stack || JSON.stringify(err, null, 2);
+      setError({ 
+        message: friendlyError.message,
+        suggestion: friendlyError.suggestion,
+        technicalDetails: technicalDetails
+      });
+      setShowErrorSuggestion(false);
+      setShowTechnicalDetails(false);
       setDisplayConversation(prev => prev.slice(0, -1));
       setCurrentPrompt(promptForRetry);
     } finally {
@@ -769,7 +890,76 @@ export default function HomePage() {
 
         {/* Input Area */}
         <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-          {error && <p className="text-red-500 text-xs text-center mb-2">{error}</p>}
+          {error && (
+            <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p className="text-red-700 dark:text-red-400 text-sm font-semibold leading-5">{error.message}</p>
+                  </div>
+                  
+                  {/* 第一層：建議 */}
+                  {error.suggestion && showErrorSuggestion && (
+                    <div ref={errorSuggestionRef} className="mt-2 text-xs text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 p-3 rounded border border-red-300 dark:border-red-700 max-h-48 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap font-sans leading-relaxed">{error.suggestion}</pre>
+                      
+                      {/* 第二層：原始錯誤 */}
+                      {error.technicalDetails && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+                            className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline flex items-center gap-1"
+                          >
+                            {showTechnicalDetails ? "隱藏" : "查看"}原始錯誤訊息
+                            <svg 
+                              className={`w-3 h-3 transition-transform ${showTechnicalDetails ? 'rotate-180' : ''}`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          
+                          {showTechnicalDetails && (
+                            <div ref={errorTechnicalRef} className="mt-2 p-2 bg-red-200 dark:bg-red-950/50 rounded border border-red-400 dark:border-red-800 max-h-32 overflow-y-auto">
+                              <pre className="text-xs text-red-800 dark:text-red-200 whitespace-pre-wrap break-words font-mono">{error.technicalDetails}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* 第一層展開按鈕 */}
+                {error.suggestion && (
+                  <button
+                    onClick={() => {
+                      setShowErrorSuggestion(!showErrorSuggestion);
+                      if (showErrorSuggestion) {
+                        setShowTechnicalDetails(false);
+                      }
+                    }}
+                    className="flex-shrink-0 p-1.5 hover:bg-red-100 dark:hover:bg-red-800/50 rounded text-red-600 dark:text-red-400 transition-colors"
+                    title={showErrorSuggestion ? "隱藏建議" : "查看建議"}
+                  >
+                    <svg 
+                      className={`w-5 h-5 transition-transform ${showErrorSuggestion ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2 sm:gap-3">
             <input
               ref={fileInputRef}

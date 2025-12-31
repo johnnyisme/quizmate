@@ -59,18 +59,19 @@ npm run dev
 8) **Dark Mode**：點擊右上角太陽/月亮圖示切換主題
 
 ## 常見問題
-- **429 / Too Many Requests**：已內建多 Key 輪替；若所有 Key 用完，請等配額重置或新增更多 Key
-- **403 / SERVICE_DISABLED**：到 Google Cloud Console 啟用「Generative Language API」
+- **429 / Too Many Requests**：已內建多 Key 輪替和智慧錯誤提示；點擊展開建議查看解決方案（換 Key、換 agent、等待重置等）
+- **403 / SERVICE_DISABLED**：錯誤訊息會引導您到 Google Cloud Console 啟用「Generative Language API」
 - **API Key 安全性**：Key 儲存在瀏覽器 localStorage，僅限本機使用者可見；建議使用 API Key 限制功能（HTTP referrers）
 - **對話紀錄不見了**：對話儲存在瀏覽器本機 IndexedDB，清除瀏覽器資料會一併刪除
 - **Gemini 3 Pro 無法使用**：免費版 API 不支援 Gemini 3 Pro（配額為 0）
+- **錯誤訊息看不懂**：所有錯誤都有中文友善說明，點擊展開箭頭查看建議；需要除錯可再展開查看原始錯誤
 
 ## 指令速查
 ```bash
 npm run dev         # 本地開發
 npm run build       # 生產建置（含測試）
 npm run start       # 本地啟動生產版
-npm test            # 執行單元測試（85 tests）
+npm test            # 執行單元測試（185 tests）
 npm run test:watch  # 監視模式執行測試
 ```
 
@@ -102,7 +103,7 @@ npm run test:watch  # 監視模式執行測試
 ### 測試
 - **Vitest 1.6.1** (單元測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **155+ 個測試** (Prompt 截斷、Settings 邏輯、按鈕狀態、前端邏輯、資料庫、主題、工具函數)
+- **185+ 個測試** (錯誤處理、Prompt 截斷、Settings 邏輯、按鈕狀態、前端邏輯、資料庫、主題、工具函數)
 
 ## 功能特色
 
@@ -138,7 +139,23 @@ npm run test:watch  # 監視模式執行測試
 - 遇到 429/quota 錯誤自動切換下一把 Key
 - localStorage 持久化儲存
 
-### 📐 數學公式支援
+### �️ 智慧錯誤處理
+- **用戶友善錯誤訊息**：將技術性錯誤轉換為易懂的中文說明
+- **兩層展開設計**：
+  - 第一層：顯示問題摘要和解決建議（點擊箭頭展開）
+  - 第二層：顯示原始技術錯誤（供進階除錯）
+- **自動滾動**：展開錯誤詳情時自動滾動至內容區
+- **Mobile 優化**：錯誤訊息自動換行，避免破圖
+- **常見錯誤識別**：
+  - 429 配額用完 → 提供多 Key 輪替、換 agent 等建議
+  - 403 權限不足 → 引導啟用 API
+  - 401 認證失敗 → 檢查 Key 有效性
+  - 400 請求錯誤 → 圖片格式/大小建議
+  - 503/500 服務錯誤 → 暫時性問題說明
+  - Network 錯誤 → 網路連線檢查
+  - Model 不可用 → 建議切換模型
+
+### �📐 數學公式支援
 - KaTeX 自動渲染行內（`$...$`）與區塊（`$$...$$`）公式
 - 錯誤容忍處理，不影響其他內容顯示
 
