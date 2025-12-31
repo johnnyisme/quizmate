@@ -137,6 +137,23 @@ export default function HomePage() {
     return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
   };
 
+  // 滾動到頂部
+  const scrollToTop = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // 滾動到底部
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({ 
+        top: chatContainerRef.current.scrollHeight, 
+        behavior: 'smooth' 
+      });
+    }
+  };
+
   // 展開錯誤詳情時自動滾動到內容
   useEffect(() => {
     if (showErrorSuggestion && errorSuggestionRef.current) {
@@ -1151,6 +1168,33 @@ export default function HomePage() {
         </div>
         </div>
       </div>
+
+      {/* Scroll Buttons - Fixed at bottom-right, above input area */}
+      {apiKeys.length > 0 && (
+        <div className="fixed bottom-24 right-4 z-50 flex flex-col gap-2">
+          {/* Scroll to Top Button */}
+          <button
+            onClick={scrollToTop}
+            className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+            title="回到頂部"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+            </svg>
+          </button>
+
+          {/* Scroll to Bottom Button */}
+          <button
+            onClick={scrollToBottom}
+            className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+            title="跳到最新"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Overlay for mobile */}
       {showSidebar && isThemeReady && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
