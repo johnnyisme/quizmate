@@ -9,6 +9,7 @@
 - **多模型選擇**：Gemini 3 Flash、Gemini 2.5 Flash、Gemini 2.5 Pro
 - **推理深度控制**：Gemini 3 Flash 支援快速/深度兩種推理模式
 - **API Key 管理**：瀏覽器端 CRUD 管理，支援多把 Key 輪替
+- **系統 Prompt 自訂**：內建預設老師 Prompt，支援新增最多 5 組自訂 Prompt，靈活切換
 - 首則系統提示：用條列、繁體中文詳細解題
 
 ## 環境需求
@@ -36,21 +37,26 @@ npm run dev
 4) 使用者首次訪問時自行輸入 API Key
 
 ## 使用方式
-1) **設定 API Key**：點擊右上角設定圖示，輸入 Gemini API Key
-2) **選擇模型**：從下拉選單選擇 AI 模型
+1) **設定 API Key**：點擊右上角設定圖示，開啟 Settings → API 金鑰 tab，輸入 Gemini API Key
+2) **自訂 System Prompt**：
+   - 點擊右上角設定圖示，開啟 Settings → Prompt 設定 tab
+   - 內建「QuizMate」預設老師 Prompt
+   - 支援新增最多 5 組自訂 Prompt（點擊「新增」按鈕）
+   - 編輯完後點「儲存」，使用按鈕可切換 Prompt（已使用的會呈現禁用狀態）
+3) **選擇模型**：從下拉選單選擇 AI 模型
    - Gemini 3 Flash（最新，支援推理深度控制）
    - Gemini 2.5 Flash（快速平衡）
    - Gemini 2.5 Pro（高品質）
-3) **上傳題目**：拍攝或上傳題目圖片，輸入問題
-4) **連續追問**：AI 回答後可繼續追問同張圖片的其他問題
-5) **推理控制**（Gemini 3 限定）：
+4) **上傳題目**：拍攝或上傳題目圖片，輸入問題
+5) **連續追問**：AI 回答後可繼續追問同張圖片的其他問題
+6) **推理控制**（Gemini 3 限定）：
    - 快速：不使用深度推理，回答更快
    - 深度：啟用完整推理過程，回答更詳細
-6) **對話紀錄**：
+7) **對話紀錄**：
    - 所有對話自動儲存到瀏覽器 IndexedDB
    - 點擊左上角選單圖示開啟側邊欄，查看歷史對話
    - 最多保留 10 個對話，超過會自動刪除最舊的（LRU 策略）
-7) **Dark Mode**：點擊右上角太陽/月亮圖示切換主題
+8) **Dark Mode**：點擊右上角太陽/月亮圖示切換主題
 
 ## 常見問題
 - **429 / Too Many Requests**：已內建多 Key 輪替；若所有 Key 用完，請等配額重置或新增更多 Key
@@ -71,10 +77,12 @@ npm run test:watch  # 監視模式執行測試
 ## 目錄摘要
 - `src/app/page.tsx`：前端主介面、Gemini API 呼叫、對話管理、Dark Mode、KaTeX 渲染
 - `src/components/ApiKeySetup.tsx`：API Key 管理介面（新增、編輯、刪除）
+- `src/components/PromptSettings.tsx`：System Prompt 自訂介面（新增、編輯、刪除、設為預設）
+- `src/components/Settings.tsx`：Settings 模態視窗（包含 Prompt 設定、API 金鑰、外觀主題三個 tab）
 - `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件
+- `src/__tests__/`：完整單元測試套件（包含 Prompt 截斷、Settings 邏輯、按鈕狀態等）
 
 ## 技術架構
 
@@ -94,7 +102,7 @@ npm run test:watch  # 監視模式執行測試
 ### 測試
 - **Vitest 1.6.1** (單元測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **85 個測試** (前端邏輯、資料庫、主題、工具函數)
+- **155+ 個測試** (Prompt 截斷、Settings 邏輯、按鈕狀態、前端邏輯、資料庫、主題、工具函數)
 
 ## 功能特色
 
@@ -104,7 +112,15 @@ npm run test:watch  # 監視模式執行測試
 - 首次訪問根據系統偏好自動設定
 - 載入時過渡畫面避免主題閃爍
 
-### 💬 對話管理
+### � 系統 Prompt 自訂
+- 內建「QuizMate」預設老師 Prompt（專為解題優化）
+- 支援新增最多 5 組自訂 Prompt，滿足多種教學風格
+- Prompt 名稱智慧截斷（中文 4 字、英文 12 字）
+- 新增/編輯/刪除/設為預設等完整 CRUD 操作
+- 自動儲存到 localStorage，跨工作階段持久化
+- 所有操作皆需儲存才生效，避免誤操作
+
+### �💬 對話管理
 - IndexedDB 自動持久化對話紀錄
 - LRU 策略管理儲存空間（最多 10 個對話）
 - 側邊欄快速切換歷史對話
@@ -125,6 +141,12 @@ npm run test:watch  # 監視模式執行測試
 ### 📐 數學公式支援
 - KaTeX 自動渲染行內（`$...$`）與區塊（`$$...$$`）公式
 - 錯誤容忍處理，不影響其他內容顯示
+
+### ⚙️ Settings 中心化管理
+- **Prompt 設定 Tab**：管理系統 Prompt，支援最多 5 組自訂 Prompt
+- **API 金鑰 Tab**：完整的 API Key 管理介面
+- **外觀主題 Tab**：淺色/深色主題切換
+- 統一的模態介面，易於操作和維護
 
 ## 架構優勢
 
