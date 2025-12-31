@@ -1,6 +1,6 @@
 # QuizMate
 
-![E2E Tests](https://github.com/USERNAME/quizmate/actions/workflows/e2e-tests.yml/badge.svg)
+![E2E Tests](https://github.com/johnnyisme/quizmate/actions/workflows/e2e-tests.yml/badge.svg)
 
 一個針對學生拍題互動解題的 Next.js + Gemini **純前端**專案。支援：
 - 上傳或拍攝題目圖片，維持圖片上下文，連續追問同張圖片的多個問題
