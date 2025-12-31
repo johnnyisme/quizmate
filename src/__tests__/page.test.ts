@@ -68,7 +68,7 @@ describe('HomePage Helper Functions', () => {
     });
   });
 
-  describe('Conversation Logic', () => {
+  describe('Conversation Logic (Frontend Gemini SDK)', () => {
     it('should validate input before sending', () => {
       const validateInput = (prompt: string, hasImage: boolean) => {
         return !!(prompt.trim() || hasImage);
@@ -91,27 +91,94 @@ describe('HomePage Helper Functions', () => {
       expect(shouldIncludeImage(2)).toBe(false);
     });
 
-    it('should compose FormData correctly', () => {
-      const buildFormData = (
-        prompt: string,
-        history: any[],
-        image?: File
-      ) => {
-        const formData = new FormData();
-        formData.append('prompt', prompt);
-        formData.append('history', JSON.stringify(history));
-        if (history.length === 0 && image) {
-          formData.append('image', image);
+    it('should compose Gemini API parts correctly with image', () => {
+      // 實際使用 GoogleGenerativeAI SDK，不使用 FormData
+      const buildParts = (prompt: string, historyLength: number, imageBase64?: string) => {
+        const parts: any[] = [];
+        
+        // 只在第一則訊息且有圖片時加入圖片
+        if (historyLength === 0 && imageBase64) {
+          parts.push({
+            inlineData: {
+              data: imageBase64,
+              mimeType: 'image/jpeg',
+            },
+          });
         }
-        return formData;
+        
+        parts.push({ text: prompt });
+        return parts;
       };
 
-      const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
-      const form1 = buildFormData('question', [], file);
-      expect(form1.has('image')).toBe(true);
+      // 第一則訊息有圖片
+      const parts1 = buildParts('問題', 0, 'BASE64_DATA');
+      expect(parts1).toHaveLength(2);
+      expect(parts1[0].inlineData).toBeDefined();
+      expect(parts1[0].inlineData.data).toBe('BASE64_DATA');
+      expect(parts1[1].text).toBe('問題');
 
-      const form2 = buildFormData('follow-up', [{ role: 'user' }], file);
-      expect(form2.has('image')).toBe(false);
+      // 後續訊息不含圖片
+      const parts2 = buildParts('追問', 1, 'BASE64_DATA');
+      expect(parts2).toHaveLength(1);
+      expect(parts2[0].text).toBe('追問');
+      expect(parts2[0].inlineData).toBeUndefined();
+    });
+
+    it('should build request with system prompt on first message', () => {
+      const buildRequest = (historyLength: number, systemPrompt?: string) => {
+        const userParts = [{ text: '測試問題' }];
+        
+        if (historyLength === 0 && systemPrompt) {
+          return [
+            { role: 'user', parts: [{ text: systemPrompt }] },
+            { role: 'user', parts: userParts },
+          ];
+        }
+        
+        return [{ role: 'user', parts: userParts }];
+      };
+
+      // 第一則訊息應注入系統 prompt
+      const request1 = buildRequest(0, '你是一位耐心的老師');
+      expect(request1).toHaveLength(2);
+      expect(request1[0].parts[0].text).toBe('你是一位耐心的老師');
+      expect(request1[1].parts[0].text).toBe('測試問題');
+
+      // 後續訊息不注入系統 prompt
+      const request2 = buildRequest(1, '你是一位耐心的老師');
+      expect(request2).toHaveLength(1);
+      expect(request2[0].parts[0].text).toBe('測試問題');
+    });
+
+    it('should handle thinking mode config for gemini-3 models', () => {
+      const buildConfig = (model: string, thinkingMode: string) => {
+        const config: any = {
+          temperature: 1.0,
+          maxOutputTokens: 65536,
+        };
+
+        if (thinkingMode === 'thinking' && model.includes('gemini-3')) {
+          config.thinkingConfig = {
+            thinkingLevel: 'high',
+            includeThoughts: false,
+          };
+        }
+
+        return config;
+      };
+
+      // gemini-3 + thinking mode 應加入 thinkingConfig
+      const config1 = buildConfig('gemini-3-flash-preview', 'thinking');
+      expect(config1.thinkingConfig).toBeDefined();
+      expect(config1.thinkingConfig.thinkingLevel).toBe('high');
+
+      // gemini-3 + fast mode 不應加入 thinkingConfig
+      const config2 = buildConfig('gemini-3-flash-preview', 'fast');
+      expect(config2.thinkingConfig).toBeUndefined();
+
+      // gemini-2.5 即使是 thinking mode 也不加入（只支援 gemini-3）
+      const config3 = buildConfig('gemini-2.5-flash', 'thinking');
+      expect(config3.thinkingConfig).toBeUndefined();
     });
   });
 

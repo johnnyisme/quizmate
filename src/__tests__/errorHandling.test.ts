@@ -158,7 +158,7 @@ describe('Error Handling - getFriendlyErrorMessage', () => {
     });
 
     it('should handle unavailable error string', () => {
-      const error = { message: 'UNAVAILABLE: Backend service is down' };
+      const error = { message: 'UNAVAILABLE: Google AI service is temporarily down' };
       const result = getFriendlyErrorMessage(error);
       
       expect(result.message).toBe("服務暫時無法使用");

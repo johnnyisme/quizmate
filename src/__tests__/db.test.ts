@@ -288,6 +288,26 @@ describe('Database Operations (db.ts)', () => {
     expect(count).toBe(MAX_SESSIONS);
   });
 
+  it('should verify MAX_SESSIONS equals 10 (not old value 5)', async () => {
+    // 明確驗證 MAX_SESSIONS 是當前正確的值
+    expect(MAX_SESSIONS).toBe(10);
+    
+    // 驗證可以創建 10 個 session 而不觸發清理
+    for (let i = 0; i < 10; i++) {
+      await createSession(`verify-${i}`, `Session ${i}`, []);
+    }
+    
+    const count = await getSessionCount();
+    expect(count).toBe(10);
+    
+    // 第 11 個 session 應觸發 LRU 清理
+    await createSession('verify-10', 'Session 10', []);
+    await pruneOldSessions();
+    
+    const afterPrune = await getSessionCount();
+    expect(afterPrune).toBe(10); // 應保持在 10 個
+  });
+
   it('should prune oldest sessions when exceeding MAX_SESSIONS', async () => {
     // Create MAX_SESSIONS + 2 sessions
     for (let i = 0; i < MAX_SESSIONS + 2; i++) {
@@ -308,6 +328,29 @@ describe('Database Operations (db.ts)', () => {
     // Sessions should be s2, s3, s4, s5, s6 (oldest 2 deleted: s0, s1)
     expect(sessions.map((s) => s.id)).not.toContain('s0');
     expect(sessions.map((s) => s.id)).not.toContain('s1');
+  });
+
+  it('should correctly sort by updatedAt for LRU pruning', async () => {
+    // 創建 3 個 session，確保時間戳不同
+    await createSession('old', 'Old', []);
+    await new Promise((r) => setTimeout(r, 10));
+    
+    await createSession('middle', 'Middle', []);
+    await new Promise((r) => setTimeout(r, 10));
+    
+    await createSession('new', 'New', []);
+    await new Promise((r) => setTimeout(r, 10));
+    
+    // 更新 'old' session，使其成為最新的
+    await appendMessages('old', [
+      { role: 'user', content: 'update', timestamp: Date.now() },
+    ]);
+    
+    // listSessions 應按 updatedAt 降序排列（newest first）
+    const sessions = await listSessions();
+    expect(sessions[0].id).toBe('old'); // 剛更新，最新
+    expect(sessions[1].id).toBe('new');
+    expect(sessions[2].id).toBe('middle'); // 最舊
   });
 
   // ============================================

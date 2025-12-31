@@ -1,7 +1,7 @@
 // src/__tests__/utils.test.ts
-// 測試後端工具函數
+// 測試前端工具函數（API key 解析與輪替邏輯）
 
-describe('API Route Utils', () => {
+describe('Frontend Utils (API Key Management)', () => {
   describe('parseApiKeys', () => {
     it('should parse comma-separated API keys', () => {
       const raw = 'key1,key2,key3';
@@ -127,6 +127,59 @@ describe('API Route Utils', () => {
       failedKeys.add(2);
       expect(getNextAvailableKey(apiKeys)).toBe('key1');
       expect(failedKeys.size).toBe(0);
+    });
+
+    it('should handle edge case: no API keys available', () => {
+      const apiKeys: string[] = [];
+      const getNextAvailableKey = (apiKeys: string[]): string | null => {
+        if (apiKeys.length === 0) return null;
+        return apiKeys[0];
+      };
+
+      expect(getNextAvailableKey(apiKeys)).toBeNull();
+    });
+
+    it('should handle edge case: single API key', () => {
+      const apiKeys = ['only-key'];
+      let currentKeyIndex = 0;
+      const failedKeys = new Set<number>();
+
+      const getNextAvailableKey = (apiKeys: string[]): string => {
+        for (let i = 0; i < apiKeys.length; i++) {
+          const index = (currentKeyIndex + i) % apiKeys.length;
+          if (!failedKeys.has(index)) {
+            currentKeyIndex = index;
+            return apiKeys[index];
+          }
+        }
+        failedKeys.clear();
+        currentKeyIndex = 0;
+        return apiKeys[0];
+      };
+
+      expect(getNextAvailableKey(apiKeys)).toBe('only-key');
+      
+      // 即使失敗也只能重試同一個 key
+      failedKeys.add(0);
+      expect(getNextAvailableKey(apiKeys)).toBe('only-key');
+      expect(failedKeys.size).toBe(0); // 應重置
+    });
+
+    it('should advance currentKeyIndex on successful request', () => {
+      const apiKeys = ['key1', 'key2', 'key3'];
+      let currentKeyIndex = 0;
+
+      const advanceKeyIndex = (successIndex: number) => {
+        currentKeyIndex = successIndex;
+      };
+
+      // 模擬成功使用 key2
+      advanceKeyIndex(1);
+      expect(currentKeyIndex).toBe(1);
+
+      // 下一次應從 key2 開始輪轉
+      const nextKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+      expect(nextKeyIndex).toBe(2);
     });
   });
 
