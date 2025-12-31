@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **335+ 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **388 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 335+ tests
+- **測試總數**: 388 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -192,15 +192,16 @@ npx vitest run src/components/__tests__/PromptSettings.test.tsx
 | `Settings.test.tsx` | 65 | ✅ | Settings Tab 切換 |
 | `PromptSettings.test.tsx` | 16 | ✅ | Prompt 設定組件邏輯 |
 | `PromptSettings.button.test.tsx` | 17 | ✅ | Prompt 按鈕狀態管理 |
-| `page.test.ts` | 40 | ✅ | 主頁面前端邏輯 |
+| `page.test.ts` | 43 | ✅ | 主頁面前端邏輯（Gemini SDK） |
 | `theme.test.ts` | 17 | ✅ | Dark Mode 主題切換 |
-| `db.test.ts` | 22 | ✅ | IndexedDB 操作與 LRU |
-| **總計** | **348+** | **✅** | **完整功能覆蓋** |
+| `db.test.ts` | 25 | ✅ | IndexedDB 操作與 LRU |
+| `utils.test.ts` | 16 | ✅ | API Key 輪替與邊界條件 |
+| **總計** | **388** | **✅** | **完整功能覆蓋** |
 
 ## 測試分類
 
-### 前端邏輯 (57+ tests)
-- `page.test.ts`: 主頁面狀態管理、API 呼叫、對話流程
+### 前端邏輯 (60 tests)
+- `page.test.ts`: 主頁面狀態管理、Gemini SDK 整合、對話流程
 - `theme.test.ts`: 主題切換、localStorage 持久化
 
 ### UI 組件 (148+ tests)
@@ -209,16 +210,17 @@ npx vitest run src/components/__tests__/PromptSettings.test.tsx
 - `ApiKeySetup.test.tsx`: API Key 管理、編輯、驗證
 - `Settings.test.tsx`: Tab 切換、響應式設計、Props 傳遞
 
-### 工具函數 (61+ tests)
+### 工具函數 (65 tests)
 - `truncatePromptName.test.ts`: 中英文截斷邏輯
 - `errorHandling.test.ts`: 錯誤訊息轉換
 - `inputAutoGrow.test.ts`: 輸入框高度計算
+- `utils.test.ts`: API Key 輪替邏輯
 
 ### 狀態管理 (60+ tests)
 - `useAsyncState.test.ts`: 非同步狀態、loading、error 管理
 
-### 資料庫 (22+ tests)
-- `db.test.ts`: IndexedDB CRUD、LRU 清理、session 管理
+### 資料庫 (25 tests)
+- `db.test.ts`: IndexedDB CRUD、LRU 清理（MAX_SESSIONS=10）、session 管理
 
 ## 如何執行測試
 
@@ -285,11 +287,11 @@ npm run test -- --coverage
 
 ## 測試品質指標
 
-- **執行時間**: ~2.5s (包含新增測試)
-- **通過率**: 100% (348/348)
+- **執行時間**: ~1.5s (優化後)
+- **通過率**: 100% (388/388)
 - **覆蓋率**: ~90% (達成目標)
-- **覆蓋範圍**: 前端邏輯、UI 組件、工具函數、資料庫、狀態管理
-- **維護性**: 模組化設計，每個功能獨立測試文件
+- **覆蓋範圍**: 前端邏輯（Gemini SDK）、UI 組件、工具函數、資料庫（IndexedDB）、狀態管理
+- **維護性**: 模組化設計，每個功能獨立測試文件，反映純前端架構
 
 ## 覆蓋率詳細分析
 
@@ -298,10 +300,10 @@ npm run test -- --coverage
 - ✅ useAsyncState: 狀態管理、非同步模式
 - ✅ Settings: Tab 切換、響應式設計
 - ✅ PromptSettings: CRUD、驗證
-- ✅ page.tsx: 核心業務邏輯
-- ✅ db.ts: 完整 CRUD 操作
+- ✅ page.tsx: 核心業務邏輯（Gemini SDK 直接調用、API Key 輪替）
+- ✅ db.ts: 完整 CRUD 操作、LRU 清理（MAX_SESSIONS=10）
 - ✅ useTheme: 主題切換邏輯
-- ✅ 所有工具函數
+- ✅ 所有工具函數（含 API Key 輪替邏輯）
 
 ### 部分覆蓋 (40-60%)
 - ⚠️ useSessionStorage: 部分 hooks 邏輯未覆蓋（React hooks 測試較複雜）
@@ -368,8 +370,8 @@ npm run test -- --coverage
 
 ---
 
-**最後更新**: 2025-12-31  
-**測試總數**: 348+ tests  
+**最後更新**: 2026-01-01  
+**測試總數**: 388 tests  
 **通過率**: 100%  
 **覆蓋率**: ~90% (達成目標)
 
