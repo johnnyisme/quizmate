@@ -58,6 +58,9 @@ npm run dev
    - 所有對話自動儲存到瀏覽器 IndexedDB
    - 點擊左上角選單圖示開啟側邊欄，查看歷史對話
    - 最多保留 10 個對話，超過會自動刪除最舊的（LRU 策略）
+   - **編輯標題**：點擊對話旁的編輯圖示 ✏️ 可重新命名（最多 30 字元）
+     - 點擊打勾 ✓ 或按 `Enter` 儲存
+     - 按 `Escape` 或點擊外部取消
 8) **Dark Mode**：點擊右上角設定圖示 → Settings → 外觀主題 tab 切換淺色/深色主題
 
 ## 常見問題
@@ -88,7 +91,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件（348+ tests, ~90% 覆蓋率：API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框、Prompt、資料庫等）
+- `src/__tests__/`：完整單元測試套件（365+ tests, ~90% 覆蓋率：API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框、Prompt、資料庫、對話標題編輯等）
 - `e2e/`：Playwright E2E 測試套件（4 tests：API Key 設定、上傳圖片、連續追問、無 Key 場景）
 - `playwright.config.ts`：Playwright 配置（自動啟動 dev server、截圖/影片記錄）
 - `.env.test.example`：E2E 測試環境變數範本
@@ -112,7 +115,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **Vitest 1.6.1** (單元測試框架)
 - **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **348+ 個單元測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、工具函數)
+- **348+ 個單元測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、對話標題編輯、工具函數)
 - **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
 - **單元測試覆蓋率**: ~90%
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)
@@ -137,8 +140,13 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - IndexedDB 自動持久化對話紀錄
 - LRU 策略管理儲存空間（最多 10 個對話）
 - 側邊欄快速切換歷史對話
-- 對話標題自動生成（取自首則問題）
-
+- 對話標題自動生成（取自首則問題）- **標題編輯功能**：
+  - 點擊編輯圖示 ✏️ 進入編輯模式
+  - 自動切換到該對話並載入內容
+  - 30 字元長度限制
+  - 點擊打勾 ✓ 或按 `Enter` 儲存
+  - 按 `Escape` 或點擊外部取消編輯
+  - 即時更新到 IndexedDB
 ### 🤖 多模型選擇
 - 三種 Gemini 模型可選：
    - **Gemini 3 Flash Preview**（預設，可切換「快速/推理」：推理時送 `thinkingLevel=high` + `includeThoughts=false`，若 API 不支援會自動回退）
