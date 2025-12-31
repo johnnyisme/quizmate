@@ -6,6 +6,8 @@ import "katex/dist/katex.min.css";
 import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
 import type { Message as DBMessage } from "@/lib/db";
 import ApiKeySetup from "@/components/ApiKeySetup";
+import Settings from "@/components/Settings";
+import PromptSettings, { DEFAULT_PROMPT, type CustomPrompt } from "@/components/PromptSettings";
 
 // 定義顯示在介面上的訊息類型
 type DisplayMessage = {
@@ -23,7 +25,9 @@ export default function HomePage() {
   const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
   const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-2.5-flash");
   const [thinkingMode, setThinkingMode] = useState<ThinkingMode>("fast");
-  const [showApiKeySetup, setShowApiKeySetup] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [prompts, setPrompts] = useState<CustomPrompt[]>([DEFAULT_PROMPT]);
+  const [selectedPromptId, setSelectedPromptId] = useState<string>("default");
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [displayConversation, setDisplayConversation] = useState<DisplayMessage[]>([]);
@@ -42,7 +46,17 @@ export default function HomePage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const modelMessageIndexRef = useRef<number | null>(null);
 
-  // 初始化 API keys 和模型選擇
+  // 根據語言自適應截斷 prompt 名稱
+  const truncatePromptName = (name: string) => {
+    const hasChinese = /[\u4E00-\u9FFF]/.test(name);
+    
+    // 只要有中文字元就用短限制（中文字寬度大）；純英文/數字允許更長
+    const maxLength = hasChinese ? 4 : 12;
+    
+    return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
+  };
+
+  // 初始化 API keys、模型選擇和 prompts
   useEffect(() => {
     const storedKeys = localStorage.getItem("gemini-api-keys");
     if (storedKeys) {
@@ -66,6 +80,31 @@ export default function HomePage() {
       setSelectedModel(defaultModel);
       localStorage.setItem("selected-model", defaultModel);
     }
+
+    // 載入 prompts
+    const storedPrompts = localStorage.getItem("custom-prompts");
+    let normalized: CustomPrompt[] | null = null;
+    if (storedPrompts) {
+      try {
+        const parsed = JSON.parse(storedPrompts) as CustomPrompt[];
+        normalized = parsed.map((p) => (p.id === "default" ? { ...DEFAULT_PROMPT } : p));
+      } catch (e) {
+        console.error("Failed to parse prompts:", e);
+      }
+    }
+
+    const basePrompts = normalized && normalized.length > 0 ? normalized : [DEFAULT_PROMPT];
+    const defaultIdFromData = basePrompts.find(p => p.isDefault)?.id || basePrompts[0].id;
+    const ensured = basePrompts.map(p => ({ ...p, isDefault: p.id === defaultIdFromData }));
+    setPrompts(ensured);
+    localStorage.setItem('custom-prompts', JSON.stringify(ensured));
+
+    const storedPromptId = localStorage.getItem("selected-prompt-id");
+    const effectiveSelected = storedPromptId && ensured.some(p => p.id === storedPromptId)
+      ? storedPromptId
+      : defaultIdFromData;
+    setSelectedPromptId(effectiveSelected);
+    localStorage.setItem('selected-prompt-id', effectiveSelected);
   }, []);
 
   // 初始化主題
@@ -97,6 +136,32 @@ export default function HomePage() {
   const handleModelChange = (model: ModelType) => {
     setSelectedModel(model);
     localStorage.setItem('selected-model', model);
+  };
+
+  // 更新 prompts
+  const handlePromptsUpdated = (updatedPrompts: CustomPrompt[], newSelectedId?: string) => {
+    const normalized = updatedPrompts.map((p) => 
+      p.id === "default" ? { ...DEFAULT_PROMPT, ...p, isDefault: p.isDefault } : p
+    );
+    
+    // 确定新的默认 ID
+    const defaultId = newSelectedId || normalized.find(p => p.isDefault)?.id || normalized[0]?.id || "default";
+    const ensured = normalized.map(p => ({ ...p, isDefault: p.id === defaultId }));
+    
+    setPrompts(ensured);
+    localStorage.setItem('custom-prompts', JSON.stringify(ensured));
+    
+    // 更新 selectedPromptId
+    setSelectedPromptId(defaultId);
+    localStorage.setItem('selected-prompt-id', defaultId);
+  };
+  // 切換 prompt
+  const handlePromptChange = (promptId: string) => {
+    const ensured = prompts.map(p => ({ ...p, isDefault: p.id === promptId }));
+    setPrompts(ensured);
+    localStorage.setItem('custom-prompts', JSON.stringify(ensured));
+    setSelectedPromptId(promptId);
+    localStorage.setItem('selected-prompt-id', promptId);
   };
 
   // Session management hooks
@@ -326,14 +391,8 @@ export default function HomePage() {
           // 準備系統指令（在第一則訊息時加入）
           let systemPrompt = "";
           if (apiHistory.length === 0) {
-            systemPrompt = `你是一位專業且有耐心的國中全科老師。請詳細分析題目並**嚴格按照以下順序**提供資訊：
-
-1.  **最終答案**：清楚標示最後的答案。    
-2.  **題目主旨**：這題在考什麼觀念？
-3.  **解題步驟**：一步一步帶領學生解題，說明每一步的思考邏輯。
-4.  **相關公式**：列出解這題會用到的所有公式，並簡單說明。
-
-**重要**：請務必按照 1→2→3→4 的順序回答，不要調整順序。使用繁體中文、條列式回答。如果使用者有額外指定題目（例如：請解第三題），請優先處理。`;
+            const selectedPrompt = prompts.find(p => p.id === selectedPromptId);
+            systemPrompt = selectedPrompt?.content || DEFAULT_PROMPT.content;
           }
 
           // 呼叫 Gemini API（支援串流）
@@ -542,19 +601,17 @@ export default function HomePage() {
       {/* Main Content - Centered with sidebar consideration */}
       <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
         <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
-          <div className="px-2 sm:px-4 py-3 border-b dark:border-gray-700 flex-shrink-0 flex items-center gap-2 sm:gap-3">
-            {/* Left: Sidebar toggle button (mobile only) */}
-            <button 
-              onClick={() => setShowSidebar(true)} 
-              className="lg:hidden flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-              title="開啟側邊欄"
-            >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
-            
-            {/* Center: Logo and Title */}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 flex items-center justify-center">
+          <div className="px-1 sm:px-2 py-2 border-b dark:border-gray-700 flex-shrink-0 flex flex-row items-center gap-1 relative z-10 bg-white dark:bg-gray-800 overflow-x-auto">
+            {/* Left cluster: menu + logo */}
+            <div className="flex items-center gap-1 flex-shrink-0 min-w-[48px]">
+              <button 
+                onClick={() => setShowSidebar(true)} 
+                className="lg:hidden flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                title="開啟側邊欄"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              </button>
+              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                   <defs>
                     <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -579,17 +636,29 @@ export default function HomePage() {
                   <rect x="75" y="42" width="7" height="12" rx="3" fill="url(#robotGradient)" opacity="0.8" />
                 </svg>
               </div>
-              <h1 className="hidden sm:block text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200 truncate">
-                QuizMate - AI 互動家教
-              </h1>
             </div>
-            
-            {/* Right: Model selector and control buttons */}
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+
+            {/* Right cluster: selectors and actions */}
+            <div className="flex items-center gap-0.5 flex-1 justify-end flex-nowrap">
+              <select 
+                value={selectedPromptId}
+                onChange={(e) => handlePromptChange(e.target.value)}
+                className={`px-1 py-1 text-xs rounded border h-7 transition-colors ${
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
+                    : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                title="選擇 Prompt"
+              >
+                {prompts.map(p => (
+                  <option key={p.id} value={p.id}>{truncatePromptName(p.name)}</option>
+                ))}
+              </select>
+
               <select 
                 value={selectedModel}
                 onChange={(e) => handleModelChange(e.target.value as ModelType)}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded border h-8 sm:h-10 transition-colors ${
+                className={`px-1 py-1 text-xs rounded border h-7 transition-colors ${
                   isDark
                     ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
                     : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
@@ -605,7 +674,7 @@ export default function HomePage() {
                 <select
                   value={thinkingMode}
                   onChange={(e) => setThinkingMode(e.target.value as ThinkingMode)}
-                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded border h-8 sm:h-10 transition-colors ${
+                  className={`px-1 py-1 text-xs rounded border h-7 transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
                       : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
@@ -618,22 +687,11 @@ export default function HomePage() {
               )}
               
               <button 
-                onClick={() => setShowApiKeySetup(true)}
-                className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-                title="API 金鑰設定"
+                onClick={() => setShowSettings(true)}
+                className="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                title="設定"
               >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              </button>
-              <button 
-                onClick={toggleTheme}
-                className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-                title={isDark ? '切換至淺色模式' : '切換至深色模式'}
-              >
-                {isDark ? (
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                ) : (
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                )}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </button>
             </div>
           </div>
@@ -801,15 +859,19 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* API Key Setup Modal */}
-      {showApiKeySetup && apiKeys.length > 0 && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[80]">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <ApiKeySetup 
-              onKeysSaved={setApiKeys} 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/50 z-[80]">
+          <div className="bg-white dark:bg-gray-800 w-full h-full overflow-y-auto flex flex-col">
+            <Settings
+              apiKeys={apiKeys}
+              onKeysSaved={setApiKeys}
+              prompts={prompts}
+              selectedPromptId={selectedPromptId}
+              onPromptsUpdated={handlePromptsUpdated}
               isDark={isDark}
-              onClose={() => setShowApiKeySetup(false)}
-              isModal={true}
+              onThemeToggle={toggleTheme}
+              onClose={() => setShowSettings(false)}
             />
           </div>
         </div>

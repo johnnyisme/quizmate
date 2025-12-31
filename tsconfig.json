@@ -14,13 +14,17 @@
     "jsx": "react-jsx",
     "incremental": true,
     "types": ["vitest/globals"],
+    "baseUrl": ".",
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/lib/*": ["./src/lib/*"]
     }
   },
   "include": [

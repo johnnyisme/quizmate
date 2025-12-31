@@ -83,132 +83,65 @@ export default function ApiKeySetup({ onKeysSaved, isDark, onClose, isModal }: A
   };
 
   return (
-    <div
-      className={`min-h-screen w-full flex items-center justify-center p-4 transition-colors ${
-        isDark ? "bg-gray-900" : "bg-gray-50"
-      }`}
-    >
-      <div className="w-full max-w-2xl">
-        {/* Close button (for modal mode) */}
-        {isModal && onClose && (
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-lg transition-colors ${
-                isDark
-                  ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200'
-                  : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'
-              }`}
-              title="關閉"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-        
-        {/* 標題 */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                <defs>
-                  <linearGradient id="robotGradientModal" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor: '#60A5FA'}} />
-                    <stop offset="100%" style={{stopColor: '#A78BFA'}} />
-                  </linearGradient>
-                </defs>
-                {/* Robot head */}
-                <rect x="25" y="30" width="50" height="45" rx="8" fill="url(#robotGradientModal)" />
-                {/* Antenna */}
-                <line x1="50" y1="30" x2="50" y2="20" stroke="url(#robotGradientModal)" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="50" cy="17" r="4" fill="url(#robotGradientModal)" />
-                {/* Eyes */}
-                <circle cx="40" cy="45" r="5" fill="white" opacity="0.9" />
-                <circle cx="60" cy="45" r="5" fill="white" opacity="0.9" />
-                <circle cx="41" cy="45" r="2.5" fill="#1E293B" />
-                <circle cx="61" cy="45" r="2.5" fill="#1E293B" />
-                {/* Smile */}
-                <path d="M 38 58 Q 50 65 62 58" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.9" />
-                {/* Ears */}
-                <rect x="18" y="42" width="7" height="12" rx="3" fill="url(#robotGradientModal)" opacity="0.8" />
-                <rect x="75" y="42" width="7" height="12" rx="3" fill="url(#robotGradientModal)" opacity="0.8" />
-              </svg>
-            </div>
-            <h1
-              className={`text-3xl font-bold ${
-                isDark ? "text-white" : "text-gray-900"
-              }`}
-            >
-              QuizMate
-            </h1>
-          </div>
-          <p
-            className={`text-lg ${isDark ? "text-gray-400" : "text-gray-600"}`}
+    <div className={`${isModal ? '' : 'h-full'} flex flex-col`}>
+      {isModal && onClose && (
+        <div className="p-4 sm:p-6 border-b dark:border-gray-700 flex items-center justify-between">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200">
+            API 金鑰設定
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
+            title="關閉"
           >
-            設置你的 Gemini API 金鑰
-          </p>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
+      )}
 
-        {/* API 金鑰輸入卡片 */}
-        <div
-          className={`rounded-lg p-6 ${
-            isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
-          }`}
-        >
-          <h3
-            className={`text-lg font-bold mb-3 ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
-            1️⃣ 取得 API 金鑰
-          </h3>
-          <div
-            className={`p-4 rounded mb-6 ${
-              isDark ? "bg-gray-700" : "bg-blue-50"
-            }`}
-          >
-            <p
-              className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}
-            >
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {/* 說明區塊 */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
+              如何取得 API 金鑰
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-400">
               前往{" "}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-600 font-semibold underline"
+                className="underline hover:text-blue-600 dark:hover:text-blue-200 font-medium"
               >
-                AI Studio
-              </a>{" "}
-              點擊「Create API Key」，複製你的金鑰。
+                Google AI Studio
+              </a>
+              {" "}點擊「Create API Key」，複製你的金鑰。支援多把金鑰（用逗號分隔）。
             </p>
-            <p
-              className={`text-xs mt-2 ${
-                isDark ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              💡 支援多把金鑰（用逗號分隔）
+            <p className="text-xs text-blue-700 dark:text-blue-500 mt-2">
+              🔒 API 金鑰只會存儲在你的瀏覽器本地，不會上傳到任何伺服器。
             </p>
           </div>
 
+          {error && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* 已保存的金鑰列表 */}
           {savedKeys.length > 0 && (
-            <>
-              <h3
-                className={`text-lg font-bold mb-3 ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
-                📋 已保存的金鑰
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                已保存的 API 金鑰 ({savedKeys.length})
               </h3>
-              <div className="space-y-2 mb-6">
+              <div className="space-y-2">
                 {savedKeys.map((key, index) => (
                   <div
                     key={index}
-                    className={`flex items-center gap-2 p-3 rounded border ${
-                      isDark ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"
-                    }`}
+                    className="flex items-center gap-2 p-3 rounded-lg border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                   >
                     {editingIndex === index ? (
                       <>
@@ -216,161 +149,83 @@ export default function ApiKeySetup({ onKeysSaved, isDark, onClose, isModal }: A
                           type="text"
                           value={editingValue}
                           onChange={(e) => setEditingValue(e.target.value)}
-                          className={`flex-1 px-2 py-1 rounded border font-mono text-sm ${
-                            isDark
-                              ? "bg-gray-600 border-gray-500 text-white"
-                              : "bg-white border-gray-300 text-gray-900"
-                          } focus:outline-none focus:border-blue-500`}
+                          className="flex-1 px-3 py-2 rounded border font-mono text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                           autoFocus
                         />
                         <button
                           onClick={() => handleSaveEdit(index)}
-                          className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
+                          className="px-3 py-2 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
                           title="保存"
                         >
-                          ✓
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                            isDark
-                              ? "bg-gray-600 hover:bg-gray-500 text-gray-300"
-                              : "bg-gray-300 hover:bg-gray-400 text-gray-700"
-                          }`}
+                          className="px-3 py-2 rounded bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 text-sm font-medium transition-colors"
                           title="取消"
                         >
-                          ✕
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </>
                     ) : (
                       <>
-                        <span className={`flex-1 font-mono text-sm truncate ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <span className="flex-1 font-mono text-sm truncate text-gray-700 dark:text-gray-300">
                           {key}
                         </span>
                         <button
                           onClick={() => handleStartEdit(index)}
-                          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                            isDark
-                              ? "bg-blue-600 hover:bg-blue-700 text-white"
-                              : "bg-blue-500 hover:bg-blue-600 text-white"
-                          }`}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
                           title="編輯"
                         >
-                          編輯
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleDeleteKey(index)}
-                          className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
+                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500 dark:text-red-400"
                           title="刪除"
                         >
-                          刪除
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </>
                     )}
                   </div>
                 ))}
               </div>
-            </>
-          )}
-
-          <h3
-            className={`text-lg font-bold mb-3 ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
-            {savedKeys.length > 0 ? "➕ 新增金鑰" : "2️⃣ 貼上金鑰"}
-          </h3>
-          <textarea
-            value={newKeyInput}
-            onChange={(e) => {
-              setNewKeyInput(e.target.value);
-              setError("");
-            }}
-            placeholder="貼上你的 API 金鑰&#10;例如：key1, key2, key3"
-            className={`w-full h-24 p-3 rounded border-2 font-mono text-sm resize-none transition-colors ${
-              isDark
-                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-            } focus:outline-none focus:border-blue-500`}
-          />
-
-          {error && (
-            <div className="mt-3 p-3 rounded bg-red-500 bg-opacity-20 text-red-600">
-              {error}
             </div>
           )}
 
-          <div className="mt-4 flex gap-3">
-            {savedKeys.length === 0 ? (
-              <>
-                <button
-                  onClick={handleAddKey}
-                  disabled={newKeyInput.trim().length === 0}
-                  className={`flex-1 py-3 rounded font-bold transition-colors ${
-                    newKeyInput.trim().length === 0
-                      ? isDark
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : isDark
-                        ? "bg-green-600 hover:bg-green-700 text-white"
-                        : "bg-green-500 hover:bg-green-600 text-white"
-                  }`}
-                >
-                  ✓ 保存金鑰並開始
-                </button>
-                {isModal && onClose && (
-                  <button
-                    onClick={onClose}
-                    className={`px-4 py-3 rounded font-bold transition-colors ${
-                      isDark
-                        ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                        : "bg-gray-300 hover:bg-gray-400 text-gray-700"
-                    }`}
-                  >
-                    返回
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleAddKey}
-                  disabled={newKeyInput.trim().length === 0}
-                  className={`flex-1 py-3 rounded font-bold transition-colors ${
-                    newKeyInput.trim().length === 0
-                      ? isDark
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : isDark
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-blue-500 hover:bg-blue-600 text-white"
-                  }`}
-                >
-                  ➕ 新增金鑰
-                </button>
-                {isModal && onClose && (
-                  <button
-                    onClick={onClose}
-                    className={`px-4 py-3 rounded font-bold transition-colors ${
-                      isDark
-                        ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                        : "bg-gray-300 hover:bg-gray-400 text-gray-700"
-                    }`}
-                  >
-                    返回
-                  </button>
-                )}
-              </>
-            )}
+          {/* 新增金鑰區 */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+              {savedKeys.length > 0 ? "新增 API 金鑰" : "設定 API 金鑰"}
+            </h3>
+            <textarea
+              value={newKeyInput}
+              onChange={(e) => {
+                setNewKeyInput(e.target.value);
+                setError("");
+              }}
+              placeholder="貼上你的 API 金鑰（支援多把，用逗號分隔）&#10;例如：AIzaSy...abc123, AIzaSy...def456"
+              className="w-full h-32 p-3 rounded-lg border font-mono text-sm resize-none bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="mt-3 flex gap-3">
+              <button
+                onClick={handleAddKey}
+                disabled={newKeyInput.trim().length === 0}
+                className="px-6 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {savedKeys.length > 0 ? "新增金鑰" : "儲存金鑰"}
+              </button>
+            </div>
           </div>
-
-          <p
-            className={`text-xs mt-4 ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            🔒 你的 API 金鑰只會存儲在你的瀏覽器本地，我們不會蒐集或存儲任何金鑰資訊。
-          </p>
         </div>
       </div>
     </div>
