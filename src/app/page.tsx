@@ -21,7 +21,7 @@ type ThinkingMode = "fast" | "thinking";
 export default function HomePage() {
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
-  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-3-flash-preview");
+  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-2.5-flash");
   const [thinkingMode, setThinkingMode] = useState<ThinkingMode>("fast");
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [image, setImage] = useState<File | null>(null);
@@ -40,6 +40,7 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const modelMessageIndexRef = useRef<number | null>(null);
 
   // 初始化 API keys 和模型選擇
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function HomePage() {
       setSelectedModel(storedModel);
     } else {
       // 如果沒有儲存的模型或模型已失效，使用預設值並儲存
-      const defaultModel: ModelType = "gemini-3-flash-preview";
+      const defaultModel: ModelType = "gemini-2.5-flash";
       setSelectedModel(defaultModel);
       localStorage.setItem("selected-model", defaultModel);
     }
@@ -284,6 +285,13 @@ export default function HomePage() {
       }
     }, 0);
 
+    // 預先放入一則模型訊息占位，用於串流更新
+    setDisplayConversation(prev => {
+      const idx = prev.length;
+      modelMessageIndexRef.current = idx;
+      return [...prev, { role: "model", text: "" }];
+    });
+
     const apiPrompt = promptText || "請分析這張圖片並解答題目";
     setCurrentPrompt("");
 
@@ -328,7 +336,7 @@ export default function HomePage() {
 **重要**：請務必按照 1→2→3→4 的順序回答，不要調整順序。使用繁體中文、條列式回答。如果使用者有額外指定題目（例如：請解第三題），請優先處理。`;
           }
 
-          // 呼叫 Gemini API
+          // 呼叫 Gemini API（支援串流）
           const buildRequestPayload = (withThinking: boolean) => {
             const generationConfig: any = {
               temperature: 1.0,
@@ -351,23 +359,51 @@ export default function HomePage() {
             };
           };
 
-          let response;
+          const updateModelMessage = (updater: (prevText: string) => string) => {
+            const idx = modelMessageIndexRef.current;
+            if (idx === null) return;
+            setDisplayConversation(prev => prev.map((msg, i) => i === idx ? { ...msg, text: updater(msg.text) } : msg));
+          };
+
+          const streamOnce = async (withThinking: boolean): Promise<string> => {
+            // 如果是 fallback 再試，先清空占位文字
+            if (!withThinking) {
+              updateModelMessage(() => "");
+            }
+
+            const result = await model.generateContentStream(buildRequestPayload(withThinking));
+            let aggregated = "";
+
+            for await (const chunk of result.stream) {
+              const chunkText = chunk.text();
+              if (!chunkText) continue;
+              aggregated += chunkText;
+              updateModelMessage((prevText) => prevText + chunkText);
+            }
+
+            // 防呆：若串流沒有內容，回退完整回應文字
+            if (!aggregated) {
+              aggregated = result.response.text();
+              updateModelMessage(() => aggregated);
+            }
+
+            return aggregated;
+          };
+
           try {
-            response = await model.generateContent(buildRequestPayload(thinkingMode === "thinking"));
+            modelResponseText = await streamOnce(thinkingMode === "thinking");
           } catch (err: any) {
             const msg = (err?.message || "").toLowerCase();
             const thinkingLikelyUnsupported = msg.includes("thinking") || msg.includes("unknown name") || msg.includes("unrecognized");
 
             if (thinkingMode === "thinking" && thinkingLikelyUnsupported && selectedModel.includes("gemini-3")) {
               console.warn("Thinking not supported for this key/model, retrying without thinking.", err?.message);
-              response = await model.generateContent(buildRequestPayload(false));
+              modelResponseText = await streamOnce(false);
             } else {
               throw err;
             }
           }
 
-          const responseText = response.response.text();
-          modelResponseText = responseText;
           success = true;
           setCurrentKeyIndex(keyIndex); // 更新為成功的 key index
           break;
@@ -384,19 +420,6 @@ export default function HomePage() {
           `所有 API keys 都失敗。最後錯誤: ${lastError?.message || "未知錯誤"}`
         );
       }
-
-      // 添加 AI 回應到顯示對話
-      const modelMessage: DisplayMessage = {
-        role: "model",
-        text: modelResponseText,
-      };
-      setDisplayConversation(prev => [...prev, modelMessage]);
-
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
-        }
-      }, 0);
 
       // --- 保存到 IndexedDB ---
       const userDBMsg: DBMessage = {
@@ -457,6 +480,7 @@ export default function HomePage() {
       setDisplayConversation(prev => prev.slice(0, -1));
       setCurrentPrompt(promptForRetry);
     } finally {
+      modelMessageIndexRef.current = null;
       setIsLoading(false);
     }
   };
@@ -636,27 +660,50 @@ export default function HomePage() {
           )}
 
           <div className="space-y-4">
-            {displayConversation.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
-                  {msg.image && (
-                    <img 
-                      src={msg.image} 
-                      alt="User upload" 
-                      className="rounded-lg mb-2 max-h-60 cursor-pointer hover:opacity-90 transition-opacity" 
-                      onClick={() => setPreviewImage(msg.image!)}
-                    />
-                  )}
-                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInText(msg.text) }} />
+            {displayConversation.map((msg, index) => {
+              if (msg.role === 'model' && msg.text.trim() === '') return null;
+              return (
+                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
+                    {msg.image && (
+                      <img 
+                        src={msg.image} 
+                        alt="User upload" 
+                        className="rounded-lg mb-2 max-h-60 cursor-pointer hover:opacity-90 transition-opacity" 
+                        onClick={() => setPreviewImage(msg.image!)}
+                      />
+                    )}
+                    <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInText(msg.text) }} />
+                  </div>
+                </div>
+              );
+            })}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="max-w-lg p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-center gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 dark:bg-gray-800/95 flex items-center justify-center shadow-sm">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 sm:w-8 sm:h-8">
+                      <defs>
+                        <linearGradient id="robotGradientThinking" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style={{stopColor: '#60A5FA'}} />
+                          <stop offset="100%" style={{stopColor: '#A78BFA'}} />
+                        </linearGradient>
+                      </defs>
+                      <rect x="25" y="30" width="50" height="45" rx="8" fill="url(#robotGradientThinking)" />
+                      <line x1="50" y1="30" x2="50" y2="20" stroke="url(#robotGradientThinking)" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="50" cy="17" r="4" fill="url(#robotGradientThinking)" />
+                      <circle cx="40" cy="45" r="5" fill="white" opacity="0.9" />
+                      <circle cx="60" cy="45" r="5" fill="white" opacity="0.9" />
+                      <circle cx="41" cy="45" r="2.5" fill="#1E293B" />
+                      <circle cx="61" cy="45" r="2.5" fill="#1E293B" />
+                      <path d="M 38 58 Q 50 65 62 58" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.9" />
+                      <rect x="18" y="42" width="7" height="12" rx="3" fill="url(#robotGradientThinking)" opacity="0.8" />
+                      <rect x="75" y="42" width="7" height="12" rx="3" fill="url(#robotGradientThinking)" opacity="0.8" />
+                    </svg>
+                  </div>
+                  <p className="text-sm animate-pulse">AI 正在思考中...</p>
                 </div>
               </div>
-            ))}
-            {isLoading && (
-                <div className="flex justify-start">
-                    <div className="max-w-lg p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        <p className="text-sm animate-pulse">AI 正在思考中...</p>
-                    </div>
-                </div>
             )}
           </div>
         </div>
