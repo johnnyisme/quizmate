@@ -126,6 +126,7 @@ export default function HomePage() {
   const errorSuggestionRef = useRef<HTMLDivElement>(null);
   const errorTechnicalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editingContainerRef = useRef<HTMLDivElement>(null);
 
   // 根據語言自適應截斷 prompt 名稱
   const truncatePromptName = (name: string) => {
@@ -497,6 +498,22 @@ export default function HomePage() {
     }
   };
 
+  // 點擊編輯容器外部時取消編輯
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editingSessionId && editingContainerRef.current && !editingContainerRef.current.contains(event.target as Node)) {
+        handleCancelEdit();
+      }
+    };
+
+    if (editingSessionId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [editingSessionId]);
+
   // 觸發檔案選擇
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -754,7 +771,7 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
 
           {/* Sidebar */}
-          <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
+          <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-72 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
                 <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
                 <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100" title="收起側邊欄">
@@ -782,37 +799,46 @@ export default function HomePage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   {editingSessionId === s.id ? (
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
-                      onKeyDown={(e) => handleTitleKeyDown(e, s.id)}
-                      onBlur={handleCancelEdit}
-                      maxLength={30}
-                      autoFocus
-                      className="w-full text-sm font-medium bg-white dark:bg-gray-800 border border-blue-500 dark:border-blue-400 rounded px-2 py-1 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : (
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{s.title}</p>
-                  )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(s.updatedAt).toLocaleDateString('zh-TW')}</p>
-                </div>
-                {/* 按鈕區：桌面端 hover 顯示，移動端始終顯示（因無 hover），編輯時始終顯示 */}
-                <div className={`flex items-center gap-1 transition-opacity duration-200 ${editingSessionId === s.id ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'}`}>
-                  {editingSessionId === s.id ? (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleSaveTitle(s.id); }} 
-                      onMouseDown={(e) => e.preventDefault()}
-                      className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600 dark:text-green-400 transition-colors"
-                      title="確認儲存"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
+                    <div ref={editingContainerRef} className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onKeyDown={(e) => handleTitleKeyDown(e, s.id)}
+                        maxLength={30}
+                        autoFocus
+                        className="flex-1 min-w-0 text-sm font-medium bg-white dark:bg-gray-800 border border-blue-500 dark:border-blue-400 rounded px-2 py-1 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleSaveTitle(s.id); }} 
+                        className="p-1.5 rounded-full bg-green-600 hover:bg-green-700 text-white transition-colors flex-shrink-0"
+                        title="保存"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleCancelEdit(); }} 
+                        className="p-1.5 rounded-full bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 transition-colors flex-shrink-0"
+                        title="取消"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                   ) : (
                     <>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{s.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(s.updatedAt).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</p>
+                    </>
+                  )}
+                </div>
+                {/* 按鈕區：桌面端 hover 顯示，移動端始終顯示（因無 hover），編輯時隱藏（改在 input 右側顯示） */}
+                {editingSessionId !== s.id && (
+                  <div className="flex items-center gap-1 transition-opacity duration-200 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
                       <button 
                         onClick={(e) => handleStartEditTitle(s.id, s.title, e)} 
                         className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded text-blue-500 dark:text-blue-400 transition-colors"
@@ -831,9 +857,8 @@ export default function HomePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
-                    </>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -841,7 +866,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Content - Centered with sidebar consideration */}
-      <div className={`absolute inset-0 ${showSidebar ? 'lg:left-64' : 'left-0'} flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto transition-all duration-300`}>
+      <div className={`absolute inset-0 ${showSidebar ? 'lg:left-72' : 'left-0'} flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto transition-all duration-300`}>
         <div className="w-full max-w-2xl lg:max-w-5xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
           <div className="px-1 sm:px-2 py-2 border-b dark:border-gray-700 flex-shrink-0 flex flex-row items-center gap-1 relative z-10 bg-white dark:bg-gray-800 overflow-x-auto">
             {/* Left cluster: menu + logo */}

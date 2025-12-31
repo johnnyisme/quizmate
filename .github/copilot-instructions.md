@@ -95,9 +95,24 @@ src/lib/
 
 ### IndexedDB Session Storage
 - **Database**: `quizmate-db` with `sessions` object store
-- **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 5 (MAX_SESSIONS)
+- **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 10 (MAX_SESSIONS)
 - **Schema**: Each session includes `id`, `title`, `createdAt`, `updatedAt`, `messages[]`, `imageBase64` (optional)
 - **Operations**: createSession, getSession, appendMessages, updateSessionTitle, listSessions, deleteSession, pruneOldSessions
+- **Session Title Editing**:
+  - Click edit icon to enter edit mode (switches to session if not current)
+  - Input limited to 30 characters with `maxLength` attribute
+  - Compact circular buttons (green ✓ save, gray ✗ cancel) with `p-1.5 rounded-full`
+  - Input uses `min-w-0` for responsive shrinking, `flex-1` for expansion
+  - **Save triggers**: Click ✓ button OR press `Enter` key
+  - **Cancel triggers**: Click ✗ button OR press `Escape` key OR click outside editing container
+  - `useEffect` with `mousedown` event listener handles click-outside detection
+  - Event listener auto-cleanup on unmount via return function
+  - Desktop: Edit/delete buttons hidden, show on hover (`opacity-100 lg:opacity-0 lg:group-hover:opacity-100`)
+  - Mobile: Buttons always visible for touch interaction
+- **Time Display Format**:
+  - Uses `toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })`
+  - Format: 2026/01/01 14:30:45 (24-hour, zero-padded)
+  - Previous: `toLocaleDateString('zh-TW')` only showed date
 
 ## Configuration & Dependencies
 - **Next.js 16.1.1**: App Router with server routes at `app/api/**`
@@ -105,7 +120,7 @@ src/lib/
 - **Tailwind v4 + @tailwindcss/postcss**: Styling
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 429 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, scroll buttons, utilities)
+- **Vitest**: Unit testing framework with 429 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents

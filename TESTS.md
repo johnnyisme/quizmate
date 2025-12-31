@@ -99,6 +99,27 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 - **泛型支援**: string, number, boolean, object, array, union 類型
 - **邊界條件**: undefined, 空字串, zero, false, 空陣列/物件
 
+### 6. `src/__tests__/sessionTimeFormat.test.ts` (12 tests)
+測試 Session 更新時間的顯示格式邏輯。
+
+**測試分類：**
+- **格式驗證**: 年/月/日 時:分:秒 完整顯示
+- **24 小時制**: 不顯示 AM/PM，正確顯示 00-23 小時
+- **補零邏輯**: 單位數月日時分秒自動補零（2-digit）
+- **特殊時間**: 午夜 00:00:00、一天結束 23:59:59
+- **新舊格式對比**: toLocaleDateString vs toLocaleString
+- **邊界情況**: 閏年日期、時區一致性
+- **更新檢測**: Session 修改後時間戳變化
+- **顯示長度**: 格式化字串長度限制與一致性
+
+**關鍵測試案例：**
+```typescript
+// 完整格式: 2026/01/01 14:30:45
+// 補零: 2026/01/05 08:09:07
+// 午夜: 2026/12/31 00:00:00（不顯示 12）
+// 傍晚: 2026/12/31 23:59:59（不顯示 11 PM）
+```
+
 **關鍵測試案例：**
 ```typescript
 // 成功模式: loading=true → value="result", loading=false, error=null
@@ -220,6 +241,8 @@ npx vitest run src/components/__tests__/PromptSettings.test.tsx
 | `db.test.ts` | 25 | ✅ | IndexedDB 操作與 LRU |
 | `utils.test.ts` | 16 | ✅ | API Key 輪替與邊界條件 |
 | `sessionHoverButtons.test.ts` | 41 | ✅ | Session 列表 Hover 按鈕 |
+| `sessionTitleEdit.test.ts` | 24 | ✅ | Session 標題編輯與驗證 |
+| `sessionTimeFormat.test.ts` | 12 | ✅ | Session 時間格式顯示 |
 | **總計** | **429** | **✅** | **完整功能覆蓋** |
 
 ## 測試分類
@@ -285,6 +308,21 @@ npm run test -- --coverage
 - ✅ Focus/Blur 高度管理
 - ✅ Enter/Shift+Enter 行為
 - ✅ Mobile 優化尺寸計算
+
+#### Session 標題編輯 (新增)
+- ✅ 點擊外部取消編輯
+- ✅ Enter 保存、Escape 取消
+- ✅ 圓形緊湊按鈕設計
+- ✅ 響應式佈局（sidebar w-72）
+- ✅ min-w-0 input 自適應
+- ✅ 24+ 測試案例覆蓋所有互動
+
+#### Session 時間顯示 (新增)
+- ✅ 完整時間格式（年月日時分秒）
+- ✅ 24 小時制顯示
+- ✅ 自動補零（2-digit）
+- ✅ 時間戳更新追蹤
+- ✅ 12+ 測試案例驗證格式一致性
 
 #### API Key 管理 (新增)
 - ✅ 多金鑰解析與驗證

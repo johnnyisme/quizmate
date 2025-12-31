@@ -206,7 +206,7 @@ export default function PromptSettings({
                 <div
                   key={prompt.id}
                   onClick={() => setSelectedId(prompt.id)}
-                  className={`p-3 rounded-lg cursor-pointer border transition-colors ${
+                  className={`group p-3 rounded-lg cursor-pointer border transition-colors ${
                     selectedId === prompt.id
                       ? "bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700"
                       : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -217,7 +217,7 @@ export default function PromptSettings({
                       {prompt.name}
                       {prompt.isNew && <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">(尚未儲存)</span>}
                     </span>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 transition-opacity duration-200 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
                       {!prompt.isNew && (
                         <button
                           onClick={(e) => {

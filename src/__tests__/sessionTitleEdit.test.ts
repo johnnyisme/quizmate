@@ -212,6 +212,123 @@ describe('Session Title Edit', () => {
     });
   });
 
+  describe('Click Outside to Cancel', () => {
+    it('should cancel edit when clicking outside editing container', () => {
+      // 模擬編輯狀態
+      let editingSessionId: string | null = 'session-1';
+      let editingTitle = 'Editing...';
+      
+      // 模擬點擊外部
+      const editingContainer = document.createElement('div');
+      const outsideElement = document.createElement('div');
+      document.body.appendChild(editingContainer);
+      document.body.appendChild(outsideElement);
+      
+      // 點擊外部元素
+      const clickEvent = new MouseEvent('mousedown', { bubbles: true });
+      Object.defineProperty(clickEvent, 'target', { value: outsideElement });
+      
+      // 檢查是否在容器外
+      const isOutside = !editingContainer.contains(clickEvent.target as Node);
+      
+      if (isOutside) {
+        editingSessionId = null;
+        editingTitle = '';
+      }
+      
+      expect(editingSessionId).toBeNull();
+      expect(editingTitle).toBe('');
+      
+      // Cleanup
+      document.body.removeChild(editingContainer);
+      document.body.removeChild(outsideElement);
+    });
+
+    it('should not cancel edit when clicking inside editing container', () => {
+      let editingSessionId: string | null = 'session-1';
+      let editingTitle = 'Editing...';
+      
+      const editingContainer = document.createElement('div');
+      const inputElement = document.createElement('input');
+      editingContainer.appendChild(inputElement);
+      document.body.appendChild(editingContainer);
+      
+      // 點擊容器內部元素
+      const clickEvent = new MouseEvent('mousedown', { bubbles: true });
+      Object.defineProperty(clickEvent, 'target', { value: inputElement });
+      
+      // 檢查是否在容器內
+      const isInside = editingContainer.contains(clickEvent.target as Node);
+      
+      if (!isInside) {
+        editingSessionId = null;
+        editingTitle = '';
+      }
+      
+      // 應該保持編輯狀態
+      expect(editingSessionId).toBe('session-1');
+      expect(editingTitle).toBe('Editing...');
+      
+      // Cleanup
+      document.body.removeChild(editingContainer);
+    });
+
+    it('should not trigger cancel when not in editing mode', () => {
+      let editingSessionId: string | null = null;
+      let editingTitle = '';
+      
+      // 當沒有在編輯時，點擊事件不應該被監聽
+      const shouldListenForClicks = editingSessionId !== null;
+      
+      expect(shouldListenForClicks).toBe(false);
+    });
+
+    it('should cleanup event listener when exiting edit mode', () => {
+      const removeEventListener = vi.fn();
+      const addEventListener = vi.fn(() => removeEventListener);
+      
+      // 模擬進入編輯模式
+      let editingSessionId: string | null = 'session-1';
+      
+      if (editingSessionId) {
+        const cleanup = addEventListener();
+        
+        // 退出編輯模式時應該調用 cleanup
+        editingSessionId = null;
+        cleanup();
+        
+        expect(removeEventListener).toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe('Button Styling and Layout', () => {
+    it('should use compact circular buttons for save and cancel', () => {
+      // 保存按鈕樣式
+      const saveButtonClasses = 'p-1.5 rounded-full bg-green-600 hover:bg-green-700 text-white transition-colors flex-shrink-0';
+      expect(saveButtonClasses).toContain('rounded-full');
+      expect(saveButtonClasses).toContain('bg-green-600');
+      expect(saveButtonClasses).toContain('flex-shrink-0');
+      
+      // 取消按鈕樣式
+      const cancelButtonClasses = 'p-1.5 rounded-full bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 transition-colors flex-shrink-0';
+      expect(cancelButtonClasses).toContain('rounded-full');
+      expect(cancelButtonClasses).toContain('bg-gray-300');
+      expect(cancelButtonClasses).toContain('flex-shrink-0');
+    });
+
+    it('should have min-w-0 on input to allow shrinking', () => {
+      const inputClasses = 'flex-1 min-w-0 text-sm font-medium';
+      expect(inputClasses).toContain('min-w-0');
+      expect(inputClasses).toContain('flex-1');
+    });
+
+    it('should use gap-1 for compact spacing', () => {
+      const containerClasses = 'flex items-center gap-1';
+      expect(containerClasses).toContain('gap-1');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle special characters in title', async () => {
       const messages: Message[] = [

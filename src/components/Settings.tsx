@@ -102,16 +102,16 @@ export default function Settings({
           />
         )}
         {activeTab === "theme" && (
-          <div className="p-4 sm:p-6 h-full">
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="p-4 sm:p-6 h-full flex justify-center pt-16">
+            <div className="space-y-4 w-full max-w-md">
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
                 選擇您偏好的外觀主題
               </p>
               <button
                 onClick={() => {
                   onThemeToggle();
                 }}
-                className="w-full sm:w-auto px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 flex items-center justify-center gap-3 transition-colors"
+                className="w-full px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 flex items-center justify-center gap-3 transition-colors"
               >
                 {isDark ? (
                   <>
