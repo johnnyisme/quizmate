@@ -103,9 +103,6 @@ export default function Settings({
         )}
         {activeTab === "theme" && (
           <div className="p-4 sm:p-6 h-full">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-              外觀主題
-            </h3>
             <div className="space-y-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 選擇您偏好的外觀主題
