@@ -33,13 +33,13 @@ export default function Settings({
     <div className="flex flex-col h-full">
       {/* Header with tabs */}
       <div className="border-b dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="p-4 sm:p-6 flex items-center justify-between">
+        <div className="p-4 sm:p-6 flex items-center justify-center relative">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200 truncate" title="QuizMate - AI 互動家教">
             QuizMate - AI 互動家教
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
+            className="absolute right-4 sm:right-6 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
             title="關閉"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

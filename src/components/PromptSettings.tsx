@@ -1,5 +1,15 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+// 統一的按鈕樣式
+const buttonBaseClasses = "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors";
+const buttonPrimaryClasses = `${buttonBaseClasses} bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700`;
+const buttonPrimaryDisabledClasses = `${buttonBaseClasses} bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed`;
+const buttonSecondaryClasses = `${buttonBaseClasses} border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700`;
+const buttonSmallClasses = `px-2 py-1 text-xs font-medium rounded transition-colors`;
+const buttonSmallActiveSurfaceClasses = `${buttonSmallClasses} bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800`;
+const buttonSmallDisabledSurfaceClasses = `${buttonSmallClasses} bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed`;
+const buttonIconOnlyClasses = `p-1.5 rounded transition-colors`;
+const buttonIconOnlyDangerClasses = `${buttonIconOnlyClasses} hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400`;
 
 export type CustomPrompt = {
   id: string;
@@ -173,7 +183,7 @@ export default function PromptSettings({
           <button
             onClick={handleAddPrompt}
             disabled={editingPrompts.filter((p) => !p.isDefault).length >= 5 || editingPrompts.some((p) => p.isNew)}
-            className="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-1 whitespace-nowrap flex-shrink-0"
+            className={editingPrompts.filter((p) => !p.isDefault).length >= 5 || editingPrompts.some((p) => p.isNew) ? buttonPrimaryDisabledClasses : buttonPrimaryClasses}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -205,17 +215,31 @@ export default function PromptSettings({
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {prompt.name}
-                      {prompt.isDefault && <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">(目前使用)</span>}
                       {prompt.isNew && <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">(尚未儲存)</span>}
                     </span>
                     <div className="flex items-center gap-1">
+                      {!prompt.isNew && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!prompt.isDefault) {
+                              handleSetDefault(prompt.id);
+                            }
+                          }}
+                          disabled={prompt.isDefault}
+                          className={prompt.isDefault ? buttonSmallDisabledSurfaceClasses : buttonSmallActiveSurfaceClasses}
+                          title={prompt.isDefault ? "已使用" : "使用"}
+                        >
+                          {prompt.isDefault ? "已使用" : "使用"}
+                        </button>
+                      )}
                       {prompt.id !== "default" && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeletePrompt(prompt.id);
                           }}
-                          className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500 dark:text-red-400"
+                          className={buttonIconOnlyDangerClasses}
                           title="刪除"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,18 +250,6 @@ export default function PromptSettings({
                               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                             />
                           </svg>
-                        </button>
-                      )}
-                      {!prompt.isDefault && !prompt.isNew && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSetDefault(prompt.id);
-                          }}
-                          className="px-2 py-1 text-xs rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800"
-                          title="使用"
-                        >
-                          使用
                         </button>
                       )}
                     </div>
@@ -293,7 +305,7 @@ export default function PromptSettings({
         {isModal && (
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            className={buttonSecondaryClasses}
           >
             取消
           </button>
@@ -301,7 +313,7 @@ export default function PromptSettings({
         <button
           onClick={handleSave}
           disabled={!hasChanges()}
-          className="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
+          className={!hasChanges() ? buttonPrimaryDisabledClasses : buttonPrimaryClasses}
         >
           儲存
         </button>
