@@ -417,7 +417,6 @@ export default function HomePage() {
   // Switch to existing session
   const handleSwitchSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
-    setShowSidebar(false);
   };
 
   // Delete session
@@ -731,10 +730,10 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
 
           {/* Sidebar */}
-          <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
+          <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
                 <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
-                <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100" title="收起側邊欄">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -815,17 +814,25 @@ export default function HomePage() {
       </div>
 
       {/* Main Content - Centered with sidebar consideration */}
-      <div className="absolute inset-0 lg:left-64 flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto">
-        <div className="w-full max-w-2xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
+      <div className={`absolute inset-0 ${showSidebar ? 'lg:left-64' : 'left-0'} flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden pointer-events-auto transition-all duration-300`}>
+        <div className="w-full max-w-2xl lg:max-w-5xl h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col">
           <div className="px-1 sm:px-2 py-2 border-b dark:border-gray-700 flex-shrink-0 flex flex-row items-center gap-1 relative z-10 bg-white dark:bg-gray-800 overflow-x-auto">
             {/* Left cluster: menu + logo */}
             <div className="flex items-center gap-1 flex-shrink-0 min-w-[48px]">
               <button 
-                onClick={() => setShowSidebar(true)} 
-                className="lg:hidden flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
-                title="開啟側邊欄"
+                onClick={() => setShowSidebar(!showSidebar)} 
+                className="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                title={showSidebar ? "收起側邊欄" : "開啟側邊欄"}
               >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                {showSidebar ? (
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
               </button>
               <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -939,7 +946,7 @@ export default function HomePage() {
               if (msg.role === 'model' && msg.text.trim() === '') return null;
               return (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-lg p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
+                  <div className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
                     {msg.image && (
                       <img 
                         src={msg.image} 
@@ -955,7 +962,7 @@ export default function HomePage() {
             })}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-lg p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-center gap-3">
+                <div className="max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-center gap-3">
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 dark:bg-gray-800/95 flex items-center justify-center shadow-sm">
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 sm:w-8 sm:h-8">
                       <defs>

@@ -76,7 +76,7 @@ npm run dev
 npm run dev            # 本地開發
 npm run build          # 生產建置（含單元測試）
 npm run start          # 本地啟動生產版
-npm test               # 執行單元測試（348+ tests）
+npm test               # 執行單元測試（343 tests）
 npm run test:watch     # 監視模式執行測試
 npm run test:e2e       # 執行 E2E 測試（Playwright）
 npm run test:e2e:ui    # Playwright UI 模式
@@ -91,7 +91,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件（365+ tests, ~90% 覆蓋率：API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框、Prompt、資料庫、對話標題編輯等）
+- `src/__tests__/`：完整單元測試套件（343 tests, ~90% 覆蓋率：API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框、Prompt、資料庫、對話標題編輯、側邊欄切換等）
 - `e2e/`：Playwright E2E 測試套件（4 tests：API Key 設定、上傳圖片、連續追問、無 Key 場景）
 - `playwright.config.ts`：Playwright 配置（自動啟動 dev server、截圖/影片記錄）
 - `.env.test.example`：E2E 測試環境變數範本
@@ -115,7 +115,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **Vitest 1.6.1** (單元測試框架)
 - **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **348+ 個單元測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、對話標題編輯、工具函數)
+- **343 個單元測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、對話標題編輯、側邊欄切換、工具函數)
 - **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
 - **單元測試覆蓋率**: ~90%
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)
@@ -140,13 +140,25 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - IndexedDB 自動持久化對話紀錄
 - LRU 策略管理儲存空間（最多 10 個對話）
 - 側邊欄快速切換歷史對話
-- 對話標題自動生成（取自首則問題）- **標題編輯功能**：
+- 對話標題自動生成（取自首則問題）
+- **標題編輯功能**：
   - 點擊編輯圖示 ✏️ 進入編輯模式
   - 自動切換到該對話並載入內容
   - 30 字元長度限制
   - 點擊打勾 ✓ 或按 `Enter` 儲存
   - 按 `Escape` 或點擊外部取消編輯
   - 即時更新到 IndexedDB
+
+### 📱 響應式佈局優化
+- **側邊欄切換**（全螢幕支援）：
+  - 行動版與桌面版皆可收起/展開側邊欄
+  - 狀態圖示（開啟：雙箭頭向左 ≪ / 關閉：漢堡選單 ☰）
+  - 300ms 平滑過渡動畫
+  - 切換對話時側邊欄保持開啟狀態
+- **桌面版佈局放大**（≥1024px lg: breakpoint）：
+  - 主內容區域：672px → **1024px** (+52%)
+  - 對話泡泡寬度：512px → **768px** (+50%)
+  - 行動版維持原尺寸，確保最佳閱讀體驗
 ### 🤖 多模型選擇
 - 三種 Gemini 模型可選：
    - **Gemini 3 Flash Preview**（預設，可切換「快速/推理」：推理時送 `thinkingLevel=high` + `includeThoughts=false`，若 API 不支援會自動回退）
