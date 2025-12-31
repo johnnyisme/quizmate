@@ -71,7 +71,7 @@ npm run dev
 npm run dev         # 本地開發
 npm run build       # 生產建置（含測試）
 npm run start       # 本地啟動生產版
-npm test            # 執行單元測試（185 tests）
+npm test            # 執行單元測試（185+ tests）
 npm run test:watch  # 監視模式執行測試
 ```
 
@@ -83,7 +83,7 @@ npm run test:watch  # 監視模式執行測試
 - `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件（包含 Prompt 截斷、Settings 邏輯、按鈕狀態等）
+- `src/__tests__/`：完整單元測試套件（包含錯誤處理、輸入框自動增長、Prompt 截斷、Settings 邏輯、按鈕狀態等）
 
 ## 技術架構
 
@@ -103,7 +103,7 @@ npm run test:watch  # 監視模式執行測試
 ### 測試
 - **Vitest 1.6.1** (單元測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **185+ 個測試** (錯誤處理、Prompt 截斷、Settings 邏輯、按鈕狀態、前端邏輯、資料庫、主題、工具函數)
+- **185+ 個測試** (錯誤處理、輸入框自動增長、Prompt 截斷、Settings 邏輯、按鈕狀態、前端邏輯、資料庫、主題、工具函數)
 
 ## 功能特色
 
@@ -154,7 +154,26 @@ npm run test:watch  # 監視模式執行測試
   - 503/500 服務錯誤 → 暫時性問題說明
   - Network 錯誤 → 網路連線檢查
   - Model 不可用 → 建議切換模型
-
+### 📝 智慧輸入框
+- **自動高度調整**：輸入框隨文字內容自動增長（最多 3 行）
+  - 最小高度：36px（單行）
+  - 最大高度：66px（3 行）
+  - 行高：22px，確保一致的視覺韻律
+- **按鈕智慧收起**：
+  - 點擊輸入框時：上傳/拍照按鈕自動收起（寬度縮為 0，透明度變 0）
+  - 離開輸入框時：按鈕恢復正常顯示，輸入框縮回單行高度
+  - 平滑過渡動畫：duration-200 確保流暢體驗
+- **鍵盤快捷鍵**：
+  - `Enter` → 送出訊息
+  - `Shift + Enter` → 換行（最多 3 行）
+- **Mobile 優化**：
+  - 按鈕尺寸：h-9 (36px)，適合觸控操作
+  - 間距縮減：gap-1.5 (6px) 避免過於擁擠
+  - 字體大小：text-sm 確保可讀性
+  - 滾動條：超過 3 行時自動顯示垂直滾動條
+- **視覺反饋**：
+  - focus 狀態：ring-2 ring-blue-500 明確聚焦指示
+  - 載入狀態：按鈕禁用，避免重複送出
 ### �📐 數學公式支援
 - KaTeX 自動渲染行內（`$...$`）與區塊（`$$...$$`）公式
 - 錯誤容忍處理，不影響其他內容顯示

@@ -117,6 +117,7 @@ export default function HomePage() {
   const [isDark, setIsDark] = useState<boolean>(false);
   const [isThemeReady, setIsThemeReady] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [inputFocused, setInputFocused] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,7 @@ export default function HomePage() {
   const modelMessageIndexRef = useRef<number | null>(null);
   const errorSuggestionRef = useRef<HTMLDivElement>(null);
   const errorTechnicalRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 根據語言自適應截斷 prompt 名稱
   const truncatePromptName = (name: string) => {
@@ -960,7 +962,7 @@ export default function HomePage() {
               </div>
             </div>
           )}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <input
               ref={fileInputRef}
               id="dropzone-file"
@@ -982,31 +984,66 @@ export default function HomePage() {
             <button 
               title="上傳圖片" 
               onClick={handleUploadClick} 
-              className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className={`flex-shrink-0 h-9 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 overflow-hidden ${inputFocused ? 'w-0 opacity-0 pointer-events-none' : 'w-9 opacity-100'}`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1.586-1.586a2 2 0 00-2.828 0L6 14" /></svg>
+              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1.586-1.586a2 2 0 00-2.828 0L6 14" /></svg>
             </button>
             <button 
               title="拍照" 
               onClick={() => cameraInputRef.current?.click()} 
-              className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className={`flex-shrink-0 h-9 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 overflow-hidden ${inputFocused ? 'w-0 opacity-0 pointer-events-none' : 'w-9 opacity-100'}`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v12H3V7zm9 2a5 5 0 110 10 5 5 0 010-10z" /></svg>
+              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v12H3V7zm9 2a5 5 0 110 10 5 5 0 010-10z" /></svg>
             </button>
-            <input
-              type="text"
+            <textarea
+              ref={textareaRef}
               id="prompt-input"
               name="prompt"
               value={currentPrompt}
-              onChange={(e) => setCurrentPrompt(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSubmit()}
-              placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或直接上傳圖片"}
-              className="flex-1 min-w-0 h-10 px-4 py-2 border dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow"
+              onChange={(e) => {
+                setCurrentPrompt(e.target.value);
+                // 自動調整高度
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = 'auto';
+                  const scrollHeight = textareaRef.current.scrollHeight;
+                  const lineHeight = 22; // 約等於 text-base 的行高
+                  const maxHeight = lineHeight * 3; // 3 行
+                  textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+                }
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              onFocus={() => {
+                setInputFocused(true);
+                // 點入時根據內容重新計算高度
+                if (textareaRef.current && currentPrompt) {
+                  textareaRef.current.style.height = 'auto';
+                  const scrollHeight = textareaRef.current.scrollHeight;
+                  const lineHeight = 22;
+                  const maxHeight = lineHeight * 3;
+                  textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+                }
+              }}
+              onBlur={() => {
+                setInputFocused(false);
+                // 鍵盤收起時縮回到一行
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = '36px';
+                }
+              }}
+              placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或上傳圖片"}
+              rows={1}
+              className="flex-1 min-w-0 px-3 py-1.5 text-sm border dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow resize-none overflow-y-auto leading-5"
+              style={{ minHeight: '36px', maxHeight: '66px' }}
             />
             <button
               onClick={handleSubmit}
               disabled={isLoading || (!currentPrompt.trim() && !image)}
-              className="flex-shrink-0 h-10 px-4 sm:px-5 bg-blue-500 dark:bg-blue-600 text-white rounded-full font-semibold whitespace-nowrap hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+              className="flex-shrink-0 h-9 px-3 sm:px-4 text-sm bg-blue-500 dark:bg-blue-600 text-white rounded-full font-semibold whitespace-nowrap hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             >
               傳送
             </button>
