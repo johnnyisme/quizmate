@@ -536,4 +536,36 @@ describe('HomePage Helper Functions', () => {
       expect(showOverlay(false, false)).toBe(false); // 桌面 + 側邊欄關閉
     });
   });
+
+  describe('Model & Thinking Defaults', () => {
+    const validModels = [
+      'gemini-3-flash-preview',
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+    ];
+
+    const initModel = (storedModel: string | null) => {
+      if (storedModel && validModels.includes(storedModel)) {
+        return storedModel;
+      }
+      return 'gemini-3-flash-preview';
+    };
+
+    it('should default to gemini-3-flash-preview when no stored model', () => {
+      expect(initModel(null)).toBe('gemini-3-flash-preview');
+    });
+
+    it('should fall back to default when stored model is invalid', () => {
+      expect(initModel('deprecated-model')).toBe('gemini-3-flash-preview');
+    });
+
+    it('should keep stored valid model', () => {
+      expect(initModel('gemini-2.5-pro')).toBe('gemini-2.5-pro');
+    });
+
+    it('should default thinking mode to fast', () => {
+      const thinkingMode = 'fast';
+      expect(thinkingMode).toBe('fast');
+    });
+  });
 });

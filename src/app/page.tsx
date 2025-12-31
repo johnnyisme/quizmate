@@ -16,10 +16,13 @@ type DisplayMessage = {
 
 type ModelType = "gemini-3-flash-preview" | "gemini-2.5-flash" | "gemini-2.5-pro";
 
+type ThinkingMode = "fast" | "thinking";
+
 export default function HomePage() {
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
   const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-3-flash-preview");
+  const [thinkingMode, setThinkingMode] = useState<ThinkingMode>("fast");
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -326,19 +329,42 @@ export default function HomePage() {
           }
 
           // 呼叫 Gemini API
-          const generationConfig: any = {
-            temperature: 1.0,
-            maxOutputTokens: 65536,
-          };
+          const buildRequestPayload = (withThinking: boolean) => {
+            const generationConfig: any = {
+              temperature: 1.0,
+              maxOutputTokens: 65536,
+            };
 
-          const response = await model.generateContent(
-            {
+            if (withThinking && selectedModel.includes("gemini-3")) {
+              // 與官方 cURL 範例一致：generationConfig.thinkingConfig
+              generationConfig.thinkingConfig = {
+                thinkingLevel: "high",
+                includeThoughts: false,
+              };
+            }
+
+            return {
               contents: apiHistory.length === 0 && systemPrompt
                 ? [{ role: "user", parts: [{ text: systemPrompt }] }, { role: "user", parts }]
                 : [...apiHistory, { role: "user", parts }],
               generationConfig,
+            };
+          };
+
+          let response;
+          try {
+            response = await model.generateContent(buildRequestPayload(thinkingMode === "thinking"));
+          } catch (err: any) {
+            const msg = (err?.message || "").toLowerCase();
+            const thinkingLikelyUnsupported = msg.includes("thinking") || msg.includes("unknown name") || msg.includes("unrecognized");
+
+            if (thinkingMode === "thinking" && thinkingLikelyUnsupported && selectedModel.includes("gemini-3")) {
+              console.warn("Thinking not supported for this key/model, retrying without thinking.", err?.message);
+              response = await model.generateContent(buildRequestPayload(false));
+            } else {
+              throw err;
             }
-          );
+          }
 
           const responseText = response.response.text();
           modelResponseText = responseText;
@@ -549,6 +575,22 @@ export default function HomePage() {
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
               </select>
+
+              {selectedModel.includes("gemini-3") && (
+                <select
+                  value={thinkingMode}
+                  onChange={(e) => setThinkingMode(e.target.value as ThinkingMode)}
+                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded border h-8 sm:h-10 transition-colors ${
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
+                      : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  title="推理/快速（Thinking: high; 不支援會自動回退）"
+                >
+                  <option value="fast">快速</option>
+                  <option value="thinking">推理</option>
+                </select>
+              )}
               
               <button 
                 onClick={() => setShowApiKeySetup(true)}

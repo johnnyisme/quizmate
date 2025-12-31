@@ -112,9 +112,9 @@ npm run test:watch  # 監視模式執行測試
 
 ### 🤖 多模型選擇
 - 三種 Gemini 模型可選：
-  - **Gemini 3 Flash Preview**（預設）
-  - **Gemini 2.5 Flash**
-  - **Gemini 2.5 Pro**
+   - **Gemini 3 Flash Preview**（預設，可切換「快速/推理」：推理時送 `thinkingLevel=high` + `includeThoughts=false`，若 API 不支援會自動回退）
+   - **Gemini 2.5 Flash**（官方尚未標示 Thinking，當前不啟用 Thinking）
+   - **Gemini 2.5 Pro**（官方尚未標示 Thinking，當前不啟用 Thinking）
 
 ### 🔑 API Key 管理
 - 瀏覽器端完整 CRUD 介面
