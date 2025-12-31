@@ -383,7 +383,8 @@ export default function HomePage() {
 
             // 防呆：若串流沒有內容，回退完整回應文字
             if (!aggregated) {
-              aggregated = result.response.text();
+              const fullResponse = await result.response;
+              aggregated = fullResponse.text();
               updateModelMessage(() => aggregated);
             }
 
