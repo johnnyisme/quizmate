@@ -777,7 +777,7 @@ export default function HomePage() {
             <div 
               key={s.id} 
               onClick={() => editingSessionId !== s.id && handleSwitchSession(s.id)} 
-              className={`p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${currentSessionId === s.id ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700'}`}
+              className={`group p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentSessionId === s.id ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700'}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -798,12 +798,13 @@ export default function HomePage() {
                   )}
                   <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(s.updatedAt).toLocaleDateString('zh-TW')}</p>
                 </div>
-                <div className="flex items-center gap-1">
+                {/* 按鈕區：桌面端 hover 顯示，移動端始終顯示（因無 hover），編輯時始終顯示 */}
+                <div className={`flex items-center gap-1 transition-opacity duration-200 ${editingSessionId === s.id ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'}`}>
                   {editingSessionId === s.id ? (
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleSaveTitle(s.id); }} 
                       onMouseDown={(e) => e.preventDefault()}
-                      className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600 dark:text-green-400"
+                      className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600 dark:text-green-400 transition-colors"
                       title="確認儲存"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -811,25 +812,27 @@ export default function HomePage() {
                       </svg>
                     </button>
                   ) : (
-                    <button 
-                      onClick={(e) => handleStartEditTitle(s.id, s.title, e)} 
-                      className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded text-blue-500 dark:text-blue-400"
-                      title="編輯標題"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
+                    <>
+                      <button 
+                        onClick={(e) => handleStartEditTitle(s.id, s.title, e)} 
+                        className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded text-blue-500 dark:text-blue-400 transition-colors"
+                        title="編輯標題"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={(e) => handleDeleteSession(s.id, e)} 
+                        className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500 dark:text-red-400 transition-colors"
+                        title="刪除對話"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </>
                   )}
-                  <button 
-                    onClick={(e) => handleDeleteSession(s.id, e)} 
-                    className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-500 dark:text-red-400"
-                    title="刪除對話"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
                 </div>
               </div>
             </div>

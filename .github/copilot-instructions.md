@@ -105,7 +105,7 @@ src/lib/
 - **Tailwind v4 + @tailwindcss/postcss**: Styling
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 77+ tests (utils, route, page, db)
+- **Vitest**: Unit testing framework with 429 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, scroll buttons, utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents

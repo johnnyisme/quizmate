@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **388 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **429 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 388 tests
+- **測試總數**: 429 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -129,7 +129,30 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // 停用樣式: "text-gray-600 hover:text-gray-900"
 ```
 
-### 7. `src/components/__tests__/PromptSettings.test.tsx`
+### 7. `src/__tests__/sessionHoverButtons.test.ts` (41 tests)
+測試 Session 列表 hover 顯示按鈕功能。
+
+**測試分類：**
+- **按鈕可見性**: 移動端永遠顯示、桌面端 hover 顯示
+- **Group Hover**: 父容器 group class 與子元素 group-hover 響應
+- **按鈕狀態**: 編輯模式顯示儲存按鈕、正常模式顯示編輯/刪除按鈕
+- **響應式行為**: lg breakpoint (1024px) 斷點邏輯
+- **邊界情況**: 編輯不同 session、null sessionId
+- **無障礙性**: 過渡動畫、按鈕標題、觸控目標尺寸
+- **視覺一致性**: 統一樣式、hover 狀態、深色模式支援
+
+**關鍵測試案例：**
+```typescript
+// Mobile: opacity-100 (永遠顯示)
+// Desktop: opacity-100 lg:opacity-0 lg:group-hover:opacity-100
+// Editing: opacity-100 (永遠顯示)
+
+// Group hover 機制
+// Parent: group class
+// Child: group-hover:opacity-100
+```
+
+### 8. `src/components/__tests__/PromptSettings.test.tsx`
 Logic tests for PromptSettings component changes.
 
 **測試功能：**
@@ -196,7 +219,8 @@ npx vitest run src/components/__tests__/PromptSettings.test.tsx
 | `theme.test.ts` | 17 | ✅ | Dark Mode 主題切換 |
 | `db.test.ts` | 25 | ✅ | IndexedDB 操作與 LRU |
 | `utils.test.ts` | 16 | ✅ | API Key 輪替與邊界條件 |
-| **總計** | **388** | **✅** | **完整功能覆蓋** |
+| `sessionHoverButtons.test.ts` | 41 | ✅ | Session 列表 Hover 按鈕 |
+| **總計** | **429** | **✅** | **完整功能覆蓋** |
 
 ## 測試分類
 
@@ -287,10 +311,10 @@ npm run test -- --coverage
 
 ## 測試品質指標
 
-- **執行時間**: ~1.5s (優化後)
-- **通過率**: 100% (388/388)
+- **執行時間**: ~1.6s (優化後)
+- **通過率**: 100% (429/429)
 - **覆蓋率**: ~90% (達成目標)
-- **覆蓋範圍**: 前端邏輯（Gemini SDK）、UI 組件、工具函數、資料庫（IndexedDB）、狀態管理
+- **覆蓋範圍**: 前端邏輯（Gemini SDK）、UI 組件、工具函數、資料庫（IndexedDB）、狀態管理、Session 管理 UI
 - **維護性**: 模組化設計，每個功能獨立測試文件，反映純前端架構
 
 ## 覆蓋率詳細分析
@@ -371,7 +395,7 @@ npm run test -- --coverage
 ---
 
 **最後更新**: 2026-01-01  
-**測試總數**: 388 tests  
+**測試總數**: 429 tests  
 **通過率**: 100%  
 **覆蓋率**: ~90% (達成目標)
 
