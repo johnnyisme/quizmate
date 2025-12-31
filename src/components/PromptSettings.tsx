@@ -179,7 +179,7 @@ export default function PromptSettings({
     <div className={`${isModal ? "" : ""} flex flex-col`}>
       <div className="flex-1 p-4 sm:p-6" ref={contentRef}>
         <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <p className="text-sm text-gray-600 dark:text-gray-400">管理最多 5 組自定義 AI 老師 prompt（預設 prompt 不可刪除）</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">管理最多 5 組自定義 AI 老師 prompt </p>
           <button
             onClick={handleAddPrompt}
             disabled={editingPrompts.filter((p) => !p.isDefault).length >= 5 || editingPrompts.some((p) => p.isNew)}
@@ -289,7 +289,7 @@ export default function PromptSettings({
                     placeholder="輸入 system prompt 內容..."
                   />
                   {selectedPrompt.id === "default" && (
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">目前使用的 prompt 不可編輯，請新增自定義 prompt</p>
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">目前使用的 prompt 不可編輯或刪除，請新增自定義 prompt</p>
                   )}
                 </div>
               </div>
