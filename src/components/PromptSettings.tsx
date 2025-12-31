@@ -178,8 +178,8 @@ export default function PromptSettings({
   return (
     <div className={`${isModal ? "" : ""} flex flex-col`}>
       <div className="flex-1 p-4 sm:p-6" ref={contentRef}>
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <p className="text-sm text-gray-600 dark:text-gray-400">管理最多 5 組自定義 AI 老師 prompt </p>
+        <div className="mb-4 flex flex-row items-center justify-between gap-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">管理最多 5 組自定義 AI 老師 prompt（預設 prompt 不可刪除）</p>
           <button
             onClick={handleAddPrompt}
             disabled={editingPrompts.filter((p) => !p.isDefault).length >= 5 || editingPrompts.some((p) => p.isNew)}
@@ -315,6 +315,9 @@ export default function PromptSettings({
           disabled={!hasChanges()}
           className={!hasChanges() ? buttonPrimaryDisabledClasses : buttonPrimaryClasses}
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
           儲存
         </button>
       </div>
