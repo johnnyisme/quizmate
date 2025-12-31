@@ -568,4 +568,59 @@ describe('HomePage Helper Functions', () => {
       expect(thinkingMode).toBe('fast');
     });
   });
+
+  describe('Prompt selection sync (home <-> settings)', () => {
+    const DEFAULT_PROMPT = {
+      id: 'default',
+      name: 'QuizMate',
+      content: 'default content',
+      isDefault: true,
+    };
+
+    const normalizePrompts = (prompts: any[]) =>
+      prompts.map((p) =>
+        p.id === 'default' ? { ...DEFAULT_PROMPT, ...p, isDefault: p.isDefault } : p
+      );
+
+    // mimic handlePromptsUpdated in page.tsx
+    const handlePromptsUpdated = (updatedPrompts: any[], newSelectedId?: string) => {
+      const normalized = normalizePrompts(updatedPrompts);
+      const defaultId =
+        newSelectedId || normalized.find((p) => p.isDefault)?.id || normalized[0]?.id || 'default';
+      const ensured = normalized.map((p) => ({ ...p, isDefault: p.id === defaultId }));
+      return { prompts: ensured, selectedPromptId: defaultId };
+    };
+
+    // mimic handlePromptChange in page.tsx
+    const handlePromptChange = (prompts: any[], promptId: string) => {
+      const ensured = prompts.map((p) => ({ ...p, isDefault: p.id === promptId }));
+      return { prompts: ensured, selectedPromptId: promptId };
+    };
+
+    it('home -> settings: selecting prompt on home marks it default for settings', () => {
+      const prompts = [
+        DEFAULT_PROMPT,
+        { id: 'custom-1', name: 'A', content: 'c1', isDefault: false },
+      ];
+
+      const { prompts: updated, selectedPromptId } = handlePromptChange(prompts, 'custom-1');
+
+      expect(selectedPromptId).toBe('custom-1');
+      expect(updated.find((p) => p.id === 'custom-1')?.isDefault).toBe(true);
+      expect(updated.find((p) => p.id === 'default')?.isDefault).toBe(false);
+    });
+
+    it('settings -> home: saving with new selected default updates home selection', () => {
+      const prompts = [
+        DEFAULT_PROMPT,
+        { id: 'custom-1', name: 'A', content: 'c1', isDefault: false },
+      ];
+
+      const { prompts: updated, selectedPromptId } = handlePromptsUpdated(prompts, 'custom-1');
+
+      expect(selectedPromptId).toBe('custom-1');
+      expect(updated.find((p) => p.id === 'custom-1')?.isDefault).toBe(true);
+      expect(updated.find((p) => p.id === 'default')?.isDefault).toBe(false);
+    });
+  });
 });
