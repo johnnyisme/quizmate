@@ -1,5 +1,7 @@
 # QuizMate
 
+![E2E Tests](https://github.com/USERNAME/quizmate/actions/workflows/e2e-tests.yml/badge.svg)
+
 一個針對學生拍題互動解題的 Next.js + Gemini **純前端**專案。支援：
 - 上傳或拍攝題目圖片，維持圖片上下文，連續追問同張圖片的多個問題
 - 文字/圖片任一即可送出
@@ -252,6 +254,20 @@ npx playwright show-report # 查看最後一次測試的 HTML 報告
 - 所有測試失敗會自動截圖並錄製影片
 - 儲存位置：`test-results/` 目錄
 - HTML 報告包含完整的執行軌跡
+
+## GitHub Actions CI/CD
+
+### 自動化測試
+每次 push 或 PR 都會自動執行：
+- ✅ 單元測試（Vitest）
+- ✅ E2E 測試（Playwright）
+
+### 設定 GitHub Secret
+1. 前往 **Settings** → **Secrets and variables** → **Actions**
+2. 新增 `TEST_GEMINI_API_KEY`
+3. 推送程式碼後自動觸發測試
+
+詳細說明請參考 [.github/workflows/README.md](.github/workflows/README.md)
 
 ## License
 MIT
