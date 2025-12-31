@@ -68,11 +68,14 @@ npm run dev
 
 ## 指令速查
 ```bash
-npm run dev         # 本地開發
-npm run build       # 生產建置（含測試）
-npm run start       # 本地啟動生產版
-npm test            # 執行單元測試（348+ tests）
-npm run test:watch  # 監視模式執行測試
+npm run dev            # 本地開發
+npm run build          # 生產建置（含單元測試）
+npm run start          # 本地啟動生產版
+npm test               # 執行單元測試（348+ tests）
+npm run test:watch     # 監視模式執行測試
+npm run test:e2e       # 執行 E2E 測試（Playwright）
+npm run test:e2e:ui    # Playwright UI 模式
+npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 ```
 
 ## 目錄摘要
@@ -84,6 +87,9 @@ npm run test:watch  # 監視模式執行測試
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
 - `src/__tests__/`：完整單元測試套件（348+ tests, ~90% 覆蓋率：API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框、Prompt、資料庫等）
+- `e2e/`：Playwright E2E 測試套件（4 tests：API Key 設定、上傳圖片、連續追問、無 Key 場景）
+- `playwright.config.ts`：Playwright 配置（自動啟動 dev server、截圖/影片記錄）
+- `.env.test.example`：E2E 測試環境變數範本
 
 ## 技術架構
 
@@ -102,9 +108,12 @@ npm run test:watch  # 監視模式執行測試
 
 ### 測試
 - **Vitest 1.6.1** (單元測試框架)
+- **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **348+ 個測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、工具函數)
-- **測試覆蓋率**: ~90%
+- **348+ 個單元測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、工具函數)
+- **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
+- **單元測試覆蓋率**: ~90%
+- **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)
 
 ## 功能特色
 
@@ -210,6 +219,39 @@ npm run test:watch  # 監視模式執行測試
   - **API restrictions**: Generative Language API only
 - 不同裝置/瀏覽器需各自設定 API Key
 - 清除瀏覽器資料會同時清除 API Key 與對話紀錄
+
+## E2E 測試設定
+
+### 初次設定
+```bash
+# 1. 安裝 Playwright 瀏覽器
+npx playwright install chromium
+
+# 2. 複製環境變數範本
+cp .env.test.example .env.test
+
+# 3. 編輯 .env.test，填入真實的 Gemini API Key
+# TEST_GEMINI_API_KEY=your_actual_api_key_here
+```
+
+### 執行測試
+```bash
+npm run test:e2e          # Headless 模式（CI 友善）
+npm run test:e2e:headed   # 開啟瀏覽器視窗觀看執行過程
+npm run test:e2e:ui       # Playwright UI 模式（可暫停、單步執行）
+npx playwright show-report # 查看最後一次測試的 HTML 報告
+```
+
+### 測試涵蓋範圍
+- ✅ **API Key 設定流程**：透過 UI 輸入 Key 並驗證儲存成功
+- ✅ **圖片上傳與詢問**：上傳測試圖片並發送問題
+- ✅ **連續追問**：驗證多輪對話功能
+- ✅ **無 Key 場景**：清除 localStorage 後驗證顯示設定頁面
+
+### 截圖與影片
+- 所有測試失敗會自動截圖並錄製影片
+- 儲存位置：`test-results/` 目錄
+- HTML 報告包含完整的執行軌跡
 
 ## License
 MIT

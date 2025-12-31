@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/playwright/.cache/
+e2e/fixtures/*.jpg
+e2e/fixtures/*.png
+e2e/fixtures/*.gif
 
 # next.js
 /.next/
@@ -32,6 +38,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.test.example
 
 # vercel
 .vercel
