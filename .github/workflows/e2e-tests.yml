@@ -27,6 +27,11 @@ jobs:
     - name: Install Playwright browsers
       run: npx playwright install chromium --with-deps
 
+    - name: Create test fixtures
+      run: |
+        mkdir -p e2e/fixtures
+        convert -size 400x300 xc:white -pointsize 20 -draw "text 50,150 'Math Problem: 2+2=?'" e2e/fixtures/test-math.jpg
+
     - name: Run unit tests
       run: npm test
 
