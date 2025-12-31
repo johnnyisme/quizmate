@@ -158,8 +158,8 @@ describe('Session Hover Buttons', () => {
 
   describe('Edge Cases', () => {
     it('should handle editing different session than current', () => {
-      const editingSessionId = 'session-2';
-      const currentSessionId = 'session-1';
+      const editingSessionId: string = 'session-2';
+      const currentSessionId: string = 'session-1';
       const isEditing = editingSessionId === currentSessionId;
       
       // 編輯別的 session，當前 session 按鈕應正常顯示/隱藏
