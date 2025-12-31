@@ -12,7 +12,7 @@ export type CustomPrompt = {
 // 預設的系統 Prompt，提供給首次使用者或未建立自定義 Prompt 時使用
 export const DEFAULT_PROMPT: CustomPrompt = {
   id: "default",
-  name: "預設老師",
+  name: "QuizMate",
   content: `你是一位專業且有耐心的國中全科老師。請詳細分析題目並提供以下資訊：
 1.  **最終答案**：清楚標示最後的答案。
 2.  **題目主旨**：這題在考什麼觀念？
