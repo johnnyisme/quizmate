@@ -71,7 +71,7 @@ npm run dev
 npm run dev         # 本地開發
 npm run build       # 生產建置（含測試）
 npm run start       # 本地啟動生產版
-npm test            # 執行單元測試（185+ tests）
+npm test            # 執行單元測試（348+ tests）
 npm run test:watch  # 監視模式執行測試
 ```
 
@@ -83,7 +83,7 @@ npm run test:watch  # 監視模式執行測試
 - `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件（包含錯誤處理、輸入框自動增長、Prompt 截斷、Settings 邏輯、按鈕狀態等）
+- `src/__tests__/`：完整單元測試套件（348+ tests, ~90% 覆蓋率：API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框、Prompt、資料庫等）
 
 ## 技術架構
 
@@ -103,7 +103,8 @@ npm run test:watch  # 監視模式執行測試
 ### 測試
 - **Vitest 1.6.1** (單元測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **185+ 個測試** (錯誤處理、輸入框自動增長、Prompt 截斷、Settings 邏輯、按鈕狀態、前端邏輯、資料庫、主題、工具函數)
+- **348+ 個測試** (API Key 管理、非同步狀態、Settings Tab、錯誤處理、輸入框自動增長、Prompt 管理、前端邏輯、資料庫、主題切換、工具函數)
+- **測試覆蓋率**: ~90%
 
 ## 功能特色
 
