@@ -56,7 +56,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should apply inactive classes to apikey tab when prompt is active', () => {
-      const activeTab: SettingsTab = "prompt";
+      const activeTab = "prompt" as SettingsTab;
       const isApiKeyActive = activeTab === "apikey";
       
       const activeClasses = "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20";
@@ -69,7 +69,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should apply active classes only to current tab', () => {
-      const activeTab: SettingsTab = "theme";
+      const activeTab = "theme" as SettingsTab;
       
       const isPromptActive = activeTab === "prompt";
       const isApiKeyActive = activeTab === "apikey";
@@ -83,7 +83,7 @@ describe('Settings Tab Logic', () => {
 
   describe('Content Rendering Logic', () => {
     it('should show prompt content when prompt tab is active', () => {
-      const activeTab: SettingsTab = "prompt";
+      const activeTab = "prompt" as SettingsTab;
       const showPrompt = activeTab === "prompt";
       const showApiKey = activeTab === "apikey";
       const showTheme = activeTab === "theme";
@@ -94,7 +94,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should show apikey content when apikey tab is active', () => {
-      const activeTab: SettingsTab = "apikey";
+      const activeTab = "apikey" as SettingsTab;
       const showPrompt = activeTab === "prompt";
       const showApiKey = activeTab === "apikey";
       const showTheme = activeTab === "theme";
@@ -105,7 +105,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should show theme content when theme tab is active', () => {
-      const activeTab: SettingsTab = "theme";
+      const activeTab = "theme" as SettingsTab;
       const showPrompt = activeTab === "prompt";
       const showApiKey = activeTab === "apikey";
       const showTheme = activeTab === "theme";
@@ -116,7 +116,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should show only one content at a time', () => {
-      const activeTab: SettingsTab = "apikey";
+      const activeTab = "apikey" as SettingsTab;
       const showCount = [
         activeTab === "prompt",
         activeTab === "apikey",

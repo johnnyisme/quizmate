@@ -9,7 +9,7 @@ describe('Scroll Buttons', () => {
 
     beforeEach(() => {
       mockContainer = document.createElement('div');
-      mockContainer.scrollTo = vi.fn();
+      mockContainer.scrollTo = vi.fn() as any;
       Object.defineProperty(mockContainer, 'scrollHeight', {
         configurable: true,
         value: 2000,
@@ -46,11 +46,11 @@ describe('Scroll Buttons', () => {
     });
 
     it('scrollToTop should handle missing container gracefully', () => {
-      let container: HTMLElement | null = null;
+      const containerRef = { current: null as HTMLElement | null };
       
       const scrollToTop = () => {
-        if (container) {
-          container.scrollTo({ top: 0, behavior: 'smooth' } as ScrollToOptions);
+        if (containerRef.current) {
+          containerRef.current.scrollTo({ top: 0, behavior: 'smooth' } as ScrollToOptions);
         }
       };
 
@@ -58,12 +58,12 @@ describe('Scroll Buttons', () => {
     });
 
     it('scrollToBottom should handle missing container gracefully', () => {
-      let container: HTMLElement | null = null;
+      const containerRef = { current: null as HTMLElement | null };
       
       const scrollToBottom = () => {
-        if (container) {
-          container.scrollTo({ 
-            top: container.scrollHeight, 
+        if (containerRef.current) {
+          containerRef.current.scrollTo({ 
+            top: containerRef.current.scrollHeight, 
             behavior: 'smooth' 
           } as ScrollToOptions);
         }
@@ -273,7 +273,7 @@ describe('Scroll Buttons', () => {
   describe('Edge Cases', () => {
     it('should handle rapid clicks without errors', () => {
       const mockContainer = document.createElement('div');
-      mockContainer.scrollTo = vi.fn();
+      mockContainer.scrollTo = vi.fn() as any;
 
       const scrollToTop = () => {
         mockContainer.scrollTo({ top: 0, behavior: 'smooth' } as ScrollToOptions);
@@ -289,7 +289,7 @@ describe('Scroll Buttons', () => {
 
     it('should handle alternating top/bottom clicks', () => {
       const mockContainer = document.createElement('div');
-      mockContainer.scrollTo = vi.fn();
+      mockContainer.scrollTo = vi.fn() as any;
       Object.defineProperty(mockContainer, 'scrollHeight', {
         value: 2000,
       });

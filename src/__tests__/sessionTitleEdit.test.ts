@@ -150,8 +150,8 @@ describe('Session Title Edit', () => {
 
   describe('Handler Functions Logic', () => {
     it('handleStartEditTitle - should switch session if not current', () => {
-      const currentSessionId = 'session-1';
-      const editingSessionId = 'session-2';
+      const currentSessionId: string = 'session-1';
+      const editingSessionId: string = 'session-2';
       
       // Simulate switching logic
       const shouldSwitch = currentSessionId !== editingSessionId;

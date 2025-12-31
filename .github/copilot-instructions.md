@@ -5,20 +5,20 @@ QuizMate is a Next.js + React student tutoring platform that leverages Google Ge
 
 ## Architecture
 
-### Frontend ([src/app/page.tsx](src/app/page.tsx)) - React Client Component
+### Frontend - Pure Client-Side Architecture
+This is a **100% client-side application** with no backend server. All Gemini API calls are made directly from the browser.
+
+**Main Component** ([src/app/page.tsx](../src/app/page.tsx)) - React Client Component:
 - **State Management**: Maintains two separate conversation histories:
   - `displayConversation`: UI-facing messages with user-friendly formatting and images
   - `apiHistory`: API-facing conversation in Gemini `Content[]` format (includes image base64 in first message only)
 - **Image Handling**: Converts first uploaded image to base64; subsequent questions skip image re-transmission
 - **Math Rendering**: KaTeX processes both inline (`$...$`) and display (`$$...$$`) math formulas; wrapped in error handling (`throwOnError: false`)
 - **Error Recovery**: Failed sends are auto-restored to input field; conversation reverts to pre-send state
-
-### Backend ([src/app/api/gemini/route.ts](src/app/api/gemini/route.ts)) - Server Route Handler
-- **Multi-Key Rotation**: Supports comma-separated Gemini API keys in `GEMINI_API_KEYS` environment variable
+- **Multi-Key Rotation**: Supports multiple Gemini API keys stored in localStorage
   - Automatic failover on 429, quota, and permission errors
   - Load-balancing: advances key index on successful requests
-  - Tracks failed keys; resets set when all exhaust (implements retry-all pattern)
-- **Image Transmission**: Only sends image in first request (when `history.length === 0`)
+  - Tracks failed keys; resets when all keys exhausted (retry-all pattern)
 - **System Prompt**: Injected on first turn only; instructs AI as "patient middle-school teacher" with structured output (answer, concept, steps, formulas) in Traditional Chinese
 
 ## Key Workflows
@@ -31,27 +31,34 @@ npm run lint        # Run ESLint
 ```
 
 ### Local Setup
-- Create `.env.local` with: `GEMINI_API_KEYS="key1,key2,key3"` (comma-separated, no spaces around commas required)
-- `.env.local` is gitignored; never commit API keys
+- **No `.env.local` needed**: All API Keys are managed client-side in browser localStorage
+- Users configure their own API keys via the Settings UI on first visit
 
 ### Production Build & Deployment
 ```bash
 npm run build       # Generates .next/ (required for `start`)
 npm run start       # Local production server
 ```
-- **Vercel Deployment**: Connect GitHub repo to Vercel → set `GEMINI_API_KEYS` env var in project settings
+- **Vercel Deployment**: Connect GitHub repo to Vercel → **No environment variables needed** (pure frontend)
+- Users configure their own API keys in-browser on first visit
 
 ## Critical Data Flows
 
 ### First Message with Image
 1. User uploads image → `setImage()`, reset conversation history
 2. Frontend: `fileToBase64()` stores base64 in `apiHistory` on first response
-3. Backend: Detects `history.length === 0 && imageFile` → transmits base64 blob and text in single request
+3. Client-side API call: Detects `apiHistory.length === 0 && image` → transmits base64 blob and text in single request
 4. Subsequent questions reuse image from `apiHistory` via reference
 
 ### API Key Rotation on Errors
 1. Request fails with retryable error (429, quota, permission_denied, etc.)
-2. `isRetryableErrorMessage()` detects error type
+2. `isRetryableErrorMessage()` detects error type (client-side logic)
+3. Current key added to `failedKeys` set; system calls `getNextAvailableKey()`
+4. Retry with fresh key; on success, advance `currentKeyIndex` for load balance
+
+### API Key Rotation on Errors
+1. Request fails with retryable error (429, quota, permission_denied, etc.)
+2. `isRetryableErrorMessage()` detects error type (client-side logic)
 3. Current key added to `failedKeys` set; system calls `getNextAvailableKey()`
 4. Retry with fresh key; on success, advance `currentKeyIndex` for load balance
 
@@ -80,9 +87,6 @@ src/app/
 ├── page.tsx          # Client component: conversation UI, image upload, KaTeX rendering
 ├── layout.tsx        # Root layout: global styles, metadata, PWA manifest
 ├── globals.css       # Tailwind directives
-└── api/
-    └── gemini/
-        └── route.ts  # Server-side Gemini integration, key rotation logic
 src/lib/
 ├── db.ts                    # IndexedDB utilities for session storage
 ├── useSessionStorage.ts     # React hooks: useSessionStorage, useSessionHistory
