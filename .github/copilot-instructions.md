@@ -93,7 +93,11 @@ npm run start       # Local production server
 - Responsive design: `max-w-2xl` container, Tailwind v4 with `@tailwindcss/postcss`
 - Loading state: inline `animate-pulse` spinner
 - Keyboard submit: `onKeyPress` detects Enter key (only when not loading)
-- Scroll behavior: smooth auto-scroll to latest user message (not AI response) for readability
+- **Scroll Behavior**: 
+  - User question scrolls to top of viewport when sending (mimicking Gemini app UX)
+  - Implementation: Direct DOM manipulation in `handleSubmit` - sets `paddingBottom: 80vh` when loading starts, removes when complete
+  - Smooth scroll triggered via `requestAnimationFrame` in `useEffect`
+  - Padding provides scroll space; removed after AI response completes
 - Camera modal: `z-[100]` full-screen with blue circular capture button (16x16)
 
 ### Error Handling

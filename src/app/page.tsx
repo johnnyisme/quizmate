@@ -138,6 +138,55 @@ export default function HomePage() {
   const errorTechnicalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editingContainerRef = useRef<HTMLDivElement>(null);
+  const lastUserMessageRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToQuestion = useRef<boolean>(false);
+
+  // 當新問題加入時自動滾動
+  useEffect(() => {
+    if (shouldScrollToQuestion.current && lastUserMessageRef.current && chatContainerRef.current) {
+      shouldScrollToQuestion.current = false;
+      
+      const userMessage = lastUserMessageRef.current;
+      const container = chatContainerRef.current;
+      
+      // 計算問題氣泡相對於容器的位置
+      const containerRect = container.getBoundingClientRect();
+      const messageRect = userMessage.getBoundingClientRect();
+      const relativeTop = messageRect.top - containerRect.top;
+      
+      // 滾動到問題位置（留 16px 上方間距）
+      container.scrollTo({
+        top: container.scrollTop + relativeTop - 16,
+        behavior: 'smooth'
+      });
+    }
+  }, [displayConversation]);
+
+  // Gemini App-like 滾動效果：使用 requestAnimationFrame 確保滾動平滑
+  // Padding 已在 handleSubmit 中直接設定
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    if (isLoading && displayConversation.length > 0) {
+      // 使用 requestAnimationFrame 確保滾動在下一個繪製週期執行
+      const rafId = requestAnimationFrame(() => {
+        if (lastUserMessageRef.current) {
+          const userMessage = lastUserMessageRef.current;
+          const containerRect = container.getBoundingClientRect();
+          const messageRect = userMessage.getBoundingClientRect();
+          const relativeTop = messageRect.top - containerRect.top;
+          
+          container.scrollTo({
+            top: container.scrollTop + relativeTop - 16,
+            behavior: 'smooth'
+          });
+        }
+      });
+      
+      return () => cancelAnimationFrame(rafId);
+    }
+  }, [isLoading, displayConversation]);
 
   // 根據語言自適應截斷 prompt 名稱
   const truncatePromptName = (name: string) => {
@@ -600,25 +649,22 @@ export default function HomePage() {
     setIsLoading(true);
     setError(null);
 
-    // --- 更新介面對話 ---
+    // --- 更新介面對話，只加入用戶訊息 ---
     const displayText = promptText || "[圖片問題]";
     const userMessage: DisplayMessage = { role: "user", text: displayText };
     if (apiHistory.length === 0 && image) {
       userMessage.image = imageUrl;
     }
+    
     setDisplayConversation(prev => [...prev, userMessage]);
-    setTimeout(() => {
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" });
-      }
-    }, 0);
 
-    // 預先放入一則模型訊息占位，用於串流更新
-    setDisplayConversation(prev => {
-      const idx = prev.length;
-      modelMessageIndexRef.current = idx;
-      return [...prev, { role: "model", text: "" }];
-    });
+    // 標記需要滾動到新問題
+    shouldScrollToQuestion.current = true;
+
+    // 直接設定 padding（不依賴 useEffect）
+    if (chatContainerRef.current) {
+      chatContainerRef.current.style.paddingBottom = '80vh';
+    }
 
     const apiPrompt = promptText || "請分析這張圖片並解答題目";
     setCurrentPrompt("");
@@ -682,16 +728,18 @@ export default function HomePage() {
           };
 
           const updateModelMessage = (updater: (prevText: string) => string) => {
-            const idx = modelMessageIndexRef.current;
-            if (idx === null) return;
-            setDisplayConversation(prev => prev.map((msg, i) => i === idx ? { ...msg, text: updater(msg.text) } : msg));
+            setDisplayConversation(prev => {
+              const lastMsg = prev[prev.length - 1];
+              // 如果最後一則是 model 訊息，更新它；否則加入新的 model 訊息
+              if (lastMsg && lastMsg.role === 'model') {
+                return prev.map((msg, i) => i === prev.length - 1 ? { ...msg, text: updater(msg.text) } : msg);
+              } else {
+                return [...prev, { role: 'model', text: updater('') }];
+              }
+            });
           };
 
           const streamOnce = async (withThinking: boolean): Promise<string> => {
-            // 如果是 fallback 再試，先清空占位文字
-            if (!withThinking) {
-              updateModelMessage(() => "");
-            }
 
             const result = await model.generateContentStream(buildRequestPayload(withThinking));
             let aggregated = "";
@@ -813,6 +861,11 @@ export default function HomePage() {
     } finally {
       modelMessageIndexRef.current = null;
       setIsLoading(false);
+      
+      // 移除 padding
+      if (chatContainerRef.current) {
+        chatContainerRef.current.style.paddingBottom = '0px';
+      }
     }
   };
 
@@ -1058,10 +1111,21 @@ export default function HomePage() {
 
           <div className="space-y-4">
             {displayConversation.map((msg, index) => {
-              if (msg.role === 'model' && msg.text.trim() === '') return null;
+              // 找到所有用戶訊息的索引
+              const userMessageIndices = displayConversation.reduce<number[]>((acc, m, i) => {
+                if (m.role === 'user') acc.push(i);
+                return acc;
+              }, []);
+              const lastUserIndex = userMessageIndices[userMessageIndices.length - 1];
+              const isLastUserMessage = msg.role === 'user' && index === lastUserIndex;
+              
               return (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
+                  <div 
+                    ref={isLastUserMessage ? lastUserMessageRef : null}
+                    className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
+                    style={isLastUserMessage ? { scrollMarginTop: '16px' } : undefined}
+                  >
                     {msg.image && (
                       <img 
                         src={msg.image} 
