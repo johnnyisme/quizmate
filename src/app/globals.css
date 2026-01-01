@@ -19,3 +19,72 @@ body {
   color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Markdown prose 樣式優化 */
+.prose {
+  @apply text-inherit;
+}
+
+.prose :where(code):not(:where([class~="not-prose"] *)) {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded text-sm;
+}
+
+.prose :where(pre):not(:where([class~="not-prose"] *)) {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg my-2;
+}
+
+.prose :where(pre code):not(:where([class~="not-prose"] *)) {
+  @apply bg-transparent p-0;
+}
+
+.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-700 dark:text-gray-300;
+}
+
+.prose :where(a):not(:where([class~="not-prose"] *)) {
+  @apply text-blue-600 dark:text-blue-400 hover:underline;
+}
+
+.prose :where(table):not(:where([class~="not-prose"] *)) {
+  @apply w-full border-collapse;
+}
+
+.prose :where(th):not(:where([class~="not-prose"] *)) {
+  @apply border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-2 text-left;
+}
+
+.prose :where(td):not(:where([class~="not-prose"] *)) {
+  @apply border border-gray-300 dark:border-gray-600 px-4 py-2;
+}
+
+.prose :where(ul):not(:where([class~="not-prose"] *)) {
+  @apply list-disc list-inside my-2;
+}
+
+.prose :where(ol):not(:where([class~="not-prose"] *)) {
+  @apply list-decimal list-inside my-2;
+}
+
+.prose :where(h1):not(:where([class~="not-prose"] *)) {
+  @apply text-2xl font-bold mt-4 mb-2;
+}
+
+.prose :where(h2):not(:where([class~="not-prose"] *)) {
+  @apply text-xl font-bold mt-3 mb-2;
+}
+
+.prose :where(h3):not(:where([class~="not-prose"] *)) {
+  @apply text-lg font-bold mt-2 mb-1;
+}
+
+.prose :where(h4, h5, h6):not(:where([class~="not-prose"] *)) {
+  @apply font-bold mt-2 mb-1;
+}
+
+.prose :where(hr):not(:where([class~="not-prose"] *)) {
+  @apply border-t border-gray-300 dark:border-gray-600 my-4;
+}
+
+.prose :where(img):not(:where([class~="not-prose"] *)) {
+  @apply rounded-lg my-2 max-w-full;
+}

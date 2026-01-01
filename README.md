@@ -6,6 +6,8 @@
 - 上傳或拍攝題目圖片，維持圖片上下文，連續追問同張圖片的多個問題
 - **即時攝影機**：桌面版開啟即時攝影機預覽，行動版使用原生相機
 - 文字/圖片任一即可送出
+- **完整 Markdown 支援**：標題、粗體、斜體、列表、程式碼區塊、表格、引用等
+- **程式碼語法高亮**：支援多種程式語言，深色/淺色主題自動切換
 - KaTeX 數學公式渲染
 - **IndexedDB 對話紀錄**：自動儲存對話到瀏覽器本機，可隨時切換歷史對話（最多 10 個）
 - **Dark Mode 深色模式**：支援淺色/深色主題切換，自動記憶偏好設定
@@ -110,6 +112,8 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **Next.js 16.1.1** (App Router + Turbopack)
 - **React 18** + TypeScript
 - **Tailwind CSS v4** (@tailwindcss/postcss)
+- **Markdown 渲染**：react-markdown + remark-gfm + remark-math + rehype-katex
+- **程式碼高亮**：react-syntax-highlighter (支援深色/淺色主題)
 - **KaTeX 0.16.27** (數學公式渲染)
 - **IndexedDB (idb 8.0.3)** (本機對話持久化)
 - **Google Generative AI SDK 0.24.1** (直接從瀏覽器呼叫)
@@ -129,6 +133,40 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)
 
 ## 功能特色
+
+### 📝 完整 Markdown 支援
+- **標題**：`# H1`, `## H2`, `### H3` 等多級標題
+- **文字格式**：
+  - 粗體：`**文字**`
+  - 斜體：`*文字*`
+  - 刪除線：`~~文字~~`
+- **程式碼**：
+  - 行內程式碼：`` `code` ``
+  - 程式碼區塊：`` ```language\ncode\n``` ``
+  - 語法高亮：支援 JavaScript, Python, Java, TypeScript, CSS, HTML 等
+  - 主題切換：深色模式使用 oneDark，淺色模式使用 oneLight
+- **清單**：
+  - 無序：`- item` 或 `* item`
+  - 有序：`1. item`
+  - 巢狀清單支援
+- **引用**：`> 引用文字`
+- **連結**：`[文字](URL)`
+- **圖片**：`![替代文字](URL)`
+- **表格**：GitHub Flavored Markdown (GFM) 表格語法
+- **水平線**：`---` 或 `***`
+- **數學公式**：整合 KaTeX，支援 `$...$` (行內) 和 `$$...$$` (區塊)
+
+### 👨‍💻 程式碼語法高亮支援語言
+- JavaScript / TypeScript
+- Python
+- Java / Kotlin
+- C / C++ / C#
+- HTML / CSS / SCSS
+- SQL
+- Bash / Shell
+- JSON / YAML
+- Markdown
+- 和更多… (Prism.js 支援的所有語言)
 
 ### 🎨 Dark Mode 深色模式
 - 支援淺色/深色主題無縫切換

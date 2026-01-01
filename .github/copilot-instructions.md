@@ -13,7 +13,11 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - `displayConversation`: UI-facing messages with user-friendly formatting and images
   - `apiHistory`: API-facing conversation in Gemini `Content[]` format (includes image base64 in first message only)
 - **Image Handling**: Converts first uploaded image to base64; subsequent questions skip image re-transmission
-- **Math Rendering**: KaTeX processes both inline (`$...$`) and display (`$$...$$`) math formulas; wrapped in error handling (`throwOnError: false`)
+- **Markdown Rendering**: ReactMarkdown with remark-math, rehype-katex, and remark-gfm plugins
+  - Full GFM support: tables, strikethrough, task lists, autolinks
+  - Syntax highlighting: react-syntax-highlighter with oneDark/oneLight themes
+  - Math formulas: KaTeX integration via rehype-katex plugin
+  - Custom code component: auto-detects language from `` ```language `` fence
 - **Error Recovery**: Failed sends are auto-restored to input field; conversation reverts to pre-send state
 - **Multi-Key Rotation**: Supports multiple Gemini API keys stored in localStorage
   - Automatic failover on 429, quota, and permission errors
@@ -144,6 +148,12 @@ src/lib/
 - **Next.js 16.1.1**: App Router with server routes at `app/api/**`
 - **@google/generative-ai ^0.24.1**: Gemini SDK
 - **Tailwind v4 + @tailwindcss/postcss**: Styling
+- **Markdown Rendering**:
+  - react-markdown: Core Markdown renderer
+  - remark-math: Math notation support in Markdown
+  - rehype-katex: KaTeX integration for LaTeX math rendering
+  - remark-gfm: GitHub Flavored Markdown (tables, strikethrough, task lists, autolinks)
+- **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
 - **Vitest**: Unit testing framework with 466 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, camera feature with platform detection, utilities)

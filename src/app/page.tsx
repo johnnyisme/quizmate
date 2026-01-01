@@ -1,7 +1,12 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
-import katex from "katex";
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import "katex/dist/katex.min.css";
 import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
 import type { Message as DBMessage } from "@/lib/db";
@@ -356,40 +361,6 @@ export default function HomePage() {
   const generateTitle = (text: string): string => {
     const cleaned = text.replace(/[*$\n]/g, " ").trim();
     return cleaned.length > 30 ? cleaned.slice(0, 30) + "..." : cleaned;
-  };
-
-  // 渲染包含數學公式的文字
-  const renderMathInText = (text: string): string => {
-    try {
-      // 先處理 **粗體** 標記
-      let processedText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      
-      // 處理換行
-      processedText = processedText.replace(/\n/g, "<br />");
-      
-      // 處理 display math ($$...$$)
-      processedText = processedText.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
-        try {
-          return katex.renderToString(formula, { displayMode: true, throwOnError: false });
-        } catch (e) {
-          return match; // 如果渲染失敗，返回原始文字
-        }
-      });
-      
-      // 處理 inline math ($...$)
-      processedText = processedText.replace(/\$([^$]+)\$/g, (match, formula) => {
-        try {
-          return katex.renderToString(formula, { displayMode: false, throwOnError: false });
-        } catch (e) {
-          return match; // 如果渲染失敗，返回原始文字
-        }
-      });
-      
-      return processedText;
-    } catch (e) {
-      console.error("Error rendering math:", e);
-      return text;
-    }
   };
 
   // 將檔案轉為純 base64（不含 data: 前綴）
@@ -1097,7 +1068,33 @@ export default function HomePage() {
                         onClick={() => setPreviewImage(msg.image!)}
                       />
                     )}
-                    <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInText(msg.text) }} />
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath, remarkGfm]}
+                        rehypePlugins={[rehypeKatex]}
+                        components={{
+                          code({ node, inline, className, children, ...props }: any) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                              <SyntaxHighlighter
+                                style={isDark ? oneDark : oneLight}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                        }}
+                      >
+                        {msg.text}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               );
