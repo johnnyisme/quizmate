@@ -69,11 +69,27 @@ npm run start       # Local production server
 - **Config**: `maxOutputTokens: 65536` (supports long tutoring explanations)
 - **History Format**: Gemini `Content[]` type; roles are `"user"` and `"model"`
 
+### Camera Feature
+- **Platform Detection**: `isMobile()` function using User Agent regex
+  - Detects: iOS, Android, iPad, iPod, webOS, BlackBerry, IEMobile, Opera Mini
+- **Desktop Behavior**: 
+  - Uses `getUserMedia({ video: { facingMode: 'environment' } })`
+  - Full-screen modal with live video preview
+  - Canvas-based photo capture → JPEG File at 95% quality
+  - Complete stream cleanup with `getTracks().forEach(track => track.stop())`
+- **Mobile Behavior**: 
+  - Native file input with `capture="environment"` attribute
+  - Opens device camera directly
+  - Better UX on iOS/Android
+- **Resource Management**: Always cleanup MediaStream when closing camera
+- **Error Handling**: Friendly permission error messages for getUserMedia failures
+
 ### UI/UX Conventions
 - Responsive design: `max-w-2xl` container, Tailwind v4 with `@tailwindcss/postcss`
 - Loading state: inline `animate-pulse` spinner
 - Keyboard submit: `onKeyPress` detects Enter key (only when not loading)
 - Scroll behavior: smooth auto-scroll to latest user message (not AI response) for readability
+- Camera modal: `z-[100]` full-screen with blue circular capture button (16x16)
 
 ### Error Handling
 - Missing both prompt and image → client-side validation
@@ -98,6 +114,16 @@ src/lib/
 - **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 10 (MAX_SESSIONS)
 - **Schema**: Each session includes `id`, `title`, `createdAt`, `updatedAt`, `messages[]`, `imageBase64` (optional)
 - **Operations**: createSession, getSession, appendMessages, updateSessionTitle, listSessions, deleteSession, pruneOldSessions
+
+### Camera Feature Tests
+- **Device Detection**: iOS, Android, desktop User Agent testing
+- **Platform Logic**: Mobile file input vs desktop getUserMedia routing
+- **Modal State**: Show/hide camera modal state management
+- **Stream Management**: MediaStream lifecycle and cleanup
+- **Photo Capture**: Canvas → Blob → File conversion flow
+- **Error Handling**: Permission denied, getUserMedia failures
+- **UI Components**: Full-screen modal, capture button, cancel button
+- **Edge Cases**: Video element not ready, blob creation failure, unsupported API
 - **Session Title Editing**:
   - Click edit icon to enter edit mode (switches to session if not current)
   - Input limited to 30 characters with `maxLength` attribute
@@ -120,7 +146,7 @@ src/lib/
 - **Tailwind v4 + @tailwindcss/postcss**: Styling
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 429 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, utilities)
+- **Vitest**: Unit testing framework with 466 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, camera feature with platform detection, utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents

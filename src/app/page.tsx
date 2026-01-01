@@ -118,10 +118,14 @@ export default function HomePage() {
   const [isThemeReady, setIsThemeReady] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [inputFocused, setInputFocused] = useState<boolean>(false);
+  const [showCamera, setShowCamera] = useState<boolean>(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const modelMessageIndexRef = useRef<number | null>(null);
   const errorSuggestionRef = useRef<HTMLDivElement>(null);
   const errorTechnicalRef = useRef<HTMLDivElement>(null);
@@ -514,9 +518,95 @@ export default function HomePage() {
     }
   }, [editingSessionId]);
 
+  // 偵測是否為行動裝置
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
   // 觸發檔案選擇
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  // 處理相機按鈕點擊
+  const handleCameraClick = () => {
+    if (isMobile()) {
+      // 行動裝置：使用原生檔案選擇器（會自動提供拍照選項）
+      cameraInputRef.current?.click();
+    } else {
+      // 桌面：開啟網頁攝影機
+      handleOpenCamera();
+    }
+  };
+
+  // 開啟攝影機（僅限桌面）
+  const handleOpenCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      setCameraStream(stream);
+      setShowCamera(true);
+      
+      // 等待 video 元素準備好
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      console.error('Failed to access camera:', err);
+      setError({ 
+        message: "無法存取攝影機",
+        suggestion: "請確認：\n1. 瀏覽器有攝影機權限\n2. 沒有其他應用程式正在使用攝影機\n3. 使用 HTTPS 連線（本地開發可用 localhost）"
+      });
+    }
+  };
+
+  // 關閉攝影機
+  const handleCloseCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  // 拍照
+  const handleTakePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    // 設定 canvas 尺寸與 video 相同
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // 繪製當前影格到 canvas
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // 將 canvas 轉換為 blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // 建立 File 物件
+          const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setImage(file);
+          setImageUrl(URL.createObjectURL(file));
+          
+          // 重置對話
+          setDisplayConversation([]);
+          setApiHistory([]);
+          setCurrentSessionId(null);
+          setError(null);
+          
+          // 關閉攝影機
+          handleCloseCamera();
+        }
+      }, 'image/jpeg', 0.95);
+    }
   };
 
   // 處理表單提交 (傳送訊息) - 直接使用前端 Gemini API + 模型選擇 + key 輪轉
@@ -1123,7 +1213,7 @@ export default function HomePage() {
               accept="image/*"
               onChange={handleImageChange}
             />
-            {/* 相機拍照專用輸入（Android Chrome 會直接開啟相機） */}
+            {/* 相機拍照專用輸入（行動裝置使用） */}
             <input
               ref={cameraInputRef}
               id="camera-file"
@@ -1142,10 +1232,10 @@ export default function HomePage() {
             </button>
             <button 
               title="拍照" 
-              onClick={() => cameraInputRef.current?.click()} 
+              onClick={handleCameraClick} 
               className={`flex-shrink-0 h-9 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 overflow-hidden ${inputFocused ? 'w-0 opacity-0 pointer-events-none' : 'w-9 opacity-100'}`}
             >
-              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h4l2-2h6l2 2h4v12H3V7zm9 2a5 5 0 110 10 5 5 0 010-10z" /></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
             <textarea
               ref={textareaRef}
@@ -1234,6 +1324,35 @@ export default function HomePage() {
       {/* Overlay for mobile */}
       {showSidebar && isThemeReady && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
       
+      {/* Camera modal */}
+      {showCamera && (
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
+          <video 
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-contain"
+          />
+          <canvas ref={canvasRef} className="hidden" />
+          
+          <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-4">
+            <button
+              onClick={handleCloseCamera}
+              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full font-medium transition-colors shadow-lg"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleTakePhoto}
+              className="w-16 h-16 bg-white hover:bg-gray-100 rounded-full flex items-center justify-center transition-all shadow-lg border-4 border-blue-500"
+              title="拍照"
+            >
+              <div className="w-12 h-12 bg-blue-500 rounded-full"></div>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Image preview modal */}
       {previewImage && (
         <div 
