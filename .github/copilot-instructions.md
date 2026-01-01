@@ -123,6 +123,11 @@ src/lib/
 - **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 10 (MAX_SESSIONS)
 - **Schema**: Each session includes `id`, `title`, `createdAt`, `updatedAt`, `messages[]`, `imageBase64` (optional)
 - **Operations**: createSession, getSession, appendMessages, updateSessionTitle, listSessions, deleteSession, pruneOldSessions
+- **Session Persistence**: Current session ID stored in localStorage (`current-session-id` key)
+  - Auto-restores last session on page reload
+  - Cleared when starting new chat
+  - Updated when switching sessions or creating new session
+  - Enables seamless user experience across browser refreshes
 
 ### Camera Feature Tests
 - **Device Detection**: iOS, Android, desktop User Agent testing

@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **429 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **757 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 429 tests
+- **測試總數**: 757 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -120,37 +120,30 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // 傍晚: 2026/12/31 23:59:59（不顯示 11 PM）
 ```
 
-**關鍵測試案例：**
-```typescript
-// 成功模式: loading=true → value="result", loading=false, error=null
-// 失敗模式: loading=true → loading=false, error="failed"
-// 重試模式: error → error=null, loading=true → success
-```
-
-### 6. `src/components/__tests__/Settings.test.tsx` (65 tests)
-測試 Settings 組件的 Tab 切換和狀態管理邏輯。
+### 7. `src/__tests__/sessionPersistence.test.ts` (51 tests)
+測試頁面 reload 後恢復上次對話的功能（localStorage session ID 持久化）。
 
 **測試分類：**
-- **Tab 狀態**: 初始化、切換、多次切換
-- **CSS Classes**: 啟用/停用樣式、藍色高亮、灰色懸停
-- **內容渲染**: 三個 tab 內容顯示邏輯、單一顯示
-- **Tab Labels**: Prompt 設定、API 金鑰、外觀主題
-- **主題切換**: light↔dark 切換、字串儲存
-- **Modal Header**: 標題、截斷、關閉按鈕
-- **Props 傳遞**: isDark, onClose, isModal
-- **邊框布局**: border-bottom, flex 布局, 置中
-- **響應式設計**: 手機/桌面 padding, 文字大小, 按鈕位置
-- **Tab 驗證**: 有效值檢查、3 個 tab
-- **整合場景**: tab 切換+關閉, 主題切換+tab 保持
+- **localStorage 操作**: 儲存、讀取、刪除 session ID
+- **Session ID 格式**: UUID、timestamp、特殊字元驗證
+- **狀態管理**: 切換 session、覆寫、新對話清除
+- **初始化行為**: 有/無既有 session 的啟動邏輯
+- **Session 生命週期**: 建立儲存、切換更新、刪除清除
+- **並行操作**: 快速切換、連續儲存刪除
+- **邊界條件**: 空字串、超長 ID、多鍵值共存
+- **隔離性**: 刪除 session ID 不影響其他 localStorage 鍵值
 
 **關鍵測試案例：**
 ```typescript
-// Tab 切換: prompt → apikey → theme → prompt
-// 啟用樣式: "text-blue-600 border-b-2 bg-blue-50"
-// 停用樣式: "text-gray-600 hover:text-gray-900"
+// 儲存: localStorage.setItem('current-session-id', 'session-123')
+// 讀取: localStorage.getItem('current-session-id') → 'session-123'
+// 切換: 'session-1' → 'session-2' (覆寫)
+// 新對話: localStorage.removeItem('current-session-id')
+// 初始化: 有 ID → 恢復對話 / 無 ID → 空白頁
+// 隔離: 刪除 current-session-id，保留 theme, api-keys
 ```
 
-### 7. `src/__tests__/sessionHoverButtons.test.ts` (41 tests)
+### 8. `src/__tests__/sessionHoverButtons.test.ts` (41 tests)
 測試 Session 列表 hover 顯示按鈕功能。
 
 **測試分類：**
@@ -173,7 +166,7 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // Child: group-hover:opacity-100
 ```
 
-### 8. `src/components/__tests__/PromptSettings.test.tsx`
+### 9. `src/components/__tests__/PromptSettings.test.tsx`
 Logic tests for PromptSettings component changes.
 
 **測試功能：**
@@ -243,7 +236,15 @@ npx vitest run src/components/__tests__/PromptSettings.test.tsx
 | `sessionHoverButtons.test.ts` | 41 | ✅ | Session 列表 Hover 按鈕 |
 | `sessionTitleEdit.test.ts` | 24 | ✅ | Session 標題編輯與驗證 |
 | `sessionTimeFormat.test.ts` | 12 | ✅ | Session 時間格式顯示 |
-| **總計** | **429** | **✅** | **完整功能覆蓋** |
+| `scrollToQuestion.test.ts` | 16 | ✅ | Gemini-like 滾動到問題功能 |
+| `markdownRendering.test.ts` | 55 | ✅ | Markdown 渲染（GFM、數學公式） |
+| `htmlSanitization.test.ts` | 72 | ✅ | HTML 安全過濾 |
+| `syntaxHighlighting.test.ts` | 78 | ✅ | 程式碼語法高亮 |
+| `cameraFeature.test.ts` | 23 | ✅ | 相機拍照功能（平台偵測） |
+| `sidebarToggle.test.ts` | 9 | ✅ | 側邊欄響應式切換 |
+| `scrollButtons.test.ts` | 6 | ✅ | 滾動按鈕邏輯 |
+| `sessionPersistence.test.ts` | 51 | ✅ | Session 持久化（reload 恢復） |
+| **總計** | **757** | **✅** | **完整功能覆蓋** |
 
 ## 測試分類
 
@@ -350,7 +351,7 @@ npm run test -- --coverage
 ## 測試品質指標
 
 - **執行時間**: ~1.6s (優化後)
-- **通過率**: 100% (429/429)
+- **通過率**: 100% (757/757)
 - **覆蓋率**: ~90% (達成目標)
 - **覆蓋範圍**: 前端邏輯（Gemini SDK）、UI 組件、工具函數、資料庫（IndexedDB）、狀態管理、Session 管理 UI
 - **維護性**: 模組化設計，每個功能獨立測試文件，反映純前端架構
@@ -432,8 +433,8 @@ npm run test -- --coverage
 
 ---
 
-**最後更新**: 2026-01-01  
-**測試總數**: 429 tests  
+**最後更新**: 2026-01-02  
+**測試總數**: 757 tests  
 **通過率**: 100%  
 **覆蓋率**: ~90% (達成目標)
 

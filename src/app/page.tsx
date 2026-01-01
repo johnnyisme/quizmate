@@ -298,6 +298,12 @@ export default function HomePage() {
       : defaultIdFromData;
     setSelectedPromptId(effectiveSelected);
     localStorage.setItem('selected-prompt-id', effectiveSelected);
+
+    // 恢復上次的對話
+    const lastSessionId = localStorage.getItem('current-session-id');
+    if (lastSessionId) {
+      setCurrentSessionId(lastSessionId);
+    }
   }, []);
 
   // 初始化主題
@@ -455,6 +461,8 @@ export default function HomePage() {
     setApiHistory([]);
     setCurrentSessionId(null);
     setError(null);
+    // 清除儲存的 session ID
+    localStorage.removeItem('current-session-id');
     // Close sidebar on mobile only
     if (window.innerWidth < 1024) {
       setShowSidebar(false);
@@ -464,6 +472,8 @@ export default function HomePage() {
   // Switch to existing session
   const handleSwitchSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
+    // 儲存當前 session ID 以便頁面重載後恢復
+    localStorage.setItem('current-session-id', sessionId);
     // Close sidebar on mobile only
     if (window.innerWidth < 1024) {
       setShowSidebar(false);
@@ -819,6 +829,8 @@ export default function HomePage() {
 
         const newSession = await createNewSession(title, [userDBMsg, modelDBMsg], imageB64);
         setCurrentSessionId(newSession.id);
+        // 儲存新建立的 session ID
+        localStorage.setItem('current-session-id', newSession.id);
         await performCleanup();
         await loadSessions();
       } else {
