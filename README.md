@@ -155,6 +155,9 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **表格**：GitHub Flavored Markdown (GFM) 表格語法
 - **水平線**：`---` 或 `***`
 - **數學公式**：整合 KaTeX，支援 `$...$` (行內) 和 `$$...$$` (區塊)
+- **HTML 支援**：安全地允許常用 HTML 標籤 (`<div>`, `<span>`, `<br>`, `<hr>` 等)
+  - 自動過濾危險標籤（`<script>`, `<iframe>`, `<object>` 等）
+  - 支援 `className` 和 `style` 屬性用於樣式客製化
 
 ### 👨‍💻 程式碼語法高亮支援語言
 - JavaScript / TypeScript

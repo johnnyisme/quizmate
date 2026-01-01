@@ -18,6 +18,7 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - Syntax highlighting: react-syntax-highlighter with oneDark/oneLight themes
   - Math formulas: KaTeX integration via rehype-katex plugin
   - Custom code component: auto-detects language from `` ```language `` fence
+  - Safe HTML support: rehype-raw + rehype-sanitize allow common HTML tags while filtering dangerous content (script, iframe, etc.)
 - **Error Recovery**: Failed sends are auto-restored to input field; conversation reverts to pre-send state
 - **Multi-Key Rotation**: Supports multiple Gemini API keys stored in localStorage
   - Automatic failover on 429, quota, and permission errors
@@ -153,6 +154,8 @@ src/lib/
   - remark-math: Math notation support in Markdown
   - rehype-katex: KaTeX integration for LaTeX math rendering
   - remark-gfm: GitHub Flavored Markdown (tables, strikethrough, task lists, autolinks)
+  - rehype-raw: Parse HTML in Markdown
+  - rehype-sanitize: Sanitize HTML to prevent XSS attacks
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper

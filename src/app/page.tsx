@@ -5,6 +5,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import "katex/dist/katex.min.css";
@@ -1071,7 +1073,26 @@ export default function HomePage() {
                     <div className="prose prose-sm max-w-none dark:prose-invert">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath, remarkGfm]}
-                        rehypePlugins={[rehypeKatex]}
+                        rehypePlugins={[
+                          rehypeRaw,
+                          [rehypeSanitize, {
+                            ...defaultSchema,
+                            attributes: {
+                              ...defaultSchema.attributes,
+                              // 允許所有標籤使用 className
+                              '*': ['className', 'style'],
+                              // 允許 span 使用 style 屬性（用於顏色等）
+                              span: ['className', 'style'],
+                              div: ['className', 'style'],
+                            },
+                            tagNames: [
+                              ...(defaultSchema.tagNames || []),
+                              // 確保允許常用 HTML 標籤
+                              'div', 'span', 'br', 'hr',
+                            ],
+                          }],
+                          rehypeKatex,
+                        ]}
                         components={{
                           code({ node, inline, className, children, ...props }: any) {
                             const match = /language-(\w+)/.exec(className || '');
