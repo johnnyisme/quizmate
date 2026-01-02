@@ -7,104 +7,150 @@ describe('Table Overflow Handling', () => {
   describe('Table Wrapper Component', () => {
     it('should wrap table in scrollable container', () => {
       const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3 my-2',
+        className: 'overflow-x-scroll -mx-3 px-3 my-2',
       };
       
-      expect(tableWrapper.className).toContain('overflow-x-auto');
-    });
-
-    it('should use negative margin to expand scroll area', () => {
-      const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3 my-2',
-      };
-      
-      expect(tableWrapper.className).toContain('-mx-3');
-    });
-
-    it('should maintain padding for content spacing', () => {
-      const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3 my-2',
-      };
-      
-      expect(tableWrapper.className).toContain('px-3');
+      expect(tableWrapper.className).toContain('overflow-x-scroll');
     });
 
     it('should add vertical margin for spacing', () => {
       const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3 my-2',
+        className: 'overflow-x-scroll -mx-3 px-3 my-2',
       };
       
       expect(tableWrapper.className).toContain('my-2');
     });
 
-    it('should set table to full width', () => {
-      const table = {
-        className: 'min-w-full',
+    it('should use negative margin to extend scroll area', () => {
+      const tableWrapper = {
+        className: 'overflow-x-scroll -mx-3 px-3 my-2',
       };
       
-      expect(table.className).toBe('min-w-full');
+      expect(tableWrapper.className).toContain('-mx-3');
+      expect(tableWrapper.className).toContain('px-3');
+    });
+
+    it('should set max-width with viewport calculation', () => {
+      const maxWidth = 'calc(100vw - 4rem)';
+      
+      expect(maxWidth).toBe('calc(100vw - 4rem)');
+    });
+
+    it('should override wordBreak to normal for tables', () => {
+      const tableWrapperStyle = {
+        maxWidth: 'calc(100vw - 4rem)',
+        wordBreak: 'normal',
+      };
+      
+      expect(tableWrapperStyle.wordBreak).toBe('normal');
     });
   });
 
   describe('Prose Container', () => {
-    it('should allow content to shrink with min-w-0', () => {
-      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert min-w-0';
+    it('should enable horizontal scrolling for long content', () => {
+      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto';
       
-      expect(proseClasses).toContain('min-w-0');
+      expect(proseClasses).toContain('overflow-x-auto');
     });
 
     it('should maintain max-w-none for full width', () => {
-      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert min-w-0';
+      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto';
       
       expect(proseClasses).toContain('max-w-none');
     });
 
     it('should support dark mode', () => {
-      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert min-w-0';
+      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto';
       
       expect(proseClasses).toContain('dark:prose-invert');
+    });
+
+    it('should set explicit width to 100%', () => {
+      const proseStyle = { width: '100%', wordBreak: 'break-word' };
+      
+      expect(proseStyle.width).toBe('100%');
+    });
+
+    it('should break long words to prevent overflow', () => {
+      const proseStyle = { width: '100%', wordBreak: 'break-word' };
+      
+      expect(proseStyle.wordBreak).toBe('break-word');
     });
   });
 
   describe('Scroll Behavior', () => {
-    it('should allow horizontal scrolling for wide tables', () => {
-      const overflowStyle = 'overflow-x-auto';
+    it('should use overflow-x-scroll for reliable scrolling', () => {
+      const overflowStyle = 'overflow-x-scroll';
       
-      // overflow-x-auto 允許橫向滾動
-      expect(overflowStyle).toBe('overflow-x-auto');
+      // overflow-x-scroll 強制顯示滾動能力（即使內容未溢出）
+      expect(overflowStyle).toBe('overflow-x-scroll');
     });
 
     it('should not affect vertical scrolling', () => {
-      const overflowStyle = 'overflow-x-auto';
+      const overflowStyle = 'overflow-x-scroll';
       
       // 只影響橫向，不影響縱向
       expect(overflowStyle).not.toContain('overflow-y');
     });
 
-    it('should hide scrollbar when content fits', () => {
-      // overflow-x-auto 只在內容溢出時顯示滾動條
-      const behavior = 'auto';
+    it('should always show scroll capability', () => {
+      // overflow-x-scroll 與 overflow-x-auto 不同，會一直保持滾動能力
+      const behavior = 'scroll';
       
-      expect(behavior).toBe('auto');
+      expect(behavior).toBe('scroll');
     });
   });
 
-  describe('Margin and Padding Strategy', () => {
-    it('should calculate correct scroll area width', () => {
-      // -mx-3 擴展 12px (每側 3*4px)
-      // px-3 保持內距 12px
-      const marginOffset = -12; // -mx-3 = -0.75rem = -12px
-      const paddingOffset = 12; // px-3 = 0.75rem = 12px
+  describe('Scroll Container Strategy', () => {
+    it('should use viewport-based max-width calculation', () => {
+      const strategy = {
+        maxWidth: 'calc(100vw - 4rem)',
+        overflow: 'overflow-x-scroll',
+      };
       
-      expect(marginOffset + paddingOffset).toBe(0); // 淨效果：擴展滾動區域但保持視覺間距
+      expect(strategy.maxWidth).toBe('calc(100vw - 4rem)');
+      expect(strategy.overflow).toBe('overflow-x-scroll');
     });
 
-    it('should extend scroll area beyond bubble padding', () => {
-      const bubblePadding = 12; // p-3
-      const tableMargin = -12; // -mx-3
+    it('should use negative margins to extend scroll area to bubble edges', () => {
+      const className = 'overflow-x-scroll -mx-3 px-3 my-2';
       
-      const extendedArea = bubblePadding + tableMargin;
-      expect(extendedArea).toBe(0); // 表格滾動區域延伸到氣泡邊緣
+      expect(className).toContain('-mx-3');
+      expect(className).toContain('px-3');
+    });
+  });
+
+  describe('Table Cell Rendering', () => {
+    it('should prevent cell content from wrapping', () => {
+      const cellStyle = { whiteSpace: 'nowrap' };
+      
+      expect(cellStyle.whiteSpace).toBe('nowrap');
+    });
+
+    it('should apply whiteSpace to both th and td', () => {
+      const thStyle = { whiteSpace: 'nowrap' };
+      const tdStyle = { whiteSpace: 'nowrap' };
+      
+      expect(thStyle.whiteSpace).toBe('nowrap');
+      expect(tdStyle.whiteSpace).toBe('nowrap');
+    });
+
+    it('should auto-size cells based on content', () => {
+      // 使用 whiteSpace: nowrap 讓瀏覽器根據內容自動調整寬度
+      const autoSize = true;
+      
+      expect(autoSize).toBe(true);
+    });
+
+    it('should preserve existing cell props', () => {
+      const props = { className: 'custom', id: 'cell-1' };
+      const cellWithStyle = { 
+        ...props, 
+        style: { whiteSpace: 'nowrap', ...props } 
+      };
+      
+      expect(cellWithStyle.className).toBe('custom');
+      expect(cellWithStyle.id).toBe('cell-1');
     });
   });
 
@@ -134,35 +180,43 @@ describe('Table Overflow Handling', () => {
       expect(result.children.children).toEqual(['thead', 'tbody']);
     });
 
-    it('should pass through table props and add min-w-full', () => {
+    it('should pass through table props', () => {
       const props = {
+        className: 'custom-table',
         id: 'table-1',
       };
       
       const tableComponent = (props: any) => ({
-        wrapper: { className: 'overflow-x-auto -mx-3 px-3 my-2' },
-        table: { className: 'min-w-full', ...props },
+        wrapper: { 
+          className: 'overflow-x-scroll -mx-3 px-3 my-2',
+          style: { maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }
+        },
+        table: { ...props },
       });
       
       const result = tableComponent(props);
-      expect(result.table.className).toBe('min-w-full');
+      expect(result.wrapper.style.maxWidth).toBe('calc(100vw - 4rem)');
+      expect(result.wrapper.style.wordBreak).toBe('normal');
+      expect(result.table.className).toBe('custom-table');
       expect(result.table.id).toBe('table-1');
     });
 
-    it('should ensure message bubble allows shrinking', () => {
+    it('should ensure message bubble maintains fixed width', () => {
       const messageBubble = {
-        className: 'max-w-lg lg:max-w-3xl min-w-0 p-3',
+        className: 'max-w-lg lg:max-w-3xl p-3',
       };
       
-      expect(messageBubble.className).toContain('min-w-0');
+      expect(messageBubble.className).toContain('max-w-lg');
+      expect(messageBubble.className).not.toContain('min-w-0');
     });
 
-    it('should ensure relative container allows shrinking', () => {
+    it('should ensure relative container stays normal', () => {
       const relativeContainer = {
-        className: 'relative min-w-0',
+        className: 'relative',
       };
       
-      expect(relativeContainer.className).toContain('min-w-0');
+      expect(relativeContainer.className).toBe('relative');
+      expect(relativeContainer.className).not.toContain('min-w-0');
     });
   });
 

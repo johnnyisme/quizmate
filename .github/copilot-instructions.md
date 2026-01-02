@@ -19,13 +19,15 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - Math formulas: KaTeX integration via rehype-katex plugin
   - Custom code component: auto-detects language from `` ```language `` fence
   - Safe HTML support: rehype-raw + rehype-sanitize allow common HTML tags while filtering dangerous content (script, iframe, etc.)
-  - **Table Overflow Handling**: Custom table component wrapper with horizontal scroll
-    - Wrapper: `<div className="overflow-x-auto -mx-3 px-3 my-2"><table className="min-w-full">...</table></div>`
+  - **Table Overflow Handling**: Custom table component wrapper with horizontal scroll and auto-sizing cells
+    - Wrapper: `<div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}><table>...</table></div>`
     - Negative margin (`-mx-3`) extends scroll area to bubble edges
     - Padding (`px-3`) maintains visual spacing consistency
     - Vertical margin (`my-2`) adds spacing between tables and other content
-    - Table min-width (`min-w-full`) ensures tables use full available width
-    - Message bubble and containers use `min-w-0` to allow proper shrinking
+    - Max-width: `calc(100vw - 4rem)` prevents overflow on mobile
+    - wordBreak: `normal` in table wrapper overrides parent's `break-word` to maintain table formatting
+    - Prose container: `overflow-x-auto` with `wordBreak: 'break-word'` for long text
+    - Table cells (th/td): `whiteSpace: 'nowrap'` allows auto-sizing based on content width
     - Prevents wide tables from breaking message bubble layout
     - Works seamlessly on mobile (touch scroll) and desktop (mouse scroll)
 - **Error Recovery**: Failed sends are auto-restored to input field; conversation reverts to pre-send state
@@ -235,7 +237,7 @@ src/lib/
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 843 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (57 tests - horizontal scroll with min-w-0 fix), utilities)
+- **Vitest**: Unit testing framework with 848 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (62 tests - horizontal scroll with auto-sizing cells and wordBreak management), utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents

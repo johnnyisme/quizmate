@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **843 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **848 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 843 tests
+- **測試總數**: 848 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -117,15 +117,16 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // 無障礙: title="關閉", 足夠對比度, hover 反饋
 ```
 
-### 2.8. `src/__tests__/tableOverflow.test.ts` (57 tests)
-測試 Markdown 表格橫向滾動功能的完整實現。
+### 2.8. `src/__tests__/tableOverflow.test.ts` (62 tests)
+測試 Markdown 表格橫向滾動功能的完整實現，包含表格單元格自適應寬度。
 
 **測試分類：**
-- **Table Wrapper Component (5 tests)**: 滾動容器、負 margin、padding 間距、垂直 margin、table min-width
-- **Prose Container (3 tests)**: min-w-0 允許縮小、max-w-none、dark mode
-- **Scroll Behavior (3 tests)**: 橫向滾動、不影響縱向、自動隱藏滾動條
-- **Margin and Padding Strategy (2 tests)**: 滾動區域計算、延伸到氣泡邊緣
-- **Component Integration (5 tests)**: 僅包裝 table、保留 children、傳遞 props、message bubble min-w-0、relative container min-w-0
+- **Table Wrapper Component (5 tests)**: 滾動容器、負 margin 擴展滾動區域、padding 維持間距、viewport 計算、wordBreak 覆蓋
+- **Prose Container (5 tests)**: overflow-x-auto 水平滾動、max-w-none 全寬、dark mode、width 100%、wordBreak 強制換行
+- **Scroll Behavior (3 tests)**: 橫向滾動、不影響縱向、一直保持滾動能力
+- **Scroll Container Strategy (2 tests)**: viewport-based max-width、負 margin 延伸到氣泡邊緣
+- **Table Cell Rendering (4 tests)**: whiteSpace nowrap 防止換行、th/td 都套用、根據內容自動調整寬度、保留現有 props
+- **Component Integration (5 tests)**: 僅包裝 table、保留 children、傳遞 props + wrapper style、message bubble 固定寬度、relative container
 - **Edge Cases (3 tests)**: 空表格、嵌套表格、超寬表格
 - **Accessibility (2 tests)**: 鍵盤導航、視覺滾動指示器
 - **Cross-browser Compatibility (2 tests)**: 標準 CSS 屬性、觸控滾動
@@ -133,17 +134,16 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 
 **關鍵測試案例：**
 ```typescript
-// Wrapper: 'overflow-x-auto -mx-3 px-3 my-2'
-// Table: 'min-w-full' (確保表格至少與容器同寬)
-// Prose: 'prose prose-sm max-w-none dark:prose-invert min-w-0' (允許內容縮小)
-// Message Bubble: 'max-w-lg lg:max-w-3xl min-w-0 p-3' (允許氣泡縮小)
-// Relative Container: 'relative min-w-0' (允許父容器縮小)
-// 負 margin: -mx-3 = -12px (每側) → 擴展滾動區域
-// Padding: px-3 = 12px → 保持視覺間距
-// 淨效果: marginOffset(-12) + paddingOffset(12) = 0 (滾動區域延伸到氣泡邊緣)
-// 組件: table({ node, children, ...props }) → <div className="..."><table className="min-w-full" {...props}>{children}</table></div>
-// 相容性: 標準 CSS 'overflow-x: auto', 支援觸控滾動
-// 效能: 僅在溢出時啟動, GPU 加速
+// Wrapper: 'overflow-x-scroll -mx-3 px-3 my-2'
+// Style: { maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }
+// Prose: 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto'
+// Prose Style: { width: '100%', wordBreak: 'break-word' }
+// Table Cells (th/td): { whiteSpace: 'nowrap' } → 根據內容自動調整寬度
+// 負 margin: -mx-3 = -12px → 擴展滾動區域到氣泡邊緣
+// Padding: px-3 = 12px → 保持視覺間距一致
+// wordBreak: prose 'break-word' 換行長文字, table wrapper 'normal' 保持表格排版
+// 組件: table → <div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}><table>{children}</table></div>
+// 組件: th/td → <th/td style={{ whiteSpace: 'nowrap', ...props.style }}>{children}</th/td>
 ```
 
 ### 3. `src/__tests__/inputAutoGrow.test.ts` (21 tests)
