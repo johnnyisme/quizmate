@@ -1,32 +1,41 @@
 # QuizMate - 測試文檔
 
-本專案包含 **926 個單元測試** + **4 個 E2E 測試**，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互和工具函數。
+本專案包含 **1,021 個測試** (926 unit + 95 integration + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
 
 ## 測試框架
-- **Vitest 1.6.1**: 單元測試框架
-- **React Testing Library 16.3.1**: React 組件測試（DOM 渲染、ref forwarding 驗證）
+- **Vitest 1.6.1**: 單元測試與整合測試框架
+- **React Testing Library 16.3.1**: React 組件測試（DOM 渲染、user interaction、ref forwarding）
+- **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 930 tests (926 unit + 4 E2E)
-- **測試覆蓋率**: ~90%
+- **測試總數**: 1,025 tests (926 unit + 95 integration + 4 E2E)
+- **整合測試覆蓋率**: 9.3% (95/1021)
+- **整體測試覆蓋率**: ~92%
 
 ---
 
 ## 📋 測試文件總覽
 
+### 整合測試 - DOM 渲染與交互驗證 (95 tests) ⭐ NEW
+1. **`src/__tests__/errorHandling.integration.test.tsx`** (19 tests) - 錯誤 UI 展開/收起/滾動
+2. **`src/__tests__/scrollFeatures.integration.test.tsx`** (17 tests) - 滾動到問題、智慧按鈕、位置記憶
+3. **`src/__tests__/sessionUI.integration.test.tsx`** (22 tests) - 標題編輯、hover 按鈕、時間格式
+4. **`src/__tests__/messageInteraction.integration.test.tsx`** (18 tests) - 複製按鈕、分享選取、桌面分享
+5. **`src/__tests__/inputAndUI.integration.test.tsx`** (14 tests) - 輸入框自動增長、主題切換、側邊欄動畫
+
 ### 核心頁面邏輯 (42 tests)
-1. **`src/__tests__/page.test.ts`** - 前端主介面、Gemini API 整合、對話管理
+6. **`src/__tests__/page.test.ts`** - 前端主介面、Gemini API 整合、對話管理
 
 ### React 組件測試 (162 tests)
-2. **`src/__tests__/messageBubbleRef.test.tsx`** (5 tests) ⭐ NEW - MessageBubble ref forwarding
-3. **`src/components/__tests__/ApiKeySetup.test.tsx`** (33 tests) - API Key 管理介面
-4. **`src/components/__tests__/Settings.test.tsx`** (41 tests) - Settings 模態視窗與 Tab
-5. **`src/components/__tests__/PromptSettings.test.tsx`** (16 tests) - System Prompt 自訂
-6. **`src/components/__tests__/PromptSettings.button.test.tsx`** (23 tests) - Prompt 按鈕邏輯
-7. **`src/lib/__tests__/useAsyncState.test.ts`** (44 tests) - 非同步狀態管理 hook
+7. **`src/__tests__/messageBubbleRef.test.tsx`** (5 tests) ⭐ NEW - MessageBubble ref forwarding
+8. **`src/components/__tests__/ApiKeySetup.test.tsx`** (33 tests) - API Key 管理介面
+9. **`src/components/__tests__/Settings.test.tsx`** (41 tests) - Settings 模態視窗與 Tab
+10. **`src/components/__tests__/PromptSettings.test.tsx`** (16 tests) - System Prompt 自訂
+11. **`src/components/__tests__/PromptSettings.button.test.tsx`** (23 tests) - Prompt 按鈕邏輯
+12. **`src/lib/__tests__/useAsyncState.test.ts`** (44 tests) - 非同步狀態管理 hook
 
 ### UI/UX 交互測試 (370 tests)
-8. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
+13. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
 9. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
 10. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
 11. **`src/__tests__/errorCloseButton.test.ts`** (22 tests) - 錯誤訊息關閉按鈕
