@@ -38,9 +38,9 @@ npm run dev
 - 支援多把 Key（逗號分隔），自動輪替避免配額限制
 - 可隨時編輯、刪除已儲存的 Key
 
-## 部署（Vercel / Netlify / GitHub Pages）
+## 部署（Vercel / GitHub Pages）
 1) 建立 GitHub 倉庫並推送程式碼
-2) 連結到 Vercel/Netlify/任何靜態託管平台
+2) 連結到 Vercel 或任何靜態託管平台
 3) **無需設定環境變數**（純前端架構）
 4) 使用者首次訪問時自行輸入 API Key
 
@@ -332,7 +332,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 
 ### ✅ 彈性部署
 - 支援任何靜態託管平台
-- Vercel / Netlify / GitHub Pages / Cloudflare Pages 皆可
+- Vercel / GitHub Pages / Cloudflare Pages 皆可
 - 無需設定環境變數
 
 ## 安全提示
