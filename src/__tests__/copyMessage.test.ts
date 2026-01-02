@@ -89,15 +89,17 @@ describe('Copy Message Feature', () => {
   });
 
   describe('Visual Feedback Timing', () => {
-    it('should simulate 2 second timeout', (done) => {
-      let copiedIndex: number | null = 5;
-      
-      setTimeout(() => {
-        copiedIndex = null;
-        expect(copiedIndex).toBeNull();
-        done();
-      }, 2000);
-    }, 2500);
+    it('should simulate 2 second timeout', () => {
+      return new Promise<void>((resolve) => {
+        let copiedIndex: number | null = 5;
+        
+        setTimeout(() => {
+          copiedIndex = null;
+          expect(copiedIndex).toBeNull();
+          resolve();
+        }, 2000);
+      });
+    });
 
     it('should handle rapid consecutive copies', async () => {
       const messages = ['msg1', 'msg2', 'msg3'];
@@ -130,7 +132,7 @@ describe('Copy Message Feature', () => {
     });
 
     it('should handle undefined clipboard API', async () => {
-      // @ts-ignore
+      // @ts-expect-error - Testing undefined clipboard
       delete navigator.clipboard;
       
       expect(navigator.clipboard).toBeUndefined();
@@ -159,7 +161,7 @@ describe('Copy Message Feature', () => {
     });
 
     it('should handle very large index', () => {
-      let copiedIndex: number | null = 999999;
+      const copiedIndex: number | null = 999999;
       expect(copiedIndex).toBe(999999);
     });
   });

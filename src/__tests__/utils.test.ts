@@ -99,7 +99,7 @@ describe('Frontend Utils (API Key Management)', () => {
   describe('getNextAvailableKey', () => {
     it('should return next available key when some keys have failed', () => {
       let currentKeyIndex = 0;
-      let failedKeys = new Set<number>();
+      const failedKeys = new Set<number>();
       const apiKeys = ['key1', 'key2', 'key3'];
 
       const getNextAvailableKey = (apiKeys: string[]): string => {
@@ -202,7 +202,7 @@ describe('Frontend Utils (API Key Management)', () => {
             },
           };
         },
-      } as any;
+      } as ReadableStream<Uint8Array>;
 
       const streamToBuffer = async (stream: ReadableStream<Uint8Array>): Promise<Buffer> => {
         const reader = stream.getReader();

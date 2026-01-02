@@ -128,6 +128,8 @@ export default function HomePage() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
+  const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
+  const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -141,6 +143,7 @@ export default function HomePage() {
   const editingContainerRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const shouldScrollToQuestion = useRef<boolean>(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   // 當新問題加入時自動滾動
   useEffect(() => {
@@ -680,6 +683,133 @@ export default function HomePage() {
     }
   };
 
+  // 長按進入選取模式
+  const handleLongPressStart = (index: number) => {
+    longPressTimer.current = setTimeout(() => {
+      setIsSelectMode(true);
+      setSelectedMessages(new Set([index]));
+    }, 500); // 500ms 長按
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  // 切換訊息選取狀態
+  const toggleMessageSelect = (index: number) => {
+    if (!isSelectMode) return;
+    
+    setSelectedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  // 全選訊息
+  const selectAllMessages = () => {
+    const allIndices = displayConversation.map((_, i) => i);
+    setSelectedMessages(new Set(allIndices));
+  };
+
+  // 清除選取，離開選取模式
+  const clearSelection = () => {
+    setSelectedMessages(new Set());
+    setIsSelectMode(false);
+  };
+
+  // 格式化選取的訊息為 Markdown
+  const formatSelectedMessages = (): string => {
+    const sortedIndices = Array.from(selectedMessages).sort((a, b) => a - b);
+    const messages = sortedIndices.map(i => displayConversation[i]);
+    
+    const header = '與 QuizMate AI 老師的討論\n' + '─'.repeat(30) + '\n\n';
+    const body = messages.map(msg => {
+      const icon = msg.role === 'user' ? '👤' : '🤖';
+      const label = msg.role === 'user' ? '用戶' : 'AI';
+      return `${icon} ${label}：${msg.text}`;
+    }).join('\n\n');
+    
+    return header + body;
+  };
+
+  // 進入分享模式（桌面端用）
+  const enterShareMode = (index: number) => {
+    setIsSelectMode(true);
+    setSelectedMessages(new Set([index]));
+  };
+
+  // 分享選取的訊息（移動端多選用）
+  const shareSelectedMessages = async () => {
+    if (selectedMessages.size === 0) {
+      setError({
+        message: "請先選取訊息",
+        suggestion: "點擊訊息泡泡上的勾選框來選取要分享的內容"
+      });
+      return;
+    }
+
+    const formattedText = formatSelectedMessages();
+
+    try {
+      // 檢查是否支援 Web Share API（需要在 HTTPS 或 localhost）
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        console.log('使用 Web Share API 分享');
+        await navigator.share({
+          title: '與 QuizMate AI 老師的討論',
+          text: formattedText,
+        });
+        // 分享成功後清除選取
+        clearSelection();
+        return;
+      }
+      
+      // Fallback: 複製到剪貼簿
+      console.log('Web Share API 不支援，使用剪貼簿 fallback');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(formattedText);
+      } else {
+        // 傳統 fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = formattedText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+      
+      alert('✅ 已複製到剪貼簿！\n\n💡 你的瀏覽器不支援直接分享功能。請手動貼上到 LINE、Messenger 等 App 分享。\n\n提示：在支援的瀏覽器（如 Safari、Chrome Mobile）上可直接呼叫分享選單。');
+      clearSelection();
+    } catch (err: any) {
+      // 用戶取消分享
+      if (err.name === 'AbortError') {
+        console.log('用戶取消分享');
+        return;
+      }
+      
+      console.error('Failed to share:', err);
+      setError({
+        message: "分享失敗",
+        suggestion: "請確認瀏覽器支援分享功能，或嘗試使用複製功能\n\n技術細節：" + (err.message || JSON.stringify(err))
+      });
+    }
+  };
+
   // 處理表單提交 (傳送訊息) - 直接使用前端 Gemini API + 模型選擇 + key 輪轉
   const handleSubmit = async () => {
     if (apiKeys.length === 0) {
@@ -1169,15 +1299,44 @@ export default function HomePage() {
               }, []);
               const lastUserIndex = userMessageIndices[userMessageIndices.length - 1];
               const isLastUserMessage = msg.role === 'user' && index === lastUserIndex;
+              const isSelected = selectedMessages.has(index);
               
               return (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
-                  <div className="relative">
-                    <div 
-                      ref={isLastUserMessage ? lastUserMessageRef : null}
-                      className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
-                      style={isLastUserMessage ? { scrollMarginTop: '16px' } : undefined}
-                    >
+                  <div className="flex items-start gap-2">
+                    {/* 選取框 - 僅在選取模式時顯示 */}
+                    {isSelectMode && (
+                      <button
+                        onClick={() => toggleMessageSelect(index)}
+                        className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center mt-3 transition-all ${
+                          isSelected 
+                            ? 'bg-blue-500 border-blue-500' 
+                            : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                        }`}
+                        aria-label={isSelected ? '取消選取' : '選取此訊息'}
+                      >
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    
+                    <div className="relative">
+                      <div 
+                        ref={isLastUserMessage ? lastUserMessageRef : null}
+                        onTouchStart={() => !isSelectMode && handleLongPressStart(index)}
+                        onTouchEnd={handleLongPressEnd}
+                        onTouchMove={handleLongPressEnd}
+                        onClick={() => isSelectMode && toggleMessageSelect(index)}
+                        className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900' 
+                            : ''
+                        } ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
+                        style={isLastUserMessage ? { scrollMarginTop: '16px' } : undefined}
+                      >
                       {msg.image && (
                         <img 
                           src={msg.image} 
@@ -1234,22 +1393,39 @@ export default function HomePage() {
                       </div>
                     </div>
                     
-                    {/* 複製按鈕 - 泡泡外右下方 */}
-                    <button
-                      onClick={() => handleCopyMessage(msg.text, index)}
-                      className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all border border-gray-200 dark:border-gray-600"
-                      title={copiedMessageIndex === index ? "已複製！" : "複製內容"}
-                    >
-                      {copiedMessageIndex === index ? (
-                        <svg className="w-4 h-4 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </button>
+                    {/* 複製和分享按鈕 - 泡泡外右下方，選取模式時隱藏 */}
+                    {!isSelectMode && (
+                      <div className="absolute -bottom-2 -right-2 flex items-center gap-1">
+                        {/* 分享按鈕（桌面端顯示，在左邊） */}
+                        <button
+                          onClick={() => enterShareMode(index)}
+                          className="hidden lg:block p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg opacity-0 lg:group-hover:opacity-100 transition-all border border-gray-200 dark:border-gray-600"
+                          title="選取訊息以分享"
+                        >
+                          <svg className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                          </svg>
+                        </button>
+                        
+                        {/* 複製按鈕（在右邊） */}
+                        <button
+                          onClick={() => handleCopyMessage(msg.text, index)}
+                          className="p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all border border-gray-200 dark:border-gray-600"
+                          title={copiedMessageIndex === index ? "已複製！" : "複製內容"}
+                        >
+                          {copiedMessageIndex === index ? (
+                            <svg className="w-4 h-4 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   </div>
                 </div>
               );
@@ -1284,11 +1460,57 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-          {error && (
-            <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <div className="flex items-start justify-between gap-2">
+        {/* Selection Toolbar - 選取模式時顯示 */}
+        {isSelectMode && (
+          <div className="px-4 py-3 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between gap-2">
+            <button
+              onClick={selectAllMessages}
+              className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            >
+              全選
+            </button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                已選 {selectedMessages.size} 則
+              </span>
+              <button
+                onClick={clearSelection}
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={shareSelectedMessages}
+                disabled={selectedMessages.size === 0}
+                className="px-4 py-2 text-sm font-medium bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                分享
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Input Area - 選取模式時隱藏 */}
+        {!isSelectMode && (
+          <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+            {error && (
+            <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg relative">
+              {/* 關閉按鈕 */}
+              <button
+                onClick={() => setError(null)}
+                className="absolute top-2 right-2 p-1 hover:bg-red-100 dark:hover:bg-red-800/50 rounded text-red-600 dark:text-red-400 transition-colors"
+                title="關閉"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              
+              <div className="flex items-start justify-between gap-2 pr-6">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1443,6 +1665,7 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+        )}
         </div>
       </div>
 

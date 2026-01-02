@@ -19,7 +19,7 @@ import {
 // Mock idb module
 vi.mock('idb', () => {
   let store: Record<string, Session> = {};
-  let indices: Record<string, Session[]> = { updatedAt: [] };
+  const indices: Record<string, Session[]> = { updatedAt: [] };
 
   return {
     openDB: vi.fn(async (_dbName, _version, { upgrade }) => {

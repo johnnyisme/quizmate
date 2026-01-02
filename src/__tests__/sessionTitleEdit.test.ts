@@ -15,7 +15,7 @@ import {
 // Mock idb module - 與 db.test.ts 相同的 mock 策略
 vi.mock('idb', () => {
   let store: Record<string, Session> = {};
-  let indices: Record<string, Session[]> = { updatedAt: [] };
+  const indices: Record<string, Session[]> = { updatedAt: [] };
 
   return {
     openDB: vi.fn(async (_dbName, _version, { upgrade }) => {
@@ -274,8 +274,8 @@ describe('Session Title Edit', () => {
     });
 
     it('should not trigger cancel when not in editing mode', () => {
-      let editingSessionId: string | null = null;
-      let editingTitle = '';
+      const editingSessionId: string | null = null;
+      const editingTitle = '';
       
       // 當沒有在編輯時，點擊事件不應該被監聽
       const shouldListenForClicks = editingSessionId !== null;

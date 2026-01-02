@@ -141,6 +141,51 @@ src/lib/
   - **Visual feedback**: Icon changes to green checkmark for 2 seconds
   - **State**: `copiedMessageIndex` tracks which message was copied
   - **Error handling**: Displays friendly error if clipboard access fails
+- **Message Share Feature**: Multi-message selection and sharing
+  - **Mobile - Long-press Gesture**: 500ms touch to enter selection mode (touch events only)
+    - Timer stored in `longPressTimer` ref
+    - `onTouchStart` starts timer, `onTouchEnd`/`onTouchMove` cancels
+    - First selected message auto-added when entering mode
+    - No mouse events (onMouseDown/Up/Leave removed)
+  - **Desktop - Share Button**: Click to enter selection mode
+    - Position: Left of copy button in `flex gap-1` container
+    - Visibility: `hidden lg:block opacity-0 lg:group-hover:opacity-100`
+    - Action: `enterShareMode(index)` - enters selection mode with message pre-selected
+    - Icon: Share/connect nodes SVG
+  - **Selection Mode UI**:
+    - Checkboxes appear left of each message (6x6 rounded border-2)
+    - Selected messages: blue checkmark + ring-2 ring-blue-500 highlight
+    - Copy and share buttons hidden during selection mode
+    - Click message bubble to toggle selection
+  - **Bottom Toolbar** (shown when `isSelectMode === true`):
+    - **全選** button: Selects all messages in conversation
+    - **取消** button: Exits selection mode, clears selection
+    - **分享(N)** button: Shares N selected messages
+      - Disabled when `selectedMessages.size === 0`
+      - Shows count badge
+      - Share icon (connect nodes)
+  - **Share Format**: Markdown with emoji labels
+    ```
+    與 QuizMate AI 老師的討論
+    ──────────────────────────────
+    👤 用戶：[question]
+    🤖 AI：[answer]
+    ```
+  - **Web Share API Integration**:
+    - Primary: `navigator.share({ title, text })` - native share sheet
+    - Fallback: `navigator.clipboard.writeText()` + alert
+    - Supports: LINE, Messenger, WhatsApp, Mail, Notes, etc.
+    - Error handling: AbortError (user cancel) silently ignored
+  - **State Management**:
+    - `isSelectMode: boolean` - toggles selection UI
+    - `selectedMessages: Set<number>` - tracks selected indices
+    - Functions: `toggleMessageSelect`, `selectAllMessages`, `clearSelection`, `shareSelectedMessages`, `formatSelectedMessages`, `enterShareMode`
+- **Error Message Close Button**:
+  - **Position**: `absolute top-2 right-2` in relative error container
+  - **Styling**: Red color scheme, hover effect, X icon
+  - **Action**: `onClick={() => setError(null)}` - dismisses error
+  - **Content Padding**: `pr-6` to avoid overlap with close button
+  - **Accessibility**: Clear visual feedback, sufficient contrast, descriptive title
 
 ### Camera Feature Tests
 - **Device Detection**: iOS, Android, desktop User Agent testing
@@ -181,7 +226,7 @@ src/lib/
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 634 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), utilities)
+- **Vitest**: Unit testing framework with 816 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, scroll buttons, camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents

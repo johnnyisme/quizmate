@@ -12,6 +12,7 @@
 - **IndexedDB 對話紀錄**：自動儲存對話到瀏覽器本機，可隨時切換歷史對話（最多 10 個）
 - **對話狀態持久化**：頁面重新載入後自動恢復上次的對話
 - **訊息複製功能**：每個問題或回答都可一鍵複製，方便保存或分享內容
+- **訊息分享功能**：長按訊息進入選取模式，可選擇多則訊息分享到 LINE、Messenger、WhatsApp 等 App
 - **Dark Mode 深色模式**：支援淺色/深色主題切換，自動記憶偏好設定
 - **多模型選擇**：Gemini 3 Flash、Gemini 2.5 Flash、Gemini 2.5 Pro
 - **推理深度控制**：Gemini 3 Flash 支援快速/深度兩種推理模式
@@ -75,6 +76,18 @@ npm run dev
      - 移動端：按鈕始終顯示，方便觸控操作
    - **時間顯示**：顯示完整更新時間（精確到秒，24 小時制）
 8) **Dark Mode**：點擊右上角設定圖示 → Settings → 外觀主題 tab 切換淺色/深色主題
+9) **分享對話**：
+   - 長按任一訊息（500ms）進入選取模式
+   - 選取一則或多則要分享的訊息（勾選框會出現）
+   - 點擊底部工具列的「分享」按鈕
+   - 系統會自動偵測可用的分享方式：
+     * 支援 Web Share API：開啟原生分享選單（LINE、Messenger、WhatsApp、Mail、Notes 等）
+     * 不支援時：自動複製到剪貼簿，可手動貼上到任何 App
+   - **分享格式**：自動格式化為 Markdown，附上對話標題和 emoji 標記
+   - **快速操作**：
+     * 全選：選取對話中所有訊息
+     * 取消：退出選取模式
+     * 已選 N 則：顯示目前選取數量
 
 ## 常見問題
 - **429 / Too Many Requests**：已內建多 Key 輪替和智慧錯誤提示；點擊展開建議查看解決方案（換 Key、換 agent、等待重置等）
@@ -89,7 +102,7 @@ npm run dev
 npm run dev            # 本地開發
 npm run build          # 生產建置（含單元測試）
 npm run start          # 本地啟動生產版
-npm test               # 執行單元測試（429 tests）
+npm test               # 執行單元測試（816 tests）
 npm run test:watch     # 監視模式執行測試
 npm run test:e2e       # 執行 E2E 測試（Playwright）
 npm run test:e2e:ui    # Playwright UI 模式
@@ -130,7 +143,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **Vitest 1.6.1** (單元測試框架)
 - **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **634 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替與邊界條件、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、滾動按鈕、Session Hover 按鈕、Markdown 渲染 (55 tests)、HTML 安全性 (72 tests)、語法高亮 (78 tests)、工具函數)
+- **780 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替與邊界條件、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、滾動按鈕、Session Hover 按鈕、訊息複製、訊息分享、Markdown 渲染 (55 tests)、HTML 安全性 (72 tests)、語法高亮 (78 tests)、工具函數)
 - **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
 - **單元測試覆蓋率**: ~90%
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)

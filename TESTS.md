@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **835 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **816 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 835 tests
+- **測試總數**: 816 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -69,6 +69,52 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // Desktop: 'lg:opacity-0 lg:group-hover:opacity-100' (hover 顯示)
 // 圖示: 'w-4 h-4' (固定尺寸)
 // 複製顏色: 'text-green-500 dark:text-green-400' (綠色勾勾)
+```
+
+### 2.6. `src/__tests__/desktopShareButton.test.ts` (21 tests)
+測試桌面端分享按鈕功能的完整實現。
+
+**測試分類：**
+- **Enter Share Mode (3 tests)**: 進入選取模式、預選訊息、允許多選
+- **Button Visibility (4 tests)**: 桌面顯示/手機隱藏、hover 顯示、選取模式隱藏、正常模式顯示
+- **Button Position (3 tests)**: 複製按鈕左側、泡泡右下角、flex gap 布局
+- **Button Styling (4 tests)**: 圓形樣式、陰影邊框、padding、transition 動畫
+- **Icon Display (3 tests)**: 分享圖示（連接節點）、一致尺寸、hover 變色
+- **Tooltip (1 test)**: 提示文字「選取訊息以分享」
+- **Mobile vs Desktop (3 tests)**: 移動端 touch 長按、桌面端無 mouse 長按、桌面用分享按鈕
+
+**關鍵測試案例：**
+```typescript
+// 進入模式: enterShareMode(2) → isSelectMode=true, selectedMessages=[2]
+// 可見性: 'hidden lg:block' (僅桌面), 'opacity-0 lg:group-hover:opacity-100' (hover)
+// 位置: 'absolute -bottom-2 -right-2', 按鈕順序 ['share', 'copy']
+// 樣式: 'rounded-full', 'shadow-md hover:shadow-lg', 'p-1.5'
+// 圖示: 分享節點 SVG path, 'w-4 h-4', 'hover:text-gray-800'
+// UX 差異: Mobile=touch events, Desktop=share button (no mouse long-press)
+```
+
+### 2.7. `src/__tests__/errorCloseButton.test.ts` (22 tests)
+測試錯誤訊息關閉按鈕功能。
+
+**測試分類：**
+- **Button Functionality (2 tests)**: 點擊關閉、清除錯誤狀態
+- **Button Position (3 tests)**: 右上角定位、relative 容器、內容避開 padding
+- **Button Styling (5 tests)**: hover 效果、紅色配色、transition、padding、圓角
+- **Icon Display (3 tests)**: X 圖示、一致尺寸、stroke 樣式
+- **Tooltip (1 test)**: 提示文字「關閉」
+- **Error Container (3 tests)**: 錯誤結構完整、錯誤圖示、展開功能不受影響
+- **User Interaction (2 tests)**: 不影響展開狀態、支援所有錯誤類型
+- **Accessibility (3 tests)**: hover 視覺反饋、對比度、螢幕閱讀器
+
+**關鍵測試案例：**
+```typescript
+// 功能: onClick={() => setError(null)}
+// 位置: 'absolute top-2 right-2', 容器 'relative', 內容 'pr-6'
+// 樣式: 'hover:bg-red-100 dark:hover:bg-red-800/50', 'rounded', 'p-1'
+// 顏色: 'text-red-600 dark:text-red-400'
+// 圖示: X icon 'M6 18L18 6M6 6l12 12', 'w-4 h-4'
+// 錯誤類型: 支援 message, suggestion, technicalDetails 三層結構
+// 無障礙: title="關閉", 足夠對比度, hover 反饋
 ```
 
 ### 3. `src/__tests__/inputAutoGrow.test.ts` (21 tests)
