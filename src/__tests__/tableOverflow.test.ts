@@ -7,7 +7,7 @@ describe('Table Overflow Handling', () => {
   describe('Table Wrapper Component', () => {
     it('should wrap table in scrollable container', () => {
       const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3',
+        className: 'overflow-x-auto -mx-3 px-3 my-2',
       };
       
       expect(tableWrapper.className).toContain('overflow-x-auto');
@@ -15,7 +15,7 @@ describe('Table Overflow Handling', () => {
 
     it('should use negative margin to expand scroll area', () => {
       const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3',
+        className: 'overflow-x-auto -mx-3 px-3 my-2',
       };
       
       expect(tableWrapper.className).toContain('-mx-3');
@@ -23,28 +23,44 @@ describe('Table Overflow Handling', () => {
 
     it('should maintain padding for content spacing', () => {
       const tableWrapper = {
-        className: 'overflow-x-auto -mx-3 px-3',
+        className: 'overflow-x-auto -mx-3 px-3 my-2',
       };
       
       expect(tableWrapper.className).toContain('px-3');
     });
+
+    it('should add vertical margin for spacing', () => {
+      const tableWrapper = {
+        className: 'overflow-x-auto -mx-3 px-3 my-2',
+      };
+      
+      expect(tableWrapper.className).toContain('my-2');
+    });
+
+    it('should set table to full width', () => {
+      const table = {
+        className: 'min-w-full',
+      };
+      
+      expect(table.className).toBe('min-w-full');
+    });
   });
 
   describe('Prose Container', () => {
-    it('should have overflow-x-auto as fallback', () => {
-      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto';
+    it('should allow content to shrink with min-w-0', () => {
+      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert min-w-0';
       
-      expect(proseClasses).toContain('overflow-x-auto');
+      expect(proseClasses).toContain('min-w-0');
     });
 
     it('should maintain max-w-none for full width', () => {
-      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto';
+      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert min-w-0';
       
       expect(proseClasses).toContain('max-w-none');
     });
 
     it('should support dark mode', () => {
-      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert overflow-x-auto';
+      const proseClasses = 'prose prose-sm max-w-none dark:prose-invert min-w-0';
       
       expect(proseClasses).toContain('dark:prose-invert');
     });
@@ -118,20 +134,35 @@ describe('Table Overflow Handling', () => {
       expect(result.children.children).toEqual(['thead', 'tbody']);
     });
 
-    it('should pass through table props', () => {
+    it('should pass through table props and add min-w-full', () => {
       const props = {
-        className: 'custom-table',
         id: 'table-1',
       };
       
       const tableComponent = (props: any) => ({
-        wrapper: { className: 'overflow-x-auto -mx-3 px-3' },
-        table: { ...props },
+        wrapper: { className: 'overflow-x-auto -mx-3 px-3 my-2' },
+        table: { className: 'min-w-full', ...props },
       });
       
       const result = tableComponent(props);
-      expect(result.table.className).toBe('custom-table');
+      expect(result.table.className).toBe('min-w-full');
       expect(result.table.id).toBe('table-1');
+    });
+
+    it('should ensure message bubble allows shrinking', () => {
+      const messageBubble = {
+        className: 'max-w-lg lg:max-w-3xl min-w-0 p-3',
+      };
+      
+      expect(messageBubble.className).toContain('min-w-0');
+    });
+
+    it('should ensure relative container allows shrinking', () => {
+      const relativeContainer = {
+        className: 'relative min-w-0',
+      };
+      
+      expect(relativeContainer.className).toContain('min-w-0');
     });
   });
 

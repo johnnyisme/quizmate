@@ -1323,14 +1323,14 @@ export default function HomePage() {
                       </button>
                     )}
                     
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <div 
                         ref={isLastUserMessage ? lastUserMessageRef : null}
                         onTouchStart={() => !isSelectMode && handleLongPressStart(index)}
                         onTouchEnd={handleLongPressEnd}
                         onTouchMove={handleLongPressEnd}
                         onClick={() => isSelectMode && toggleMessageSelect(index)}
-                        className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md cursor-pointer transition-all ${
+                        className={`max-w-lg lg:max-w-3xl min-w-0 p-3 rounded-lg shadow-md cursor-pointer transition-all ${
                           isSelected 
                             ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900' 
                             : ''
@@ -1345,7 +1345,7 @@ export default function HomePage() {
                           onClick={() => setPreviewImage(msg.image!)}
                         />
                       )}
-                      <div className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto">
+                      <div className="prose prose-sm max-w-none dark:prose-invert min-w-0">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath, remarkGfm]}
                           rehypePlugins={[
@@ -1388,8 +1388,8 @@ export default function HomePage() {
                             },
                             table({ node, children, ...props }: any) {
                               return (
-                                <div className="overflow-x-auto -mx-3 px-3">
-                                  <table {...props}>{children}</table>
+                                <div className="overflow-x-auto -mx-3 px-3 my-2">
+                                  <table className="min-w-full" {...props}>{children}</table>
                                 </div>
                               );
                             },
