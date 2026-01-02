@@ -310,6 +310,12 @@ export default function HomePage() {
     if (lastSessionId) {
       setCurrentSessionId(lastSessionId);
     }
+
+    // 恢復側邊欄狀態
+    const storedSidebarState = localStorage.getItem('sidebar-open');
+    if (storedSidebarState === 'true') {
+      setShowSidebar(true);
+    }
   }, []);
 
   // 初始化主題
@@ -417,6 +423,16 @@ export default function HomePage() {
         setImageUrl(session.imageBase64);
         // Note: Cannot fully restore File object, but imageUrl is sufficient for display
       }
+
+      // 恢復滾動位置
+      const savedScrollPos = localStorage.getItem(`scroll-pos-${session.id}`);
+      if (savedScrollPos && chatContainerRef.current) {
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = parseInt(savedScrollPos, 10);
+          }
+        }, 100); // 等待 DOM 渲染完成
+      }
     }
   }, [session]);
 
@@ -472,6 +488,7 @@ export default function HomePage() {
     // Close sidebar on mobile only
     if (window.innerWidth < 1024) {
       setShowSidebar(false);
+      localStorage.setItem('sidebar-open', 'false');
     }
   };
 
@@ -483,6 +500,7 @@ export default function HomePage() {
     // Close sidebar on mobile only
     if (window.innerWidth < 1024) {
       setShowSidebar(false);
+      localStorage.setItem('sidebar-open', 'false');
     }
   };
 
@@ -582,6 +600,22 @@ export default function HomePage() {
       container.removeEventListener('scroll', handleScroll);
     };
   }, [displayConversation]);
+
+  // 在頁面離開時保存滾動位置
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentSessionId && chatContainerRef.current) {
+        const scrollPos = chatContainerRef.current.scrollTop;
+        localStorage.setItem(`scroll-pos-${currentSessionId}`, scrollPos.toString());
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentSessionId]);
 
   // 偵測是否為行動裝置
   const isMobile = () => {
@@ -1100,7 +1134,7 @@ export default function HomePage() {
           <div className={`${showSidebar ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-[70] pointer-events-auto w-72 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col`}>
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
                 <h2 className="font-bold text-gray-800 dark:text-gray-200">對話歷史</h2>
-                <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100" title="收起側邊欄">
+                <button onClick={() => { setShowSidebar(false); localStorage.setItem('sidebar-open', 'false'); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100" title="收起側邊欄">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
@@ -1198,7 +1232,11 @@ export default function HomePage() {
             {/* Left cluster: menu + logo */}
             <div className="flex items-center gap-1 flex-shrink-0 min-w-[48px]">
               <button 
-                onClick={() => setShowSidebar(!showSidebar)} 
+                onClick={() => { 
+                  const newState = !showSidebar;
+                  setShowSidebar(newState);
+                  localStorage.setItem('sidebar-open', newState.toString());
+                }} 
                 className="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
                 title={showSidebar ? "收起側邊欄" : "開啟側邊欄"}
               >
@@ -1747,7 +1785,7 @@ export default function HomePage() {
       )}
 
       {/* Overlay for mobile */}
-      {showSidebar && isThemeReady && <div onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
+      {showSidebar && isThemeReady && <div onClick={() => { setShowSidebar(false); localStorage.setItem('sidebar-open', 'false'); }} className="fixed inset-0 bg-gradient-to-r from-black/40 to-black/20 z-[60] lg:hidden" />}
       
       {/* Camera modal */}
       {showCamera && (

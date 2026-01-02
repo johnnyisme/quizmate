@@ -36,6 +36,16 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - Load-balancing: advances key index on successful requests
   - Tracks failed keys; resets when all keys exhausted (retry-all pattern)
 - **System Prompt**: Injected on first turn only; instructs AI as "patient middle-school teacher" with structured output (answer, concept, steps, formulas) in Traditional Chinese
+- **Sidebar Persistence**: Sidebar open/close state saved to localStorage
+  - Key: `sidebar-open` (string: 'true' or 'false')
+  - Restored on page load
+  - Auto-closes on mobile (<1024px) when switching sessions or starting new chat
+  - Persists across page refreshes
+- **Scroll Position Memory**: Chat scroll position saved per session
+  - Key pattern: `scroll-pos-{sessionId}` (string: scroll offset in pixels)
+  - Saved on `beforeunload` event
+  - Restored when switching back to session (100ms delay for DOM render)
+  - Different positions tracked for each session independently
 
 ## Key Workflows
 
@@ -237,7 +247,7 @@ src/lib/
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 872 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (30 tests - visibility logic with opacity-based hiding), camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (62 tests - horizontal scroll with auto-sizing cells and wordBreak management), utilities)
+- **Vitest**: Unit testing framework with 897 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (30 tests - visibility logic with opacity-based hiding), camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (62 tests - horizontal scroll with auto-sizing cells and wordBreak management), utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents
