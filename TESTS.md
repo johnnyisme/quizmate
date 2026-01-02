@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,033 個測試** (936 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
+本專案包含 **1,074 個測試** (977 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,037 tests (936 unit + 95 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 9.2% (95/1033)
+- **測試總數**: 1,078 tests (977 unit + 95 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 8.8% (95/1074)
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -34,38 +34,40 @@
 11. **`src/components/__tests__/PromptSettings.button.test.tsx`** (23 tests) - Prompt 按鈕邏輯
 12. **`src/lib/__tests__/useAsyncState.test.ts`** (44 tests) - 非同步狀態管理 hook
 
-### UI/UX 交互測試 (370 tests)
+### UI/UX 交互測試 (518 tests)
 13. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
-9. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
-10. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
-11. **`src/__tests__/errorCloseButton.test.ts`** (22 tests) - 錯誤訊息關閉按鈕
-12. **`src/__tests__/inputAutoGrow.test.ts`** (21 tests) - 輸入框自動高度
-13. **`src/__tests__/scrollButtons.test.ts`** (31 tests) - 快速滾動按鈕
-14. **`src/__tests__/smartScrollButtons.test.ts`** (23 tests) - 智慧滾動按鈕可見性
-15. **`src/__tests__/scrollToQuestion.test.ts`** (16 tests) - 滾動到問題位置
-16. **`src/__tests__/sessionTitleEdit.test.ts`** (24 tests) - 對話標題編輯
-17. **`src/__tests__/sessionTimeFormat.test.ts`** (12 tests) - 對話時間格式
-18. **`src/__tests__/sessionPersistence.test.ts`** (21 tests) - Session 持久化
-19. **`src/__tests__/sessionHoverButtons.test.ts`** (22 tests) - Session hover 按鈕
-20. **`src/__tests__/sidebarToggle.test.ts`** (30 tests) - 側邊欄開關
-21. **`src/__tests__/sidebarPersistence.test.ts`** (10 tests) - 側邊欄狀態持久化
-22. **`src/__tests__/scrollPositionMemory.test.ts`** (15 tests) - 滾動位置記憶
-23. **`src/__tests__/cameraFeature.test.ts`** (37 tests) - 攝影機拍照功能
+14. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
+15. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
+16. **`src/__tests__/errorCloseButton.test.ts`** (22 tests) - 錯誤訊息關閉按鈕
+17. **`src/__tests__/inputAutoGrow.test.ts`** (21 tests) - 輸入框自動高度
+18. **`src/__tests__/scrollButtons.test.ts`** (31 tests) - 快速滾動按鈕
+19. **`src/__tests__/smartScrollButtons.test.ts`** (23 tests) - 智慧滾動按鈕可見性
+20. **`src/__tests__/scrollToQuestion.test.ts`** (16 tests) - 滾動到問題位置
+21. **`src/__tests__/scrollAfterResponse.test.ts`** (23 tests) ⭐ NEW - AI 回應後滾動行為
+22. **`src/__tests__/enterKeyBehavior.test.ts`** (125 tests) ⭐ NEW - Enter 鍵換行行為
+23. **`src/__tests__/sessionTitleEdit.test.ts`** (24 tests) - 對話標題編輯
+24. **`src/__tests__/sessionTimeFormat.test.ts`** (12 tests) - 對話時間格式
+25. **`src/__tests__/sessionPersistence.test.ts`** (21 tests) - Session 持久化
+26. **`src/__tests__/sessionHoverButtons.test.ts`** (22 tests) - Session hover 按鈕
+27. **`src/__tests__/sidebarToggle.test.ts`** (30 tests) - 側邊欄開關
+28. **`src/__tests__/sidebarPersistence.test.ts`** (10 tests) - 側邊欄狀態持久化
+29. **`src/__tests__/scrollPositionMemory.test.ts`** (15 tests) - 滾動位置記憶
+30. **`src/__tests__/cameraFeature.test.ts`** (37 tests) - 攝影機拍照功能
 
 ### 資料庫測試 (24 tests)
-24. **`src/__tests__/db.test.ts`** (24 tests) - IndexedDB 對話儲存與 LRU
+31. **`src/__tests__/db.test.ts`** (24 tests) - IndexedDB 對話儲存與 LRU
 
 ### Markdown 渲染測試 (205 tests)
-25. **`src/__tests__/markdownRendering.test.ts`** (55 tests) - Markdown 基礎語法
-26. **`src/__tests__/htmlSanitization.test.ts`** (72 tests) - HTML 安全過濾
-27. **`src/__tests__/syntaxHighlighting.test.ts`** (78 tests) - 程式碼語法高亮
+32. **`src/__tests__/markdownRendering.test.ts`** (55 tests) - Markdown 基礎語法
+33. **`src/__tests__/htmlSanitization.test.ts`** (72 tests) - HTML 安全過濾
+34. **`src/__tests__/syntaxHighlighting.test.ts`** (78 tests) - 程式碼語法高亮
 
 ### Overflow 處理測試 (57 tests)
-28. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動
-29. **`src/__tests__/codeBlockOverflow.test.ts`** (24 tests) - 代碼區塊橫向滾動
+35. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動
+36. **`src/__tests__/codeBlockOverflow.test.ts`** (24 tests) - 代碼區塊橫向滾動
 
 ### 圖片驗證測試 (10 tests) ⭐ NEW
-30. **`src/__tests__/imageSize.test.tsx`** (10 tests) - 圖片大小限制與錯誤處理
+37. **`src/__tests__/imageSize.test.tsx`** (10 tests) - 圖片大小限制與錯誤處理
    - 接受小於 10MB 的圖片
    - 拒絕大於 10MB 的圖片並顯示友善錯誤訊息
    - 顯示實際檔案大小（MB，兩位小數）
@@ -76,18 +78,66 @@
    - 錯誤關閉與重試流程
 
 ### 錯誤處理測試 (25 tests)
-31. **`src/__tests__/errorHandling.test.ts`** (25 tests) - 友善錯誤訊息轉換
+38. **`src/__tests__/errorHandling.test.ts`** (25 tests) - 友善錯誤訊息轉換
 
 ### 工具函數測試 (30 tests)
-32. **`src/__tests__/utils.test.ts`** (15 tests) - 通用工具函數
-33. **`src/__tests__/truncatePromptName.test.ts`** (15 tests) - Prompt 名稱智慧截斷
+39. **`src/__tests__/utils.test.ts`** (15 tests) - 通用工具函數
+40. **`src/__tests__/truncatePromptName.test.ts`** (15 tests) - Prompt 名稱智慧截斷
 
 ### 主題測試 (17 tests)
-34. **`src/__tests__/theme.test.ts`** (17 tests) - Dark Mode 切換
+41. **`src/__tests__/theme.test.ts`** (17 tests) - Dark Mode 切換
 
 ---
 
 ## 📝 重點測試詳解
+
+### ⭐ NEW: AI 回應後滾動行為 (23 tests)
+**文件**: `src/__tests__/scrollAfterResponse.test.ts`
+
+修復 AI 回應完成後畫面跳動問題，確保用戶滾動位置保持穩定。
+
+**測試分類：**
+- **Padding 管理** (2 tests)：載入時加入 80vh padding，完成後移除
+- **Session 切換檢測** (5 tests)：區分真正的 session 切換與同 session 更新
+- **滾動恢復邏輯** (2 tests)：只在 session 切換時恢復位置
+- **邊緣案例** (3 tests)：快速更新、padding 移除、串流更新
+- **AI 回應期間滾動** (2 tests)：允許用戶自然滾動，不強制改變位置
+- **requestAnimationFrame 整合** (1 test)：平滑滾動到問題位置
+
+**關鍵邏輯：**
+```typescript
+// 使用 prevSessionIdRef 檢測真正的 session 切換
+const isSessionSwitch = prevSessionIdRef.current !== session.id;
+
+// 只在切換 session 時恢復滾動位置
+if (isSessionSwitch) {
+  const savedScrollPos = localStorage.getItem(`scroll-pos-${session.id}`);
+  if (savedScrollPos && chatContainerRef.current) {
+    chatContainerRef.current.scrollTop = parseInt(savedScrollPos, 10);
+  }
+}
+```
+
+### ⭐ NEW: Enter 鍵換行行為 (125 tests)
+**文件**: `src/__tests__/enterKeyBehavior.test.ts`
+
+驗證輸入框 Enter 鍵行為改為換行（不再送出訊息），提升多行輸入體驗。
+
+**測試分類：**
+- **Enter 鍵處理** (5 tests)：Enter 不阻止預設行為、創建新行、不觸發送出
+- **Shift+Enter 行為** (2 tests)：與 Enter 相同（都是換行）
+- **Textarea 高度調整** (3 tests)：自動增長、最大高度限制、滾動條
+- **送出行為** (4 tests)：只能透過按鈕送出、保留換行、重置高度
+- **鍵盤行為** (3 tests)：Enter 不關閉鍵盤、保持開啟、明確 blur 才關閉
+- **邊緣案例** (4 tests)：空白 Enter、開頭 Enter、中間 Enter、快速連按
+- **Focus 管理** (2 tests)：送出後不 auto-blur、維持 focus
+- **載入狀態** (2 tests)：載入時允許換行、阻止按鈕送出
+
+**關鍵變更：**
+- 移除 `handleKeyPress` 和 `onKeyPress` handler
+- Enter 鍵執行瀏覽器預設行為（換行）
+- 送出訊息只能透過點擊送出按鈕
+- 移除送出後的 `blur()` 呼叫（鍵盤保持開啟）
 
 ### ⭐ NEW: MessageBubble Ref Forwarding (5 tests)
 **文件**: `src/__tests__/messageBubbleRef.test.tsx`
@@ -190,7 +240,7 @@ const MessageBubble = React.memo(
 
 ### 本地開發
 ```bash
-npm test              # 執行所有 926 個單元測試
+npm test              # 執行所有 1074 個單元測試
 npm run test:watch    # 監視模式（檔案變更自動重跑）
 npm run test -- --coverage  # 查看覆蓋率報告
 ```
@@ -310,9 +360,9 @@ Error: Cannot read properties of undefined
 
 ## 📈 測試品質指標
 
-- **執行時間**: ~2 秒（優化後）
-- **通過率**: 100% (926/926)
-- **覆蓋率**: ~90% ✅  
+- **執行時間**: ~6.5 秒
+- **通過率**: 100% (1074/1074)
+- **覆蓋率**: ~92% ✅  
 - **維護性**: 模組化設計，每個功能獨立測試檔
 
 ---
@@ -325,6 +375,6 @@ Error: Cannot read properties of undefined
 ---
 
 **最後更新**: 2026-01-03  
-**測試總數**: 1,027 tests (926 unit + 95 integration + 2 regression + 4 E2E)  
+**測試總數**: 1,078 tests (977 unit + 95 integration + 2 regression + 4 E2E)  
 **通過率**: 100%  
 **覆蓋率**: ~92% ✅

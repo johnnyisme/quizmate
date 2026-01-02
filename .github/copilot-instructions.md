@@ -54,8 +54,10 @@ This is a **100% client-side application** with no backend server. All Gemini AP
 - **Scroll Position Memory**: Chat scroll position saved per session
   - Key pattern: `scroll-pos-{sessionId}` (string: scroll offset in pixels)
   - Saved on `beforeunload` event
-  - Restored when switching back to session (100ms delay for DOM render)
+  - Restored ONLY when switching between sessions (detected via `prevSessionIdRef`)
+  - NOT restored during same-session updates (e.g., AI streaming responses)
   - Different positions tracked for each session independently
+  - Prevents scroll jumps when AI response completes
 
 ## Key Workflows
 
@@ -123,13 +125,17 @@ npm run start       # Local production server
 ### UI/UX Conventions
 - Responsive design: `max-w-2xl` container, Tailwind v4 with `@tailwindcss/postcss`
 - Loading state: inline `animate-pulse` spinner
-- Keyboard submit: `onKeyPress` detects Enter key (only when not loading)
+- **Input Behavior**: Enter key creates new line (no auto-submit); submit via button click only
 - **Mobile Keyboard UX**: Input Area uses `sticky bottom-0 z-10` to keep input field anchored above mobile keyboard when scrolling chat
+- **Multi-line Input**: Textarea auto-grows up to 3 lines; scrollable beyond that
 - **Scroll Behavior**: 
   - User question scrolls to top of viewport when sending (mimicking Gemini app UX)
   - Implementation: Direct DOM manipulation in `handleSubmit` - sets `paddingBottom: 80vh` when loading starts, removes when complete
   - Smooth scroll triggered via `requestAnimationFrame` in `useEffect`
   - Padding provides scroll space; removed after AI response completes
+  - **Session Switch Detection**: Uses `prevSessionIdRef` to distinguish real session switches from same-session updates
+  - **Scroll Position Preservation**: When AI response completes, removes padding WITHOUT forcing scroll position change (browser handles naturally)
+  - **No Scroll Jumps**: User scroll position maintained during AI streaming and after completion
 - Camera modal: `z-[100]` full-screen with blue circular capture button (16x16)
 
 ### Error Handling
@@ -273,7 +279,7 @@ src/lib/
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 926 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (23 tests - visibility logic with opacity-based hiding), camera feature with platform detection, MessageBubble ref forwarding (5 tests - React component integration), Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (33 tests - horizontal scroll with auto-sizing cells and wordBreak management), code block overflow handling (24 tests - horizontal scroll for long code lines), utilities)
+- **Vitest**: Unit testing framework with 1074 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), scroll after AI response (23 tests - padding management, session switch detection, no scroll jumps), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (23 tests - visibility logic with opacity-based hiding), camera feature with platform detection, MessageBubble ref forwarding (5 tests - React component integration), Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (33 tests - horizontal scroll with auto-sizing cells and wordBreak management), code block overflow handling (24 tests - horizontal scroll for long code lines), Enter key behavior (23 tests - newline instead of submit), utilities)
 - **React Testing Library 16.3.1**: React component testing with DOM rendering validation
 - **TypeScript strict mode**: No `any` types without justification
 - **Vitest Config**: Path alias `@` → `./src` configured in vitest.config.ts for consistent imports

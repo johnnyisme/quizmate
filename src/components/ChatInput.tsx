@@ -52,13 +52,6 @@ export const ChatInput = React.memo<ChatInputProps>(({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
   const handleFocus = () => {
     setInputFocused(true);
     if (textareaRef.current && localPrompt) {
@@ -95,7 +88,6 @@ export const ChatInput = React.memo<ChatInputProps>(({
         name="prompt"
         value={localPrompt}
         onChange={handleChange}
-        onKeyPress={handleKeyPress}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder={hasHistory ? "進行追問..." : "輸入問題或上傳圖片"}

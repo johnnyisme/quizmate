@@ -534,9 +534,15 @@ export default function HomePage() {
   const { session, createNewSession, addMessages, updateTitle } = useSessionStorage(currentSessionId);
   const { sessions: sessionList, loadSessions, removeSession, performCleanup } = useSessionHistory();
 
+  // Track previous session ID to detect real session switches
+  const prevSessionIdRef = useRef<string | null>(null);
+
   // Load session when switching
   useEffect(() => {
     if (session) {
+      const isSessionSwitch = prevSessionIdRef.current !== session.id;
+      prevSessionIdRef.current = session.id;
+
       // Convert DB messages to display format
       const displayMsgs: DisplayMessage[] = session.messages.map((msg) => ({
         role: msg.role,
@@ -575,14 +581,16 @@ export default function HomePage() {
         // Note: Cannot fully restore File object, but imageUrl is sufficient for display
       }
 
-      // 恢復滾動位置
-      const savedScrollPos = localStorage.getItem(`scroll-pos-${session.id}`);
-      if (savedScrollPos && chatContainerRef.current) {
-        setTimeout(() => {
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = parseInt(savedScrollPos, 10);
-          }
-        }, 100); // 等待 DOM 渲染完成
+      // 只在真正切換 session 時恢復滾動位置（不是在同一個 session 更新訊息時）
+      if (isSessionSwitch) {
+        const savedScrollPos = localStorage.getItem(`scroll-pos-${session.id}`);
+        if (savedScrollPos && chatContainerRef.current) {
+          setTimeout(() => {
+            if (chatContainerRef.current) {
+              chatContainerRef.current.scrollTop = parseInt(savedScrollPos, 10);
+            }
+          }, 100); // 等待 DOM 渲染完成
+        }
       }
     }
   }, [session]);
@@ -1274,7 +1282,7 @@ export default function HomePage() {
       modelMessageIndexRef.current = null;
       setIsLoading(false);
       
-      // 移除 padding
+      // 移除 padding（讓瀏覽器自然處理滾動）
       if (chatContainerRef.current) {
         chatContainerRef.current.style.paddingBottom = '0px';
       }
