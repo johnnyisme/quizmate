@@ -4,6 +4,11 @@
 
 ✅ **目標達成**: 將測試覆蓋率從 ~60% 提升至 **~90%**
 
+**最新統計**: 921 個測試 (32 個測試文件)
+- 側邊欄持久化: +10 tests
+- 滾動位置記憶: +15 tests  
+- 代碼區塊 overflow: +24 tests
+
 ## 新增測試文件
 
 ### 1. `src/components/__tests__/ApiKeySetup.test.tsx` (50 tests)

@@ -19,6 +19,15 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - Math formulas: KaTeX integration via rehype-katex plugin
   - Custom code component: auto-detects language from `` ```language `` fence
   - Safe HTML support: rehype-raw + rehype-sanitize allow common HTML tags while filtering dangerous content (script, iframe, etc.)
+  - **Code Block Overflow Handling**: Custom wrapper with horizontal scroll for long code lines
+    - Wrapper: `<div className="overflow-x-auto -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)' }}><SyntaxHighlighter>...</SyntaxHighlighter></div>`
+    - Negative margin (`-mx-3`) extends scroll area to bubble edges
+    - Padding (`px-3`) maintains visual spacing consistency
+    - Vertical margin (`my-2`) adds spacing between code blocks and other content
+    - Max-width: `calc(100vw - 4rem)` prevents overflow on mobile
+    - Custom styles: `margin: 0`, `borderRadius: '0.375rem'`, `fontSize: '0.875rem'`
+    - Handles long single-line code (e.g., `model = genai.GenerativeModel(model_name="...")`) without breaking layout
+    - Works seamlessly on mobile (touch scroll) and desktop (mouse scroll)
   - **Table Overflow Handling**: Custom table component wrapper with horizontal scroll and auto-sizing cells
     - Wrapper: `<div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}><table>...</table></div>`
     - Negative margin (`-mx-3`) extends scroll area to bubble edges
@@ -247,7 +256,7 @@ src/lib/
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 897 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (30 tests - visibility logic with opacity-based hiding), camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (62 tests - horizontal scroll with auto-sizing cells and wordBreak management), utilities)
+- **Vitest**: Unit testing framework with 921 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (23 tests - visibility logic with opacity-based hiding), camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (33 tests - horizontal scroll with auto-sizing cells and wordBreak management), code block overflow handling (24 tests - horizontal scroll for long code lines), utilities)
 - **TypeScript strict mode**: No `any` types without justification
 
 ## Common Tasks for AI Agents

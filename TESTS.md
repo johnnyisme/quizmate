@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **872 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **921 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 872 tests
+- **測試總數**: 921 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -45,7 +45,81 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // Network 錯誤 → 檢查網路連線
 ```
 
-### 2.5. `src/__tests__/copyMessage.test.ts` (78 tests)
+### 2.5. `src/__tests__/codeBlockOverflow.test.ts` (24 tests)
+測試代碼區塊水平滾動和 overflow 處理。
+
+**測試分類：**
+- **Wrapper 結構**: overflow-x-auto, 負 margin, padding, max-width
+- **SyntaxHighlighter 樣式**: margin, borderRadius, fontSize
+- **長代碼行處理**: 單行和多行長代碼
+- **行動裝置響應**: 不同視窗寬度下的 max-width 計算
+- **與表格一致性**: 與 table overflow 使用相同的樣式模式
+- **代碼類型區分**: 區分 inline code 和 code block
+- **語言偵測**: Python, JavaScript, TypeScript 等
+
+**關鍵測試案例：**
+```typescript
+// 長代碼行不破壞版面
+const longLine = 'model = genai.GenerativeModel(model_name="gemini-2.0-pro-exp-02-05")';
+
+// Mobile max-width 計算 (375px viewport)
+const maxWidth = 375 - (4 * 16); // = 311px
+
+// Wrapper classes 一致性
+const codeWrapper = 'overflow-x-auto -mx-3 px-3 my-2';
+const tableWrapper = 'overflow-x-scroll -mx-3 px-3 my-2';
+```
+
+### 2.6. `src/__tests__/sidebarPersistence.test.ts` (10 tests)
+測試側邊欄狀態持久化功能。
+
+**測試分類：**
+- **狀態儲存**: 開啟/關閉側邊欄時儲存到 localStorage
+- **狀態恢復**: 頁面載入時從 localStorage 恢復
+- **移動端自動關閉**: 切換對話或新對話時自動關閉
+- **無效狀態處理**: 處理無效或缺失的儲存值
+
+**關鍵測試案例：**
+```typescript
+// 儲存狀態
+localStorage.setItem('sidebar-open', 'true');
+
+// 恢復狀態
+const shouldShow = localStorage.getItem('sidebar-open') === 'true';
+
+// 移動端關閉
+if (window.innerWidth < 1024) {
+  setShowSidebar(false);
+  localStorage.setItem('sidebar-open', 'false');
+}
+```
+
+### 2.7. `src/__tests__/scrollPositionMemory.test.ts` (15 tests)
+測試對話滾動位置記憶功能。
+
+**測試分類：**
+- **儲存滾動位置**: beforeunload 時儲存
+- **恢復滾動位置**: 切換 session 時恢復
+- **多 session 獨立**: 不同對話維持不同位置
+- **邊界條件**: 無效值、缺失 session ID
+- **事件監聽器管理**: 正確添加/移除 event listener
+
+**關鍵測試案例：**
+```typescript
+// 儲存位置 (每個 session 獨立)
+localStorage.setItem(`scroll-pos-${sessionId}`, scrollTop.toString());
+
+// 恢復位置 (100ms 延遲等待 DOM 渲染)
+setTimeout(() => {
+  chatContainer.scrollTop = parseInt(savedScrollPos, 10);
+}, 100);
+
+// 多 session 測試
+localStorage['scroll-pos-session-1'] = '100';
+localStorage['scroll-pos-session-2'] = '500';
+```
+
+### 2.8. `src/__tests__/copyMessage.test.ts` (78 tests)
 測試訊息複製功能的完整實現。
 
 **測試分類：**
