@@ -77,12 +77,11 @@ describe('Scroll Position Memory', () => {
 
     it('should not save scroll position if no chat container', () => {
       const sessionId = 'test-session-123';
-      const nullContainer = null;
+      const nullContainer = null as HTMLDivElement | null;
 
       const handleBeforeUnload = () => {
         if (sessionId && nullContainer) {
-          const scrollPos = nullContainer.scrollTop;
-          localStorage.setItem(`scroll-pos-${sessionId}`, scrollPos.toString());
+          localStorage.setItem(`scroll-pos-${sessionId}`, nullContainer.scrollTop.toString());
         }
       };
 
