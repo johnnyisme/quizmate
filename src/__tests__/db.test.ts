@@ -288,24 +288,24 @@ describe('Database Operations (db.ts)', () => {
     expect(count).toBe(MAX_SESSIONS);
   });
 
-  it('should verify MAX_SESSIONS equals 100 (increased from 10)', async () => {
+  it('should verify MAX_SESSIONS equals 30 (optimized for browser storage)', async () => {
     // 明確驗證 MAX_SESSIONS 是當前正確的值
-    expect(MAX_SESSIONS).toBe(100);
-    
-    // 驗證可以創建 100 個 session 而不觸發清理
-    for (let i = 0; i < 100; i++) {
+    expect(MAX_SESSIONS).toBe(30);
+
+    // 驗證可以創建 30 個 session 而不觸發清理
+    for (let i = 0; i < 30; i++) {
       await createSession(`verify-${i}`, `Session ${i}`, []);
     }
     
     const count = await getSessionCount();
-    expect(count).toBe(100);
+    expect(count).toBe(30);
     
-    // 第 101 個 session 應觸發 LRU 清理
-    await createSession('verify-100', 'Session 100', []);
+    // 第 31 個 session 應觸發 LRU 清理
+    await createSession('verify-30', 'Session 30', []);
     await pruneOldSessions();
     
     const afterPrune = await getSessionCount();
-    expect(afterPrune).toBe(100); // 應保持在 100 個
+    expect(afterPrune).toBe(30); // 應保持在 30 個
   });
 
   it('should prune oldest sessions when exceeding MAX_SESSIONS', async () => {

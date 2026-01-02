@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,021 個測試** (926 unit + 95 integration + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
+本專案包含 **1,033 個測試** (936 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,025 tests (926 unit + 95 integration + 4 E2E)
-- **整合測試覆蓋率**: 9.3% (95/1021)
+- **測試總數**: 1,037 tests (936 unit + 95 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 9.2% (95/1033)
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -64,15 +64,26 @@
 28. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動
 29. **`src/__tests__/codeBlockOverflow.test.ts`** (24 tests) - 代碼區塊橫向滾動
 
+### 圖片驗證測試 (10 tests) ⭐ NEW
+30. **`src/__tests__/imageSize.test.tsx`** (10 tests) - 圖片大小限制與錯誤處理
+   - 接受小於 10MB 的圖片
+   - 拒絕大於 10MB 的圖片並顯示友善錯誤訊息
+   - 顯示實際檔案大小（MB，兩位小數）
+   - 提供壓縮建議（TinyPNG、Squoosh、調整解析度）
+   - 清空 input 以允許重新選擇同一檔案
+   - 邊界測試（10MB, 10MB+1 byte）
+   - 相機拍照的圖片驗證
+   - 錯誤關閉與重試流程
+
 ### 錯誤處理測試 (25 tests)
-30. **`src/__tests__/errorHandling.test.ts`** (25 tests) - 友善錯誤訊息轉換
+31. **`src/__tests__/errorHandling.test.ts`** (25 tests) - 友善錯誤訊息轉換
 
 ### 工具函數測試 (30 tests)
-31. **`src/__tests__/utils.test.ts`** (15 tests) - 通用工具函數
-32. **`src/__tests__/truncatePromptName.test.ts`** (15 tests) - Prompt 名稱智慧截斷
+32. **`src/__tests__/utils.test.ts`** (15 tests) - 通用工具函數
+33. **`src/__tests__/truncatePromptName.test.ts`** (15 tests) - Prompt 名稱智慧截斷
 
 ### 主題測試 (17 tests)
-33. **`src/__tests__/theme.test.ts`** (17 tests) - Dark Mode 切換
+34. **`src/__tests__/theme.test.ts`** (17 tests) - Dark Mode 切換
 
 ---
 
@@ -313,7 +324,7 @@ Error: Cannot read properties of undefined
 
 ---
 
-**最後更新**: 2026-01-02  
-**測試總數**: 930 tests (926 unit + 4 E2E)  
+**最後更新**: 2026-01-03  
+**測試總數**: 1,027 tests (926 unit + 95 integration + 2 regression + 4 E2E)  
 **通過率**: 100%  
-**覆蓋率**: ~90% ✅
+**覆蓋率**: ~92% ✅

@@ -180,8 +180,8 @@ describe('Scroll Features Integration', () => {
     localStorage.clear();
     
     // Mock scrollTo and scrollIntoView
-    Element.prototype.scrollTo = vi.fn();
-    Element.prototype.scrollIntoView = vi.fn();
+    Element.prototype.scrollTo = vi.fn() as any;
+    Element.prototype.scrollIntoView = vi.fn() as any;
   });
 
   afterEach(() => {
@@ -520,6 +520,144 @@ describe('Scroll Features Integration', () => {
       // Check the correct session ID is used
       expect(localStorage.getItem('scroll-pos-test-session-123')).toBe('123');
       expect(localStorage.getItem('scroll-pos-other-session')).toBeNull();
+    });
+  });
+
+  describe('Bug Fix: Streaming Response Scroll Lock', () => {
+    // 測試修正前的 bug：AI 串流回應時，displayConversation 更新會觸發不必要的滾動
+    // 修正後應該只在 isLoading 狀態改變時滾動一次
+
+    function StreamingScrollDemo() {
+      const [messages, setMessages] = useState<string[]>([]);
+      const [isLoading, setIsLoading] = useState(false);
+      const [scrollCount, setScrollCount] = useState(0); // 使用 state 而不是 ref 來追蹤滾動次數
+      
+      const chatContainerRef = useRef<HTMLDivElement>(null);
+      const lastUserMessageRef = useRef<HTMLDivElement>(null);
+
+      // ✅ 修正後的程式碼：只依賴 isLoading
+      useEffect(() => {
+        const container = chatContainerRef.current;
+        if (!container) return;
+
+        if (isLoading && messages.length > 0) {
+          setScrollCount(prev => prev + 1); // 更新 state 而不是 ref
+          
+          if (lastUserMessageRef.current) {
+            const userMessage = lastUserMessageRef.current;
+            const containerRect = container.getBoundingClientRect();
+            const messageRect = userMessage.getBoundingClientRect();
+            const relativeTop = messageRect.top - containerRect.top;
+            
+            container.scrollTo({
+              top: container.scrollTop + relativeTop - 16,
+              behavior: 'smooth'
+            });
+          }
+        }
+      }, [isLoading]); // 只依賴 isLoading，不依賴 messages
+
+      const simulateStreaming = () => {
+        // 先添加一條用戶訊息（模擬實際情況：用戶提問後才開始 loading）
+        setMessages(['User question']);
+        
+        // 然後設置 loading 狀態，這會觸發滾動（因為 messages.length > 0）
+        setTimeout(() => {
+          setIsLoading(true);
+        }, 0);
+        
+        // 模擬 AI 串流：10 次更新
+        let count = 0;
+        const interval = setInterval(() => {
+          count++;
+          setMessages(prev => [...prev, `Chunk ${count}`]);
+          
+          if (count >= 10) {
+            clearInterval(interval);
+            setIsLoading(false);
+          }
+        }, 50);
+      };
+
+      return (
+        <div>
+          <button onClick={simulateStreaming} data-testid="start-streaming">Start Streaming</button>
+          <div data-testid="scroll-count">{scrollCount}</div>
+          
+          <div 
+            ref={chatContainerRef}
+            data-testid="chat-container"
+            style={{ height: '300px', overflowY: 'scroll' }}
+          >
+            {messages.map((msg, index) => {
+              const isLast = index === messages.length - 1;
+              return (
+                <div 
+                  key={index}
+                  ref={isLast ? lastUserMessageRef : null}
+                  data-testid={`message-${index}`}
+                  style={{ height: '100px', marginBottom: '16px' }}
+                >
+                  {msg}
+                </div>
+              );
+            })}
+            {isLoading && <div data-testid="loading">Loading...</div>}
+          </div>
+        </div>
+      );
+    }
+
+    it('should only scroll once when streaming starts, not on every message update', async () => {
+      render(<StreamingScrollDemo />);
+      
+      const startBtn = screen.getByTestId('start-streaming');
+      const scrollCount = screen.getByTestId('scroll-count');
+      
+      // 初始狀態：沒有滾動
+      expect(scrollCount.textContent).toBe('0');
+      
+      // 開始串流
+      fireEvent.click(startBtn);
+      
+      // 等待至少 3 次訊息更新 (3 * 50ms = 150ms)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // 斷言：即使已經有多次 messages 更新，滾動應該只被調用 1 次
+      // （因為只依賴 isLoading，不依賴 messages）
+      expect(scrollCount.textContent).toBe('1');
+      
+      // 等待串流完成 (10 次更新 * 50ms = 500ms)
+      await waitFor(() => {
+        expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
+      }, { timeout: 1000 });
+      
+      // 最終確認：整個串流過程中只滾動了 1 次
+      expect(scrollCount.textContent).toBe('1');
+    });
+
+    it('should not trigger additional scrolls during streaming', async () => {
+      render(<StreamingScrollDemo />);
+      
+      const startBtn = screen.getByTestId('start-streaming');
+      const scrollCount = screen.getByTestId('scroll-count');
+      
+      // 開始串流
+      fireEvent.click(startBtn);
+      
+      // 等待第一次滾動完成（isLoading 變為 true）
+      await waitFor(() => {
+        expect(scrollCount.textContent).toBe('1');
+      }, { timeout: 300 });
+      
+      // 記錄此時的滾動次數
+      const scrollCountAfterFirstScroll = scrollCount.textContent;
+      
+      // 等待更多訊息更新（至少 5 次 = 250ms）
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 斷言：滾動次數應該保持不變（messages 更新不應該觸發滾動）
+      expect(scrollCount.textContent).toBe(scrollCountAfterFirstScroll);
     });
   });
 });

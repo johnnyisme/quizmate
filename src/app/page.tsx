@@ -9,12 +9,17 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import "katex/dist/katex.min.css";
 import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
 import type { Message as DBMessage } from "@/lib/db";
+import dynamic from 'next/dynamic';
 import ApiKeySetup from "@/components/ApiKeySetup";
-import Settings from "@/components/Settings";
 import PromptSettings, { DEFAULT_PROMPT, type CustomPrompt } from "@/components/PromptSettings";
+
+// Lazy load Settings modal (code splitting)
+const Settings = dynamic(() => import("@/components/Settings"), {
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-gray-600 dark:text-gray-400">載入設定中...</div></div>,
+  ssr: false,
+});
 import MessageBubble from "@/components/MessageBubble";
 import { ChatInput } from "@/components/ChatInput";
 import SessionList from "@/components/SessionList";
@@ -327,6 +332,7 @@ export default function HomePage() {
 
   // Gemini App-like 滾動效果：使用 requestAnimationFrame 確保滾動平滑
   // Padding 已在 handleSubmit 中直接設定
+  // 只在開始 loading 時執行一次，避免串流更新時重複滾動
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
@@ -349,7 +355,7 @@ export default function HomePage() {
       
       return () => cancelAnimationFrame(rafId);
     }
-  }, [isLoading, displayConversation]);
+  }, [isLoading]); // 移除 displayConversation 依賴，只在 loading 狀態改變時執行
 
   // 根據語言自適應截斷 prompt 名稱
   const truncatePromptName = (name: string) => {
@@ -456,7 +462,7 @@ export default function HomePage() {
     }
   }, []);
 
-  // 初始化主題
+  // 初始化主題 + 動態載入 KaTeX CSS
   useEffect(() => {
     const stored = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -465,6 +471,17 @@ export default function HomePage() {
     setIsDark(shouldBeDark);
     document.documentElement.classList.toggle('dark', shouldBeDark);
     document.documentElement.classList.toggle('light', !shouldBeDark);
+    
+    // 動態載入 KaTeX CSS (只在需要時載入)
+    if (typeof window !== 'undefined' && !document.getElementById('katex-css')) {
+      const link = document.createElement('link');
+      link.id = 'katex-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css';
+      link.integrity = 'sha384-mXD7x5S50Ko38scHSnD4egvoExgMPbrseZorkbE49evAfv9nNcbrXJ8LLNsDgh9d';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    }
     
     // 立即顯示內容，讓灰色加載畫面能正常顯示
     setIsThemeReady(true);
@@ -599,6 +616,20 @@ export default function HomePage() {
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // 檢查圖片大小限制 (10MB)
+      const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_IMAGE_SIZE) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        setError({
+          message: "圖片檔案太大",
+          suggestion: `目前圖片大小：${fileSizeMB} MB\n\n建議：\n1. 壓縮圖片後再上傳（建議 < 10MB）\n2. 使用線上工具壓縮：TinyPNG、Squoosh 等\n3. 調整圖片解析度（手機可選擇「中」或「低」畫質拍照）\n4. 截圖時選擇較小的區域\n\n💡 10MB 限制是為了保護瀏覽器儲存空間，避免影響效能。`
+        });
+        // 清空 input，允許重新選擇同一個檔案
+        e.target.value = '';
+        return;
+      }
+      
       setImage(file);
       setImageUrl(URL.createObjectURL(file));
       // 重置對話並開始新 session
@@ -1156,7 +1187,10 @@ export default function HomePage() {
           break;
         } catch (err: any) {
           lastError = err;
-          console.error(`API key ${keyIndex} failed:`, err.message);
+          // 只在開發環境輸出詳細錯誤（避免 production console 噪音）
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`API key ${keyIndex} failed:`, err.message);
+          }
           // 繼續嘗試下一個 key
           continue;
         }

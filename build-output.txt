@@ -1,0 +1,77 @@
+
+> quizmate2@0.1.0 build
+> npm run test && next build
+
+
+> quizmate2@0.1.0 test
+> vitest run
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v1.6.1 /Users/al02405465/Development/AI-workshop/quizmate
+
+ ✓ src/__tests__/errorHandling.test.ts  (25 tests) 4ms
+ ✓ src/__tests__/shareMessages.test.ts  (31 tests) 5ms
+ ✓ src/__tests__/markdownRendering.test.ts  (55 tests) 5ms
+ ✓ src/__tests__/page.test.ts  (42 tests) 8ms
+ ✓ src/__tests__/syntaxHighlighting.test.ts  (78 tests) 6ms
+ ✓ src/__tests__/htmlSanitization.test.ts  (72 tests) 14ms
+ ✓ src/__tests__/errorHandling.integration.test.tsx  (19 tests) 82ms
+ ✓ src/__tests__/sessionUI.integration.test.tsx  (22 tests) 136ms
+ ✓ src/__tests__/db.test.ts  (24 tests) 362ms
+ ✓ src/lib/__tests__/useAsyncState.test.ts  (44 tests) 7ms
+ ✓ src/__tests__/sessionTitleEdit.test.ts  (24 tests) 19ms
+ ✓ src/__tests__/cameraFeature.test.ts  (37 tests) 8ms
+ ✓ src/components/__tests__/Settings.test.tsx  (41 tests) 7ms
+ ✓ src/__tests__/sidebarToggle.test.ts  (30 tests) 5ms
+ ✓ src/__tests__/inputAndUI.integration.test.tsx  (14 tests) 54ms
+ ✓ src/__tests__/scrollButtons.test.ts  (31 tests) 6ms
+ ✓ src/__tests__/scrollPositionMemory.test.ts  (15 tests) 113ms
+ ✓ src/__tests__/scrollFeatures.integration.test.tsx  (17 tests) 1378ms
+ ✓ src/__tests__/sessionHoverButtons.test.ts  (22 tests) 3ms
+ ✓ src/__tests__/tableOverflow.test.ts  (33 tests) 6ms
+ ✓ src/components/__tests__/ApiKeySetup.test.tsx  (33 tests) 8ms
+ ✓ src/__tests__/smartScrollButtons.test.ts  (23 tests) 3ms
+ ✓ src/__tests__/sessionTimeFormat.test.ts  (12 tests) 4ms
+ ✓ src/components/__tests__/PromptSettings.button.test.tsx  (17 tests) 4ms
+ ✓ src/__tests__/scrollToQuestion.test.ts  (16 tests) 210ms
+ ✓ src/components/__tests__/PromptSettings.test.tsx  (16 tests) 5ms
+ ✓ src/__tests__/messageInteraction.integration.test.tsx  (23 tests) 2139ms
+ ✓ src/__tests__/utils.test.ts  (15 tests) 4ms
+ ✓ src/__tests__/sessionPersistence.test.ts  (21 tests) 5ms
+ ✓ src/__tests__/inputAutoGrow.test.ts  (21 tests) 5ms
+ ✓ src/__tests__/errorCloseButton.test.ts  (22 tests) 5ms
+ ✓ src/__tests__/theme.test.ts  (17 tests) 9ms
+ ✓ src/__tests__/codeBlockOverflow.test.ts  (24 tests) 3ms
+ ✓ src/__tests__/desktopShareButton.test.ts  (21 tests) 4ms
+ ✓ src/__tests__/sidebarPersistence.test.ts  (10 tests) 4ms
+ ✓ src/__tests__/truncatePromptName.test.ts  (15 tests) 2ms
+ ✓ src/__tests__/copyMessage.test.ts  (34 tests) 2006ms
+ ✓ src/__tests__/messageBubbleRef.test.tsx  (5 tests) 39ms
+
+ Test Files  38 passed (38)
+      Tests  1021 passed (1021)
+   Start at  23:33:39
+   Duration  4.62s (transform 1.28s, setup 2.65s, collect 3.09s, tests 6.69s, environment 21.21s, prepare 2.95s)
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1934.7ms
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/4) ...
+  Generating static pages using 11 workers (1/4) 
+  Generating static pages using 11 workers (2/4) 
+  Generating static pages using 11 workers (3/4) 
+✓ Generating static pages using 11 workers (4/4) in 575.5ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+

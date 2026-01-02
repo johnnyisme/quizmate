@@ -145,10 +145,11 @@ export async function getSessionCount(): Promise<number> {
 }
 
 // ============================================
-// LRU Cleanup (Keep max 100 sessions)
+// LRU Cleanup (Keep max 30 sessions)
 // ============================================
 
-export const MAX_SESSIONS = 100;
+export const MAX_SESSIONS = 30;
+export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 /**
  * Prune old sessions if count exceeds MAX_SESSIONS

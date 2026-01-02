@@ -166,7 +166,8 @@ src/lib/
 
 ### IndexedDB Session Storage
 - **Database**: `quizmate-db` with `sessions` object store
-- **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 10 (MAX_SESSIONS)
+- **LRU Cleanup**: Auto-prunes oldest sessions when count exceeds 30 (MAX_SESSIONS)
+- **Image Size Limit**: 10MB max per image (MAX_IMAGE_SIZE)
 - **Schema**: Each session includes `id`, `title`, `createdAt`, `updatedAt`, `messages[]`, `imageBase64` (optional)
 - **Operations**: createSession, getSession, appendMessages, updateSessionTitle, listSessions, deleteSession, pruneOldSessions
 - **Session Persistence**: Current session ID stored in localStorage (`current-session-id` key)
