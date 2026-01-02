@@ -29,6 +29,50 @@ type ModelType = "gemini-3-flash-preview" | "gemini-2.5-flash" | "gemini-2.5-pro
 
 type ThinkingMode = "fast" | "thinking";
 
+// Grouped state types for performance optimization
+type UIState = {
+  showSettings: boolean;
+  showSidebar: boolean;
+  showCamera: boolean;
+  previewImage: string | null;
+  isSelectMode: boolean;
+  copiedMessageIndex: number | null;
+  showScrollToTop: boolean;
+  showScrollToBottom: boolean;
+  showErrorSuggestion: boolean;
+  showTechnicalDetails: boolean;
+};
+
+type SettingsState = {
+  apiKeys: string[];
+  currentKeyIndex: number;
+  selectedModel: ModelType;
+  thinkingMode: ThinkingMode;
+  prompts: CustomPrompt[];
+  selectedPromptId: string;
+  isDark: boolean;
+};
+
+type ChatState = {
+  displayConversation: DisplayMessage[];
+  apiHistory: Content[];
+  currentPrompt: string;
+  isLoading: boolean;
+  error: { message: string; suggestion?: string; technicalDetails?: string } | null;
+};
+
+type ImageState = {
+  image: File | null;
+  imageUrl: string;
+  cameraStream: MediaStream | null;
+};
+
+type SelectionState = {
+  selectedMessages: Set<number>;
+  editingSessionId: string | null;
+  editingTitle: string;
+};
+
 // 將技術性錯誤轉換為使用者友善的訊息
 const getFriendlyErrorMessage = (error: any): { message: string; suggestion: string } => {
   const errorStr = error?.message || JSON.stringify(error) || '';
@@ -105,34 +149,53 @@ const getFriendlyErrorMessage = (error: any): { message: string; suggestion: str
 };
 
 export default function HomePage() {
-  const [apiKeys, setApiKeys] = useState<string[]>([]);
-  const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
-  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-2.5-flash");
-  const [thinkingMode, setThinkingMode] = useState<ThinkingMode>("fast");
-  const [showSettings, setShowSettings] = useState(false);
-  const [prompts, setPrompts] = useState<CustomPrompt[]>([DEFAULT_PROMPT]);
-  const [selectedPromptId, setSelectedPromptId] = useState<string>("default");
-  const [image, setImage] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>("");
-  const [displayConversation, setDisplayConversation] = useState<DisplayMessage[]>([]);
-  const [apiHistory, setApiHistory] = useState<Content[]>([]); // 用於傳送給 API
-  const [currentPrompt, setCurrentPrompt] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<{ message: string; suggestion?: string; technicalDetails?: string } | null>(null);
-  const [showErrorSuggestion, setShowErrorSuggestion] = useState<boolean>(false);
-  const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
+  // Grouped states for better performance
+  const [uiState, setUIState] = useState<UIState>({
+    showSettings: false,
+    showSidebar: false,
+    showCamera: false,
+    previewImage: null,
+    isSelectMode: false,
+    copiedMessageIndex: null,
+    showScrollToTop: false,
+    showScrollToBottom: false,
+    showErrorSuggestion: false,
+    showTechnicalDetails: false,
+  });
+
+  const [settingsState, setSettingsState] = useState<SettingsState>({
+    apiKeys: [],
+    currentKeyIndex: 0,
+    selectedModel: "gemini-2.5-flash",
+    thinkingMode: "fast",
+    prompts: [DEFAULT_PROMPT],
+    selectedPromptId: "default",
+    isDark: false,
+  });
+
+  const [chatState, setChatState] = useState<ChatState>({
+    displayConversation: [],
+    apiHistory: [],
+    currentPrompt: "",
+    isLoading: false,
+    error: null,
+  });
+
+  const [imageState, setImageState] = useState<ImageState>({
+    image: null,
+    imageUrl: "",
+    cameraStream: null,
+  });
+
+  const [selectionState, setSelectionState] = useState<SelectionState>({
+    selectedMessages: new Set(),
+    editingSessionId: null,
+    editingTitle: "",
+  });
+
+  // Keep separate for specific reasons
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [showSidebar, setShowSidebar] = useState<boolean>(false);
-  const [isDark, setIsDark] = useState<boolean>(false);
   const [isThemeReady, setIsThemeReady] = useState<boolean>(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [showCamera, setShowCamera] = useState<boolean>(false);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
-  const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
-  const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
-  const [showScrollToTop, setShowScrollToTop] = useState<boolean>(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -146,6 +209,99 @@ export default function HomePage() {
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const shouldScrollToQuestion = useRef<boolean>(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper functions for state updates (reduces boilerplate)
+  const updateUIState = useCallback((updates: Partial<UIState>) => {
+    setUIState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateSettingsState = useCallback((updates: Partial<SettingsState>) => {
+    setSettingsState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateChatState = useCallback((updates: Partial<ChatState>) => {
+    setChatState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateImageState = useCallback((updates: Partial<ImageState>) => {
+    setImageState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateSelectionState = useCallback((updates: Partial<SelectionState>) => {
+    setSelectionState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // Destructure for easier access
+  const {
+    showSettings, showSidebar, showCamera, previewImage,
+    isSelectMode, copiedMessageIndex, showScrollToTop, showScrollToBottom,
+    showErrorSuggestion, showTechnicalDetails
+  } = uiState;
+
+  const {
+    apiKeys, currentKeyIndex, selectedModel, thinkingMode,
+    prompts, selectedPromptId, isDark
+  } = settingsState;
+
+  const {
+    displayConversation, apiHistory, currentPrompt, isLoading, error
+  } = chatState;
+
+  const { image, imageUrl, cameraStream } = imageState;
+
+  const { selectedMessages, editingSessionId, editingTitle } = selectionState;
+
+  // Backward-compatible setters (to minimize refactoring)
+  const setApiKeys = useCallback((keys: string[]) => updateSettingsState({ apiKeys: keys }), []);
+  const setCurrentKeyIndex = useCallback((index: number) => updateSettingsState({ currentKeyIndex: index }), []);
+  const setSelectedModel = useCallback((model: ModelType) => updateSettingsState({ selectedModel: model }), []);
+  const setThinkingMode = useCallback((mode: ThinkingMode) => updateSettingsState({ thinkingMode: mode }), []);
+  const setPrompts = useCallback((p: CustomPrompt[]) => updateSettingsState({ prompts: p }), []);
+  const setSelectedPromptId = useCallback((id: string) => updateSettingsState({ selectedPromptId: id }), []);
+  const setIsDark = useCallback((dark: boolean) => updateSettingsState({ isDark: dark }), []);
+  
+  const setShowSettings = useCallback((show: boolean) => updateUIState({ showSettings: show }), []);
+  const setShowSidebar = useCallback((show: boolean) => updateUIState({ showSidebar: show }), []);
+  const setShowCamera = useCallback((show: boolean) => updateUIState({ showCamera: show }), []);
+  const setPreviewImage = useCallback((img: string | null) => updateUIState({ previewImage: img }), []);
+  const setIsSelectMode = useCallback((mode: boolean) => updateUIState({ isSelectMode: mode }), []);
+  const setCopiedMessageIndex = useCallback((idx: number | null) => updateUIState({ copiedMessageIndex: idx }), []);
+  const setShowScrollToTop = useCallback((show: boolean) => updateUIState({ showScrollToTop: show }), []);
+  const setShowScrollToBottom = useCallback((show: boolean) => updateUIState({ showScrollToBottom: show }), []);
+  const setShowErrorSuggestion = useCallback((show: boolean) => updateUIState({ showErrorSuggestion: show }), []);
+  const setShowTechnicalDetails = useCallback((show: boolean) => updateUIState({ showTechnicalDetails: show }), []);
+  
+  const setDisplayConversation = useCallback((conv: DisplayMessage[] | ((prev: DisplayMessage[]) => DisplayMessage[])) => {
+    if (typeof conv === 'function') {
+      setChatState(prev => ({ ...prev, displayConversation: conv(prev.displayConversation) }));
+    } else {
+      updateChatState({ displayConversation: conv });
+    }
+  }, []);
+  const setApiHistory = useCallback((hist: Content[] | ((prev: Content[]) => Content[])) => {
+    if (typeof hist === 'function') {
+      setChatState(prev => ({ ...prev, apiHistory: hist(prev.apiHistory) }));
+    } else {
+      updateChatState({ apiHistory: hist });
+    }
+  }, []);
+  const setCurrentPrompt = useCallback((prompt: string) => updateChatState({ currentPrompt: prompt }), []);
+  const setIsLoading = useCallback((loading: boolean) => updateChatState({ isLoading: loading }), []);
+  const setError = useCallback((err: { message: string; suggestion?: string; technicalDetails?: string } | null) => updateChatState({ error: err }), []);
+  
+  const setImage = useCallback((img: File | null) => updateImageState({ image: img }), []);
+  const setImageUrl = useCallback((url: string) => updateImageState({ imageUrl: url }), []);
+  const setCameraStream = useCallback((stream: MediaStream | null) => updateImageState({ cameraStream: stream }), []);
+  
+  const setSelectedMessages = useCallback((msgs: Set<number> | ((prev: Set<number>) => Set<number>)) => {
+    if (typeof msgs === 'function') {
+      setSelectionState(prev => ({ ...prev, selectedMessages: msgs(prev.selectedMessages) }));
+    } else {
+      updateSelectionState({ selectedMessages: msgs });
+    }
+  }, []);
+  const setEditingSessionId = useCallback((id: string | null) => updateSelectionState({ editingSessionId: id }), []);
+  const setEditingTitle = useCallback((title: string) => updateSelectionState({ editingTitle: title }), []);
 
   // 當新問題加入時自動滾動
   useEffect(() => {
@@ -359,10 +515,6 @@ export default function HomePage() {
   // Session management hooks
   const { session, createNewSession, addMessages, updateTitle } = useSessionStorage(currentSessionId);
   const { sessions: sessionList, loadSessions, removeSession, performCleanup } = useSessionHistory();
-
-  // Session title editing
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState<string>("");
 
   // Load session when switching
   useEffect(() => {
