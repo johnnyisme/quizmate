@@ -123,6 +123,7 @@ npm run start       # Local production server
 - Responsive design: `max-w-2xl` container, Tailwind v4 with `@tailwindcss/postcss`
 - Loading state: inline `animate-pulse` spinner
 - Keyboard submit: `onKeyPress` detects Enter key (only when not loading)
+- **Mobile Keyboard UX**: Input Area uses `sticky bottom-0 z-10` to keep input field anchored above mobile keyboard when scrolling chat
 - **Scroll Behavior**: 
   - User question scrolls to top of viewport when sending (mimicking Gemini app UX)
   - Implementation: Direct DOM manipulation in `handleSubmit` - sets `paddingBottom: 80vh` when loading starts, removes when complete

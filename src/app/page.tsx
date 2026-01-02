@@ -1591,7 +1591,7 @@ export default function HomePage() {
 
         {/* Input Area - 選取模式時隱藏 */}
         {!isSelectMode && (
-          <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+          <div className="sticky bottom-0 p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 z-10">
             {error && (
             <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg relative">
               {/* 關閉按鈕 */}
