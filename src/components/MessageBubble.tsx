@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -47,6 +47,77 @@ const MessageBubble = React.memo(
     onImagePreview,
   }, ref) => {
 
+  // Memoize rehype plugins configuration
+  const rehypePlugins = useMemo(() => [
+    rehypeRaw,
+    [rehypeSanitize, {
+      ...defaultSchema,
+      attributes: {
+        ...defaultSchema.attributes,
+        '*': ['className', 'style'],
+        span: ['className', 'style'],
+        div: ['className', 'style'],
+      },
+      tagNames: [
+        ...(defaultSchema.tagNames || []),
+        'div', 'span', 'br', 'hr',
+      ],
+    }],
+    rehypeKatex,
+  ], []);
+
+  // Memoize remark plugins configuration
+  const remarkPlugins = useMemo(() => [remarkMath, remarkGfm], []);
+
+  // Memoize ReactMarkdown components
+  const markdownComponents = useMemo(() => ({
+    code({ node, inline, className, children, ...props }: any) {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <div className="overflow-x-auto -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)' }}>
+          <SyntaxHighlighter
+            style={isDark ? oneDark : oneLight}
+            language={match[1]}
+            PreTag="div"
+            customStyle={{
+              margin: 0,
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+            }}
+            {...props}
+          >
+            {String(children).replace(/\n$/, '')}
+          </SyntaxHighlighter>
+        </div>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    },
+    table({ node, children, ...props }: any) {
+      return (
+        <div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}>
+          <table {...props}>{children}</table>
+        </div>
+      );
+    },
+    th({ node, children, ...props }: any) {
+      return (
+        <th {...props} style={{ whiteSpace: 'nowrap', ...props.style }}>
+          {children}
+        </th>
+      );
+    },
+    td({ node, children, ...props }: any) {
+      return (
+        <td {...props} style={{ whiteSpace: 'nowrap', ...props.style }}>
+          {children}
+        </td>
+      );
+    },
+  }), [isDark]);
+
   return (
     <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
       <div className="flex items-start gap-2">
@@ -93,71 +164,9 @@ const MessageBubble = React.memo(
             )}
             <div className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto" style={{ width: '100%', wordBreak: 'break-word' }}>
               <ReactMarkdown
-                remarkPlugins={[remarkMath, remarkGfm]}
-                rehypePlugins={[
-                  rehypeRaw,
-                  [rehypeSanitize, {
-                    ...defaultSchema,
-                    attributes: {
-                      ...defaultSchema.attributes,
-                      '*': ['className', 'style'],
-                      span: ['className', 'style'],
-                      div: ['className', 'style'],
-                    },
-                    tagNames: [
-                      ...(defaultSchema.tagNames || []),
-                      'div', 'span', 'br', 'hr',
-                    ],
-                  }],
-                  rehypeKatex,
-                ]}
-                components={{
-                  code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <div className="overflow-x-auto -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)' }}>
-                        <SyntaxHighlighter
-                          style={isDark ? oneDark : oneLight}
-                          language={match[1]}
-                          PreTag="div"
-                          customStyle={{
-                            margin: 0,
-                            borderRadius: '0.375rem',
-                            fontSize: '0.875rem',
-                          }}
-                          {...props}
-                        >
-                          {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
-                      </div>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                  table({ node, children, ...props }: any) {
-                    return (
-                      <div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}>
-                        <table {...props}>{children}</table>
-                      </div>
-                    );
-                  },
-                  th({ node, children, ...props }: any) {
-                    return (
-                      <th {...props} style={{ whiteSpace: 'nowrap', ...props.style }}>
-                        {children}
-                      </th>
-                    );
-                  },
-                  td({ node, children, ...props }: any) {
-                    return (
-                      <td {...props} style={{ whiteSpace: 'nowrap', ...props.style }}>
-                        {children}
-                      </td>
-                    );
-                  },
-                }}
+                remarkPlugins={remarkPlugins}
+                rehypePlugins={rehypePlugins}
+                components={markdownComponents}
               >
                 {msg.text}
               </ReactMarkdown>
