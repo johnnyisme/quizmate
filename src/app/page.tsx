@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -690,7 +690,7 @@ export default function HomePage() {
   };
 
   // 複製訊息內容
-  const handleCopyMessage = async (text: string, index: number) => {
+  const handleCopyMessage = useCallback(async (text: string, index: number) => {
     try {
       // 優先使用現代 Clipboard API
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -725,25 +725,25 @@ export default function HomePage() {
         suggestion: "請檢查瀏覽器是否允許存取剪貼簿"
       });
     }
-  };
+  }, []);
 
   // 長按進入選取模式
-  const handleLongPressStart = (index: number) => {
+  const handleLongPressStart = useCallback((index: number) => {
     longPressTimer.current = setTimeout(() => {
       setIsSelectMode(true);
       setSelectedMessages(new Set([index]));
     }, 500); // 500ms 長按
-  };
+  }, []);
 
-  const handleLongPressEnd = () => {
+  const handleLongPressEnd = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-  };
+  }, []);
 
   // 切換訊息選取狀態
-  const toggleMessageSelect = (index: number) => {
+  const toggleMessageSelect = useCallback((index: number) => {
     if (!isSelectMode) return;
     
     setSelectedMessages(prev => {
@@ -755,7 +755,7 @@ export default function HomePage() {
       }
       return newSet;
     });
-  };
+  }, [isSelectMode]);
 
   // 全選訊息
   const selectAllMessages = () => {
@@ -785,10 +785,10 @@ export default function HomePage() {
   };
 
   // 進入分享模式（桌面端用）
-  const enterShareMode = (index: number) => {
+  const enterShareMode = useCallback((index: number) => {
     setIsSelectMode(true);
     setSelectedMessages(new Set([index]));
-  };
+  }, []);
 
   // 分享選取的訊息（移動端多選用）
   const shareSelectedMessages = async () => {
