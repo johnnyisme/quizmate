@@ -1372,6 +1372,7 @@ export default function HomePage() {
               return (
                 <MessageBubble
                   key={index}
+                  ref={isLastUserMessage ? lastUserMessageRef : null}
                   msg={msg}
                   index={index}
                   isLastUserMessage={isLastUserMessage}

@@ -157,11 +157,12 @@ src/lib/
 
 ### MessageBubble Component ([src/components/MessageBubble.tsx](../src/components/MessageBubble.tsx))
 - **Purpose**: Isolated, memoized message rendering component for optimal performance
-- **React.memo**: Prevents re-rendering when parent state changes (e.g., typing in input)
+- **React.memo + forwardRef**: Prevents re-rendering when parent state changes (e.g., typing in input) while supporting ref forwarding
 - **Props**: msg, index, isLastUserMessage, isSelectMode, isSelected, copiedMessageIndex, isDark, event handlers
 - **Encapsulates**: All message rendering logic including ReactMarkdown, KaTeX, SyntaxHighlighter, copy/share buttons
 - **Performance Impact**: 80-90% reduction in CPU usage during typing with 20+ messages
-- **Ref Forwarding**: `lastUserMessageRef` for scroll-to-question behavior
+- **Ref Forwarding**: Uses `React.forwardRef` to pass `lastUserMessageRef` for scroll-to-question behavior
+- **Testing**: 5 dedicated tests for ref forwarding validation (messageBubbleRef.test.tsx)
 
 ### IndexedDB Session Storage
 - **Database**: `quizmate-db` with `sessions` object store
@@ -271,8 +272,10 @@ src/lib/
 - **Syntax Highlighting**: react-syntax-highlighter with Prism (oneDark/oneLight themes)
 - **KaTeX ^0.16.27**: Math formula rendering (CSS bundled)
 - **idb ^8.0.3**: Promise-based IndexedDB wrapper
-- **Vitest**: Unit testing framework with 921 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (23 tests - visibility logic with opacity-based hiding), camera feature with platform detection, Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (33 tests - horizontal scroll with auto-sizing cells and wordBreak management), code block overflow handling (24 tests - horizontal scroll for long code lines), utilities)
+- **Vitest**: Unit testing framework with 926 tests (frontend logic, Gemini SDK integration, API key rotation, error handling, DB LRU, theme, session management, sidebar responsive behavior, sidebar persistence (10 tests - save/restore state), scroll position memory (15 tests - save/restore per session), session hover buttons, session title editing with click-outside, session time format display, smart scroll buttons (23 tests - visibility logic with opacity-based hiding), camera feature with platform detection, MessageBubble ref forwarding (5 tests - React component integration), Markdown rendering (55 tests), HTML sanitization (72 tests), syntax highlighting (78 tests), message sharing (31 tests - mobile touch gestures), desktop share button (21 tests - desktop click enter selection mode), error close button (22 tests - dismiss errors), table overflow handling (33 tests - horizontal scroll with auto-sizing cells and wordBreak management), code block overflow handling (24 tests - horizontal scroll for long code lines), utilities)
+- **React Testing Library 16.3.1**: React component testing with DOM rendering validation
 - **TypeScript strict mode**: No `any` types without justification
+- **Vitest Config**: Path alias `@` → `./src` configured in vitest.config.ts for consistent imports
 
 ## Common Tasks for AI Agents
 

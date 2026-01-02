@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -30,22 +30,22 @@ interface MessageBubbleProps {
   onImagePreview: (imageUrl: string) => void;
 }
 
-const MessageBubble = React.memo<MessageBubbleProps>(({
-  msg,
-  index,
-  isLastUserMessage,
-  isSelectMode,
-  isSelected,
-  copiedMessageIndex,
-  isDark,
-  onToggleSelect,
-  onCopyMessage,
-  onEnterShareMode,
-  onLongPressStart,
-  onLongPressEnd,
-  onImagePreview,
-}) => {
-  const lastUserMessageRef = useRef<HTMLDivElement>(null);
+const MessageBubble = React.memo(
+  React.forwardRef<HTMLDivElement, MessageBubbleProps>(({
+    msg,
+    index,
+    isLastUserMessage,
+    isSelectMode,
+    isSelected,
+    copiedMessageIndex,
+    isDark,
+    onToggleSelect,
+    onCopyMessage,
+    onEnterShareMode,
+    onLongPressStart,
+    onLongPressEnd,
+    onImagePreview,
+  }, ref) => {
 
   return (
     <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
@@ -71,7 +71,7 @@ const MessageBubble = React.memo<MessageBubbleProps>(({
         
         <div className="relative">
           <div 
-            ref={isLastUserMessage ? lastUserMessageRef : null}
+            ref={isLastUserMessage ? ref : null}
             onTouchStart={() => !isSelectMode && onLongPressStart(index)}
             onTouchEnd={onLongPressEnd}
             onTouchMove={onLongPressEnd}
@@ -200,7 +200,8 @@ const MessageBubble = React.memo<MessageBubbleProps>(({
       </div>
     </div>
   );
-});
+  })
+);
 
 MessageBubble.displayName = 'MessageBubble';
 
