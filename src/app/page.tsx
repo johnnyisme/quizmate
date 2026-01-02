@@ -127,6 +127,7 @@ export default function HomePage() {
   const [inputFocused, setInputFocused] = useState<boolean>(false);
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -641,6 +642,44 @@ export default function HomePage() {
     }
   };
 
+  // 複製訊息內容
+  const handleCopyMessage = async (text: string, index: number) => {
+    try {
+      // 優先使用現代 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback: 使用傳統 execCommand 方法（支援更多環境）
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+      
+      setCopiedMessageIndex(index);
+      // 2 秒後清除複製狀態
+      setTimeout(() => {
+        setCopiedMessageIndex(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      setError({
+        message: "複製失敗",
+        suggestion: "請檢查瀏覽器是否允許存取剪貼簿"
+      });
+    }
+  };
+
   // 處理表單提交 (傳送訊息) - 直接使用前端 Gemini API + 模型選擇 + key 輪轉
   const handleSubmit = async () => {
     if (apiKeys.length === 0) {
@@ -1132,66 +1171,85 @@ export default function HomePage() {
               const isLastUserMessage = msg.role === 'user' && index === lastUserIndex;
               
               return (
-                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div 
-                    ref={isLastUserMessage ? lastUserMessageRef : null}
-                    className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
-                    style={isLastUserMessage ? { scrollMarginTop: '16px' } : undefined}
-                  >
-                    {msg.image && (
-                      <img 
-                        src={msg.image} 
-                        alt="User upload" 
-                        className="rounded-lg mb-2 max-h-60 cursor-pointer hover:opacity-90 transition-opacity" 
-                        onClick={() => setPreviewImage(msg.image!)}
-                      />
-                    )}
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath, remarkGfm]}
-                        rehypePlugins={[
-                          rehypeRaw,
-                          [rehypeSanitize, {
-                            ...defaultSchema,
-                            attributes: {
-                              ...defaultSchema.attributes,
-                              // 允許所有標籤使用 className
-                              '*': ['className', 'style'],
-                              // 允許 span 使用 style 屬性（用於顏色等）
-                              span: ['className', 'style'],
-                              div: ['className', 'style'],
+                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
+                  <div className="relative">
+                    <div 
+                      ref={isLastUserMessage ? lastUserMessageRef : null}
+                      className={`max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md ${msg.role === 'user' ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
+                      style={isLastUserMessage ? { scrollMarginTop: '16px' } : undefined}
+                    >
+                      {msg.image && (
+                        <img 
+                          src={msg.image} 
+                          alt="User upload" 
+                          className="rounded-lg mb-2 max-h-60 cursor-pointer hover:opacity-90 transition-opacity" 
+                          onClick={() => setPreviewImage(msg.image!)}
+                        />
+                      )}
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkMath, remarkGfm]}
+                          rehypePlugins={[
+                            rehypeRaw,
+                            [rehypeSanitize, {
+                              ...defaultSchema,
+                              attributes: {
+                                ...defaultSchema.attributes,
+                                // 允許所有標籤使用 className
+                                '*': ['className', 'style'],
+                                // 允許 span 使用 style 屬性（用於顏色等）
+                                span: ['className', 'style'],
+                                div: ['className', 'style'],
+                              },
+                              tagNames: [
+                                ...(defaultSchema.tagNames || []),
+                                // 確保允許常用 HTML 標籤
+                                'div', 'span', 'br', 'hr',
+                              ],
+                            }],
+                            rehypeKatex,
+                          ]}
+                          components={{
+                            code({ node, inline, className, children, ...props }: any) {
+                              const match = /language-(\w+)/.exec(className || '');
+                              return !inline && match ? (
+                                <SyntaxHighlighter
+                                  style={isDark ? oneDark : oneLight}
+                                  language={match[1]}
+                                  PreTag="div"
+                                  {...props}
+                                >
+                                  {String(children).replace(/\n$/, '')}
+                                </SyntaxHighlighter>
+                              ) : (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              );
                             },
-                            tagNames: [
-                              ...(defaultSchema.tagNames || []),
-                              // 確保允許常用 HTML 標籤
-                              'div', 'span', 'br', 'hr',
-                            ],
-                          }],
-                          rehypeKatex,
-                        ]}
-                        components={{
-                          code({ node, inline, className, children, ...props }: any) {
-                            const match = /language-(\w+)/.exec(className || '');
-                            return !inline && match ? (
-                              <SyntaxHighlighter
-                                style={isDark ? oneDark : oneLight}
-                                language={match[1]}
-                                PreTag="div"
-                                {...props}
-                              >
-                                {String(children).replace(/\n$/, '')}
-                              </SyntaxHighlighter>
-                            ) : (
-                              <code className={className} {...props}>
-                                {children}
-                              </code>
-                            );
-                          },
-                        }}
-                      >
-                        {msg.text}
-                      </ReactMarkdown>
+                          }}
+                        >
+                          {msg.text}
+                        </ReactMarkdown>
+                      </div>
                     </div>
+                    
+                    {/* 複製按鈕 - 泡泡外右下方 */}
+                    <button
+                      onClick={() => handleCopyMessage(msg.text, index)}
+                      className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all border border-gray-200 dark:border-gray-600"
+                      title={copiedMessageIndex === index ? "已複製！" : "複製內容"}
+                    >
+                      {copiedMessageIndex === index ? (
+                        <svg className="w-4 h-4 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
               );

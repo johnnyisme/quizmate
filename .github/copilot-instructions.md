@@ -128,6 +128,19 @@ src/lib/
   - Cleared when starting new chat
   - Updated when switching sessions or creating new session
   - Enables seamless user experience across browser refreshes
+- **Message Copy Feature**: One-click copy for all messages
+  - **Position**: Outside bubble at bottom-right corner (`absolute -bottom-2 -right-2`)
+  - **Styling**: Circular button (`rounded-full`) with white background + shadow
+  - **Responsive**:
+    - Mobile: Always visible (`opacity-100`)
+    - Desktop: Show on hover (`lg:opacity-0 lg:group-hover:opacity-100`)
+  - **Content**: Icon only, no text (4x4 icon size)
+  - **Copy mechanism**: 
+    - Primary: `navigator.clipboard.writeText()` (modern browsers)
+    - Fallback: `document.execCommand('copy')` (HTTP, old browsers)
+  - **Visual feedback**: Icon changes to green checkmark for 2 seconds
+  - **State**: `copiedMessageIndex` tracks which message was copied
+  - **Error handling**: Displays friendly error if clipboard access fails
 
 ### Camera Feature Tests
 - **Device Detection**: iOS, Android, desktop User Agent testing
