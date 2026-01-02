@@ -1345,7 +1345,7 @@ export default function HomePage() {
                           onClick={() => setPreviewImage(msg.image!)}
                         />
                       )}
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <div className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto">
                         <ReactMarkdown
                           remarkPlugins={[remarkMath, remarkGfm]}
                           rehypePlugins={[
@@ -1384,6 +1384,13 @@ export default function HomePage() {
                                 <code className={className} {...props}>
                                   {children}
                                 </code>
+                              );
+                            },
+                            table({ node, children, ...props }: any) {
+                              return (
+                                <div className="overflow-x-auto -mx-3 px-3">
+                                  <table {...props}>{children}</table>
+                                </div>
                               );
                             },
                           }}

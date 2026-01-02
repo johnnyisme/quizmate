@@ -102,7 +102,7 @@ npm run dev
 npm run dev            # 本地開發
 npm run build          # 生產建置（含單元測試）
 npm run start          # 本地啟動生產版
-npm test               # 執行單元測試（816 tests）
+npm test               # 執行單元測試（839 tests）
 npm run test:watch     # 監視模式執行測試
 npm run test:e2e       # 執行 E2E 測試（Playwright）
 npm run test:e2e:ui    # Playwright UI 模式
@@ -117,7 +117,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件（634 tests, ~90% 覆蓋率：前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、資料庫 LRU、主題切換、對話管理、側邊欄響應式行為、滾動按鈕、Session Hover 按鈕、Markdown 渲染、HTML 安全性、語法高亮、工具函數）
+- `src/__tests__/`：完整單元測試套件（839 tests, ~90% 覆蓋率：前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、資料庫 LRU、主題切換、對話管理、側邊欄響應式行為、滾動按鈕、Session Hover 按鈕、Markdown 渲染、HTML 安全性、語法高亮、表格橫向滾動、工具函數）
 - `e2e/`：Playwright E2E 測試套件（4 tests：API Key 設定、上傳圖片、連續追問、無 Key 場景）
 - `playwright.config.ts`：Playwright 配置（自動啟動 dev server、截圖/影片記錄）
 - `.env.test.example`：E2E 測試環境變數範本
@@ -143,7 +143,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **Vitest 1.6.1** (單元測試框架)
 - **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **780 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替與邊界條件、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、滾動按鈕、Session Hover 按鈕、訊息複製、訊息分享、Markdown 渲染 (55 tests)、HTML 安全性 (72 tests)、語法高亮 (78 tests)、工具函數)
+- **780 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替與邊界條件、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、滾動按鈕、Session Hover 按鈕、訊息複製、訊息分享、Markdown 渲染 (55 tests)、HTML 安全性 (72 tests)、語法高亮 (78 tests)、表格橫向滾動 (53 tests)、工具函數)
 - **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
 - **單元測試覆蓋率**: ~90%
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)

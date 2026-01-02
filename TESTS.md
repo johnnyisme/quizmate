@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **816 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **839 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 816 tests
+- **測試總數**: 839 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -115,6 +115,31 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // 圖示: X icon 'M6 18L18 6M6 6l12 12', 'w-4 h-4'
 // 錯誤類型: 支援 message, suggestion, technicalDetails 三層結構
 // 無障礙: title="關閉", 足夠對比度, hover 反饋
+```
+
+### 2.8. `src/__tests__/tableOverflow.test.ts` (53 tests)
+測試 Markdown 表格橫向滾動功能的完整實現。
+
+**測試分類：**
+- **Table Wrapper Component (3 tests)**: 滾動容器、負 margin、padding 間距
+- **Prose Container (3 tests)**: 備援 overflow-x-auto、max-w-none、dark mode
+- **Scroll Behavior (3 tests)**: 橫向滾動、不影響縱向、自動隱藏滾動條
+- **Margin and Padding Strategy (2 tests)**: 滾動區域計算、延伸到氣泡邊緣
+- **Component Integration (3 tests)**: 僅包裝 table、保留 children、傳遞 props
+- **Edge Cases (3 tests)**: 空表格、嵌套表格、超寬表格
+- **Accessibility (2 tests)**: 鍵盤導航、視覺滾動指示器
+- **Cross-browser Compatibility (2 tests)**: 標準 CSS 屬性、觸控滾動
+- **Performance (2 tests)**: 無 layout reflow、GPU 加速
+
+**關鍵測試案例：**
+```typescript
+// Wrapper: 'overflow-x-auto -mx-3 px-3'
+// 負 margin: -mx-3 = -12px (每側) → 擴展滾動區域
+// Padding: px-3 = 12px → 保持視覺間距
+// 淨效果: marginOffset(-12) + paddingOffset(12) = 0 (滾動區域延伸到氣泡邊緣)
+// 組件: table({ node, children, ...props }) → <div className="..."><table {...props}>{children}</table></div>
+// 相容性: 標準 CSS 'overflow-x: auto', 支援觸控滾動
+// 效能: 僅在溢出時啟動, GPU 加速
 ```
 
 ### 3. `src/__tests__/inputAutoGrow.test.ts` (21 tests)
@@ -530,7 +555,7 @@ npm run test -- --coverage
 ---
 
 **最後更新**: 2026-01-02  
-**測試總數**: 817 tests  
+**測試總數**: 839 tests  
 **通過率**: 100%  
 **覆蓋率**: ~90% (達成目標)
 
