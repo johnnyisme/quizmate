@@ -130,6 +130,8 @@ export default function HomePage() {
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
   const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
+  const [showScrollToTop, setShowScrollToTop] = useState<boolean>(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -553,6 +555,33 @@ export default function HomePage() {
       };
     }
   }, [editingSessionId]);
+
+  // 監聽滾動位置來顯示/隱藏滾動按鈕
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const threshold = 100; // 100px 閾值
+      
+      // 距離頂部超過 100px 時顯示「回到頂部」按鈕
+      setShowScrollToTop(scrollTop > threshold);
+      
+      // 距離底部超過 100px 時顯示「跳到最新」按鈕
+      setShowScrollToBottom(scrollTop < scrollHeight - clientHeight - threshold);
+    };
+
+    // 初始檢查
+    handleScroll();
+
+    // 監聽滾動事件
+    container.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [displayConversation]);
 
   // 偵測是否為行動裝置
   const isMobile = () => {
@@ -1691,12 +1720,12 @@ export default function HomePage() {
       </div>
 
       {/* Scroll Buttons - Fixed at bottom-right, above input area */}
-      {apiKeys.length > 0 && (
+      {apiKeys.length > 0 && (showScrollToTop || showScrollToBottom) && (
         <div className="fixed bottom-24 right-4 z-50 flex flex-col gap-2">
-          {/* Scroll to Top Button */}
+          {/* Scroll to Top Button - 只在不在頂部時顯示 */}
           <button
             onClick={scrollToTop}
-            className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white/30 lg:bg-white/90 dark:bg-gray-800/30 dark:lg:bg-gray-800/90 lg:backdrop-blur-sm hover:bg-white/50 lg:hover:bg-white dark:hover:bg-gray-800/50 dark:lg:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+            className={`w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white/30 lg:bg-white/90 dark:bg-gray-800/30 dark:lg:bg-gray-800/90 lg:backdrop-blur-sm hover:bg-white/50 lg:hover:bg-white dark:hover:bg-gray-800/50 dark:lg:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${!showScrollToTop ? 'opacity-0 invisible pointer-events-none' : ''}`}
             title="回到頂部"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1704,10 +1733,10 @@ export default function HomePage() {
             </svg>
           </button>
 
-          {/* Scroll to Bottom Button */}
+          {/* Scroll to Bottom Button - 只在不在底部時顯示 */}
           <button
             onClick={scrollToBottom}
-            className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white/30 lg:bg-white/90 dark:bg-gray-800/30 dark:lg:bg-gray-800/90 lg:backdrop-blur-sm hover:bg-white/50 lg:hover:bg-white dark:hover:bg-gray-800/50 dark:lg:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+            className={`w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white/30 lg:bg-white/90 dark:bg-gray-800/30 dark:lg:bg-gray-800/90 lg:backdrop-blur-sm hover:bg-white/50 lg:hover:bg-white dark:hover:bg-gray-800/50 dark:lg:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${!showScrollToBottom ? 'opacity-0 invisible pointer-events-none' : ''}`}
             title="跳到最新"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

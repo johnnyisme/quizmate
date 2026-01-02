@@ -1,11 +1,11 @@
 # QuizMate - 單元測試文檔
 
-本專案包含 **848 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
+本專案包含 **872 個單元測試**，涵蓋前端邏輯、資料庫操作、UI 組件和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試框架
 - **jsdom**: 瀏覽器環境模擬
-- **測試總數**: 848 tests
+- **測試總數**: 872 tests
 - **測試覆蓋率**: ~90% (目標達成)
 
 ## 測試文件概覽
@@ -144,6 +144,29 @@ Test suite for the smart prompt name truncation function added to `page.tsx`.
 // wordBreak: prose 'break-word' 換行長文字, table wrapper 'normal' 保持表格排版
 // 組件: table → <div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}><table>{children}</table></div>
 // 組件: th/td → <th/td style={{ whiteSpace: 'nowrap', ...props.style }}>{children}</th/td>
+```
+
+### 2.9. `src/__tests__/smartScrollButtons.test.ts` (30 tests)
+測試智慧滾動按鈕的顯示/隱藏邏輯。
+
+**測試分類：**
+- **Visibility Logic (6 tests)**: 頂部只顯示向下、底部只顯示向上、中間兩個都顯示、完全在頂部/底部狀態
+- **Threshold Calculation (3 tests)**: 100px 閾值計算、頂部檢測、底部檢測、邊界情況
+- **Button State Classes (3 tests)**: 隱藏時套用 opacity-0/invisible/pointer-events-none、顯示時移除、transition 保持
+- **Container Visibility (3 tests)**: 至少一個按鈕顯示時顯示容器、兩個都隱藏時隱藏容器、兩個都顯示時顯示容器
+- **Scroll Position Scenarios (5 tests)**: 短內容不滾動、超長內容、接近頂部、接近底部、中間位置
+- **Fixed Position Layout (3 tests)**: 固定位置 class、flex 布局、z-index 確保可見
+- **Button Size Consistency (2 tests)**: 尺寸一致性、位置保持（使用 opacity 而非條件渲染）
+- **Performance (5 tests)**: scroll event listener 清理、依賴 displayConversation 變化、初始化時檢查、閾值敏感度
+
+**關鍵測試案例：**
+```typescript
+// 在頂部 (scrollTop < 100): showScrollToTop=false, showScrollToBottom=true
+// 在底部 (scrollTop > scrollHeight - clientHeight - 100): showScrollToTop=true, showScrollToBottom=false
+// 中間: 兩個都為 true
+// 隱藏狀態: 'opacity-0 invisible pointer-events-none'
+// 顯示狀態: 正常顯示，無額外 class
+// 位置固定: 使用 opacity 切換而非條件渲染，確保按鈕位置不變
 ```
 
 ### 3. `src/__tests__/inputAutoGrow.test.ts` (21 tests)
