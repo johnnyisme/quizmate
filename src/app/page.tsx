@@ -16,6 +16,7 @@ import ApiKeySetup from "@/components/ApiKeySetup";
 import Settings from "@/components/Settings";
 import PromptSettings, { DEFAULT_PROMPT, type CustomPrompt } from "@/components/PromptSettings";
 import MessageBubble from "@/components/MessageBubble";
+import { ChatInput } from "@/components/ChatInput";
 
 // 定義顯示在介面上的訊息類型
 type DisplayMessage = {
@@ -125,7 +126,6 @@ export default function HomePage() {
   const [isDark, setIsDark] = useState<boolean>(false);
   const [isThemeReady, setIsThemeReady] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [inputFocused, setInputFocused] = useState<boolean>(false);
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
@@ -142,7 +142,6 @@ export default function HomePage() {
   const modelMessageIndexRef = useRef<number | null>(null);
   const errorSuggestionRef = useRef<HTMLDivElement>(null);
   const errorTechnicalRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editingContainerRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const shouldScrollToQuestion = useRef<boolean>(false);
@@ -229,32 +228,13 @@ export default function HomePage() {
         errorSuggestionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
     }
-  }, [showErrorSuggestion]);
-
-  useEffect(() => {
+    
     if (showTechnicalDetails && errorTechnicalRef.current) {
       setTimeout(() => {
         errorTechnicalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
     }
-  }, [showTechnicalDetails]);
-
-  // 展開錯誤詳情時自動滾動到內容
-  useEffect(() => {
-    if (showErrorSuggestion && errorSuggestionRef.current) {
-      setTimeout(() => {
-        errorSuggestionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
-    }
-  }, [showErrorSuggestion]);
-
-  useEffect(() => {
-    if (showTechnicalDetails && errorTechnicalRef.current) {
-      setTimeout(() => {
-        errorTechnicalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
-    }
-  }, [showTechnicalDetails]);
+  }, [showErrorSuggestion, showTechnicalDetails]);
 
   // 初始化 API keys、模型選擇和 prompts
   useEffect(() => {
@@ -875,16 +855,16 @@ export default function HomePage() {
   };
 
   // 處理表單提交 (傳送訊息) - 直接使用前端 Gemini API + 模型選擇 + key 輪轉
-  const handleSubmit = async () => {
+  const handleSubmit = async (promptText?: string) => {
     if (apiKeys.length === 0) {
       setError({ message: "請先設置 API keys" });
       return;
     }
 
-    const promptText = currentPrompt.trim();
-    const promptForRetry = promptText;
+    const text = promptText ?? currentPrompt.trim();
+    const promptForRetry = text;
 
-    if (!promptText && !image) {
+    if (!text && !image) {
       setError({ message: "請輸入問題或上傳圖片" });
       return;
     }
@@ -893,7 +873,7 @@ export default function HomePage() {
     setError(null);
 
     // --- 更新介面對話，只加入用戶訊息 ---
-    const displayText = promptText || "[圖片問題]";
+    const displayText = text || "[圖片問題]";
     const userMessage: DisplayMessage = { role: "user", text: displayText };
     if (apiHistory.length === 0 && image) {
       userMessage.image = imageUrl;
@@ -909,7 +889,7 @@ export default function HomePage() {
       chatContainerRef.current.style.paddingBottom = '80vh';
     }
 
-    const apiPrompt = promptText || "請分析這張圖片並解答題目";
+    const apiPrompt = text || "請分析這張圖片並解答題目";
     setCurrentPrompt("");
 
     try {
@@ -1537,92 +1517,32 @@ export default function HomePage() {
               </div>
             </div>
           )}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <input
-              ref={fileInputRef}
-              id="dropzone-file"
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            {/* 相機拍照專用輸入（行動裝置使用） */}
-            <input
-              ref={cameraInputRef}
-              id="camera-file"
-              type="file"
-              className="hidden"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageChange}
-            />
-            <button 
-              title="上傳考卷" 
-              onClick={handleUploadClick} 
-              className={`flex-shrink-0 h-9 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 overflow-hidden ${inputFocused ? 'w-0 opacity-0 pointer-events-none' : 'w-9 opacity-100'}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            </button>
-            <button 
-              title="拍照" 
-              onClick={handleCameraClick} 
-              className={`flex-shrink-0 h-9 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 overflow-hidden ${inputFocused ? 'w-0 opacity-0 pointer-events-none' : 'w-9 opacity-100'}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
-            <textarea
-              ref={textareaRef}
-              id="prompt-input"
-              name="prompt"
-              value={currentPrompt}
-              onChange={(e) => {
-                setCurrentPrompt(e.target.value);
-                // 自動調整高度
-                if (textareaRef.current) {
-                  textareaRef.current.style.height = 'auto';
-                  const scrollHeight = textareaRef.current.scrollHeight;
-                  const lineHeight = 22; // 約等於 text-base 的行高
-                  const maxHeight = lineHeight * 3; // 3 行
-                  textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-                }
-              }}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              onFocus={() => {
-                setInputFocused(true);
-                // 點入時根據內容重新計算高度
-                if (textareaRef.current && currentPrompt) {
-                  textareaRef.current.style.height = 'auto';
-                  const scrollHeight = textareaRef.current.scrollHeight;
-                  const lineHeight = 22;
-                  const maxHeight = lineHeight * 3;
-                  textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-                }
-              }}
-              onBlur={() => {
-                setInputFocused(false);
-                // 鍵盤收起時縮回到一行
-                if (textareaRef.current) {
-                  textareaRef.current.style.height = '36px';
-                }
-              }}
-              placeholder={apiHistory.length > 0 ? "進行追問..." : "輸入問題或上傳圖片"}
-              rows={1}
-              className="flex-1 min-w-0 px-3 py-1.5 text-sm border dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow resize-none overflow-y-auto leading-5"
-              style={{ minHeight: '36px', maxHeight: '66px' }}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading || (!currentPrompt.trim() && !image)}
-              className="flex-shrink-0 h-9 px-3 sm:px-4 text-sm bg-blue-500 dark:bg-blue-600 text-white rounded-full font-semibold whitespace-nowrap hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-            >
-              傳送
-            </button>
-          </div>
+          <input
+            ref={fileInputRef}
+            id="dropzone-file"
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+          {/* 相機拍照專用輸入（行動裝置使用） */}
+          <input
+            ref={cameraInputRef}
+            id="camera-file"
+            type="file"
+            className="hidden"
+            accept="image/*"
+            capture="environment"
+            onChange={handleImageChange}
+          />
+          <ChatInput
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            hasImage={!!image}
+            hasHistory={apiHistory.length > 0}
+            onUploadClick={handleUploadClick}
+            onCameraClick={handleCameraClick}
+          />
         </div>
         )}
         </div>
