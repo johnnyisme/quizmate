@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { FixedSizeList as List } from 'react-window';
+'use client';
+import React from 'react';
 import type { Session } from '@/lib/db';
 
 interface SessionListProps {
@@ -7,7 +7,7 @@ interface SessionListProps {
   currentSessionId: string | null;
   editingSessionId: string | null;
   editingTitle: string;
-  editingContainerRef: React.RefObject<HTMLDivElement>;
+  editingContainerRef: React.RefObject<HTMLDivElement | null>;
   onSwitchSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string, e: React.MouseEvent) => void;
   onStartEditTitle: (sessionId: string, currentTitle: string, e: React.MouseEvent) => void;
@@ -33,12 +33,11 @@ const SessionList: React.FC<SessionListProps> = ({
   setEditingTitle,
   isDark,
 }) => {
-  const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const s = sessions[index];
-    
-    return (
-      <div style={style} className="px-2 py-1">
+  return (
+    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      {sessions.map((s) => (
         <div 
+          key={s.id} 
           onClick={() => editingSessionId !== s.id && onSwitchSession(s.id)} 
           className={`group p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentSessionId === s.id ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700'}`}
         >
@@ -106,19 +105,8 @@ const SessionList: React.FC<SessionListProps> = ({
             )}
           </div>
         </div>
-      </div>
-    );
-  }, [sessions, currentSessionId, editingSessionId, editingTitle, editingContainerRef, onSwitchSession, onDeleteSession, onStartEditTitle, onSaveTitle, onCancelEdit, onTitleKeyDown, setEditingTitle]);
-
-  return (
-    <List
-      height={window.innerHeight - 180} // Subtract header + new chat button height
-      itemCount={sessions.length}
-      itemSize={100} // Height per session item (adjusted for padding)
-      width="100%"
-    >
-      {Row}
-    </List>
+      ))}
+    </div>
   );
 };
 

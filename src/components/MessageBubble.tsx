@@ -64,7 +64,7 @@ const MessageBubble = React.memo(
       ],
     }],
     rehypeKatex,
-  ], []);
+  ] as any, []);
 
   // Memoize remark plugins configuration
   const remarkPlugins = useMemo(() => [remarkMath, remarkGfm], []);

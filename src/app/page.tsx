@@ -482,13 +482,13 @@ export default function HomePage() {
   };
 
   // 切換模型
-  const handleModelChange = (model: ModelType) => {
+  const handleModelChange = useCallback((model: ModelType) => {
     setSelectedModel(model);
     localStorage.setItem('selected-model', model);
-  };
+  }, [setSelectedModel]);
 
   // 更新 prompts
-  const handlePromptsUpdated = (updatedPrompts: CustomPrompt[], newSelectedId?: string) => {
+  const handlePromptsUpdated = useCallback((updatedPrompts: CustomPrompt[], newSelectedId?: string) => {
     const normalized = updatedPrompts.map((p) => 
       p.id === "default" ? { ...DEFAULT_PROMPT, ...p, isDefault: p.isDefault } : p
     );
@@ -503,15 +503,15 @@ export default function HomePage() {
     // 更新 selectedPromptId
     setSelectedPromptId(defaultId);
     localStorage.setItem('selected-prompt-id', defaultId);
-  };
+  }, [setPrompts, setSelectedPromptId]);
   // 切換 prompt
-  const handlePromptChange = (promptId: string) => {
+  const handlePromptChange = useCallback((promptId: string) => {
     const ensured = prompts.map(p => ({ ...p, isDefault: p.id === promptId }));
     setPrompts(ensured);
     localStorage.setItem('custom-prompts', JSON.stringify(ensured));
     setSelectedPromptId(promptId);
     localStorage.setItem('selected-prompt-id', promptId);
-  };
+  }, [prompts, setPrompts, setSelectedPromptId]);
 
   // Session management hooks
   const { session, createNewSession, addMessages, updateTitle } = useSessionStorage(currentSessionId);
@@ -596,7 +596,7 @@ export default function HomePage() {
   };
 
   // 處理圖片選擇
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImage(file);
@@ -607,10 +607,10 @@ export default function HomePage() {
       setCurrentSessionId(null);
       setError(null);
     }
-  };
+  }, [setImage, setImageUrl, setDisplayConversation, setApiHistory, setError]);
 
   // Start new conversation
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
     setImage(null);
     setImageUrl("");
     setDisplayConversation([]);
@@ -624,10 +624,10 @@ export default function HomePage() {
       setShowSidebar(false);
       localStorage.setItem('sidebar-open', 'false');
     }
-  };
+  }, [setImage, setImageUrl, setDisplayConversation, setApiHistory, setError, setShowSidebar]);
 
   // Switch to existing session
-  const handleSwitchSession = (sessionId: string) => {
+  const handleSwitchSession = useCallback((sessionId: string) => {
     setCurrentSessionId(sessionId);
     // 儲存當前 session ID 以便頁面重載後恢復
     localStorage.setItem('current-session-id', sessionId);
@@ -636,10 +636,10 @@ export default function HomePage() {
       setShowSidebar(false);
       localStorage.setItem('sidebar-open', 'false');
     }
-  };
+  }, [setShowSidebar]);
 
   // Delete session
-  const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
+  const handleDeleteSession = useCallback(async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       await removeSession(sessionId);
@@ -649,10 +649,10 @@ export default function HomePage() {
     } catch (err) {
       console.error("Failed to delete session:", err);
     }
-  };
+  }, [removeSession, currentSessionId, handleNewChat]);
 
   // Start editing session title
-  const handleStartEditTitle = (sessionId: string, currentTitle: string, e: React.MouseEvent) => {
+  const handleStartEditTitle = useCallback((sessionId: string, currentTitle: string, e: React.MouseEvent) => {
     e.stopPropagation();
     // 如果不是當前對話,先切換到該對話
     if (currentSessionId !== sessionId) {
@@ -660,10 +660,10 @@ export default function HomePage() {
     }
     setEditingSessionId(sessionId);
     setEditingTitle(currentTitle);
-  };
+  }, [currentSessionId, setEditingSessionId, setEditingTitle]);
 
   // Save edited title
-  const handleSaveTitle = async (sessionId: string) => {
+  const handleSaveTitle = useCallback(async (sessionId: string) => {
     if (!editingTitle.trim()) return;
     
     try {
@@ -674,23 +674,23 @@ export default function HomePage() {
     } catch (err) {
       console.error("Failed to update title:", err);
     }
-  };
+  }, [editingTitle, updateTitle, loadSessions, setEditingSessionId, setEditingTitle]);
 
   // Cancel editing
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingSessionId(null);
     setEditingTitle("");
-  };
+  }, [setEditingSessionId, setEditingTitle]);
 
   // Handle Enter key to save, Escape to cancel
-  const handleTitleKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent, sessionId: string) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleSaveTitle(sessionId);
     } else if (e.key === "Escape") {
       handleCancelEdit();
     }
-  };
+  }, [handleSaveTitle, handleCancelEdit]);
 
   // 點擊編輯容器外部時取消編輯
   useEffect(() => {
@@ -757,23 +757,12 @@ export default function HomePage() {
   };
 
   // 觸發檔案選擇
-  const handleUploadClick = () => {
+  const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
-
-  // 處理相機按鈕點擊
-  const handleCameraClick = () => {
-    if (isMobile()) {
-      // 行動裝置：使用原生檔案選擇器（會自動提供拍照選項）
-      cameraInputRef.current?.click();
-    } else {
-      // 桌面：開啟網頁攝影機
-      handleOpenCamera();
-    }
-  };
+  }, []);
 
   // 開啟攝影機（僅限桌面）
-  const handleOpenCamera = async () => {
+  const handleOpenCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
@@ -794,19 +783,30 @@ export default function HomePage() {
         suggestion: "請確認：\n1. 瀏覽器有攝影機權限\n2. 沒有其他應用程式正在使用攝影機\n3. 使用 HTTPS 連線（本地開發可用 localhost）"
       });
     }
-  };
+  }, [setCameraStream, setShowCamera, setError]);
+
+  // 處理相機按鈕點擊
+  const handleCameraClick = useCallback(() => {
+    if (isMobile()) {
+      // 行動裝置：使用原生檔案選擇器（會自動提供拍照選項）
+      cameraInputRef.current?.click();
+    } else {
+      // 桌面：開啟網頁攝影機
+      handleOpenCamera();
+    }
+  }, [handleOpenCamera]);
 
   // 關閉攝影機
-  const handleCloseCamera = () => {
+  const handleCloseCamera = useCallback(() => {
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
     }
     setShowCamera(false);
-  };
+  }, [cameraStream, setCameraStream, setShowCamera]);
 
   // 拍照
-  const handleTakePhoto = () => {
+  const handleTakePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
     
     const video = videoRef.current;
@@ -840,7 +840,7 @@ export default function HomePage() {
         }
       }, 'image/jpeg', 0.95);
     }
-  };
+  }, [setImage, setImageUrl, setDisplayConversation, setApiHistory, setError, handleCloseCamera]);
 
   // 複製訊息內容
   const handleCopyMessage = useCallback(async (text: string, index: number) => {
