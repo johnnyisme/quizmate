@@ -1,7 +1,7 @@
 # QuizMate - AI Agent Instructions
 
 ## Project Overview
-QuizMate is a Next.js + React student tutoring platform that leverages Google Gemini AI to interactively solve homework problems from uploaded images. Key feature: users upload a problem image once and can ask multiple follow-up questions about the same image without re-uploading.
+QuizMate is a Next.js + React student tutoring platform that leverages Google Gemini AI to interactively solve homework problems from uploaded images. **Key feature: users can upload multiple images within the same chat session**, asking different questions about different images without creating new sessions.
 
 ## Architecture
 
@@ -11,8 +11,20 @@ This is a **100% client-side application** with no backend server. All Gemini AP
 **Main Component** ([src/app/page.tsx](../src/app/page.tsx)) - React Client Component:
 - **State Management**: Maintains two separate conversation histories:
   - `displayConversation`: UI-facing messages with user-friendly formatting and images
-  - `apiHistory`: API-facing conversation in Gemini `Content[]` format (includes image base64 in first message only)
-- **Image Handling**: Converts first uploaded image to base64; subsequent questions skip image re-transmission
+  - `apiHistory`: API-facing conversation in Gemini `Content[]` format (includes image base64 in each message with image)
+- **Multi-Image Support**: Users can upload multiple images in the same session
+  - No session reset on image upload (removed auto-conversation reset)
+  - File input cleared after each upload (`e.target.value = ''`) to allow re-uploading same file
+  - Image state cleared immediately after sending to allow next upload
+  - **Image Reference Pattern**: Save image reference → clear state → use saved reference (prevents race conditions)
+  - **Error Recovery**: Restore image on send failure so user can retry
+- **Image Preview**: 
+  - **Empty conversation**: Only center upload area shows image preview
+  - **Active conversation**: Small thumbnail preview (80px height) above input box
+  - **Preview UI**: Blue border, gray circular X button (top-right), no filename overlay
+  - **Temporary State**: Preview not persisted to localStorage/IndexedDB
+  - **Clear on**: Page reload, session switch, after successful send
+  - **Persist on**: Opening settings modal (just a modal overlay)
 - **Performance Optimization**: Uses `MessageBubble` component wrapped with `React.memo` to prevent unnecessary re-renders during typing
 - **Markdown Rendering**: ReactMarkdown with remark-math, rehype-katex, and remark-gfm plugins
   - Full GFM support: tables, strikethrough, task lists, autolinks
@@ -82,11 +94,24 @@ npm run start       # Local production server
 
 ## Critical Data Flows
 
-### First Message with Image
-1. User uploads image → `setImage()`, reset conversation history
-2. Frontend: `fileToBase64()` stores base64 in `apiHistory` on first response
-3. Client-side API call: Detects `apiHistory.length === 0 && image` → transmits base64 blob and text in single request
-4. Subsequent questions reuse image from `apiHistory` via reference
+### Multi-Image Upload in Same Session
+1. **First image**: User uploads → `setImage()` + `setImageUrl()` → displays preview
+2. User inputs question → clicks send
+3. **Image Reference Pattern**:
+   - Save references: `const currentImage = image; const currentImageUrl = imageUrl;`
+   - Clear state immediately: `setImage(null); setImageUrl("");` (allows next upload)
+   - Use saved refs in API call: `await fileToBase64(currentImage)`
+4. On API success: Image included in conversation bubble, state already cleared
+5. On API failure: Restore image → `setImage(currentImage); setImageUrl(currentImageUrl);`
+6. **Second image**: User uploads new image → same flow, no session reset
+7. **File input clearing**: `e.target.value = ''` after each upload allows re-selecting same file
+
+### Image Preview Display Logic
+- **Condition**: `{imageUrl && displayConversation.length > 0 && (...preview UI...)}`
+- **Empty conversation (length === 0)**: No preview above input, only center upload area
+- **Active conversation (length > 0)**: Small thumbnail preview above input
+- **Not persisted**: Preview is React state only, cleared on unmount/reload/session-switch
+- **Initial Load Flag**: `isInitialLoad.current` prevents restoring old session images on page load
 
 ### API Key Rotation on Errors
 1. Request fails with retryable error (429, quota, permission_denied, etc.)

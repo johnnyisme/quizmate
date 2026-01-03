@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,074 個測試** (977 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
+本專案包含 **1,085 個測試** (984 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,078 tests (977 unit + 95 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 8.8% (95/1074)
+- **測試總數**: 1,085 tests (984 unit + 95 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 8.8% (95/1085)
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -118,7 +118,56 @@ if (isSessionSwitch) {
 }
 ```
 
-### ⭐ NEW: Enter 鍵換行行為 (125 tests)
+### ⭐ NEW: 多圖片上傳功能 (11 tests)
+**文件**: `src/__tests__/multiImageUpload.test.tsx`
+
+驗證同一個 chat session 可上傳多張圖片，不會自動建立新對話。
+
+**測試分類：**
+- **同 Session 上傳** (2 tests)：上傳多張圖片不重置對話、保留歷史訊息
+- **File Input 清除** (1 test)：每次上傳後清空 input value、允許重選同檔案
+- **圖片預覽顯示** (2 tests)：
+  - 空對話時：只在中央上傳區顯示預覽
+  - 有對話時：輸入框上方顯示縮圖預覽（80px 高）
+  - 條件渲染：`{imageUrl && displayConversation.length > 0}`
+- **圖片狀態管理** (4 tests)：
+  - **Settings Modal 保留預覽**：開啟/關閉 Settings 不清除圖片（只是 overlay）
+  - **Image Reference Pattern**：送出前保存引用 → 立即清空狀態 → 使用保存的引用
+  - 預覽非持久化：頁面重載時清除（不儲存到 localStorage）
+  - 切換 session 時清除預覽（`handleSwitchSession` 呼叫 `setImage(null)`）
+- **錯誤恢復** (1 test)：API 失敗時恢復圖片到 input、允許重試
+- **初始載入標記** (2 tests)：
+  - `isInitialLoad.current` 防止頁面重載時錯誤恢復 session 圖片
+  - 第一次 session 載入後標記為 false
+
+**關鍵實作：**
+```typescript
+// 圖片引用保存模式（避免 race condition）
+const currentImage = image;
+const currentImageUrl = imageUrl;
+setImage(null);  // 立即清空，允許下次上傳
+setImageUrl("");
+
+// API 使用保存的引用
+if (currentImage) {
+  const base64 = await fileToBase64(currentImage);
+  // ... 送出到 Gemini API
+}
+
+// 失敗時恢復
+if (error) {
+  setImage(currentImage);
+  setImageUrl(currentImageUrl);
+}
+```
+
+**預覽 UI 邏輯：**
+- 空對話（length === 0）：無預覽，只顯示中央上傳區
+- 有對話（length > 0）：輸入框上方顯示 80px 縮圖
+- 非持久化：React state only，不存 localStorage/IndexedDB
+- 清除時機：重載、切換 session、送出成功後
+
+### ⭐ NEW: Enter 鍵換行行為 (23 tests)
 **文件**: `src/__tests__/enterKeyBehavior.test.ts`
 
 驗證輸入框 Enter 鍵行為改為換行（不再送出訊息），提升多行輸入體驗。

@@ -215,6 +215,7 @@ export default function HomePage() {
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const shouldScrollToQuestion = useRef<boolean>(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isInitialLoad = useRef<boolean>(true);
 
   // Helper functions for state updates (reduces boilerplate)
   const updateUIState = useCallback((updates: Partial<UIState>) => {
@@ -540,8 +541,12 @@ export default function HomePage() {
   // Load session when switching
   useEffect(() => {
     if (session) {
-      const isSessionSwitch = prevSessionIdRef.current !== session.id;
+      const isSessionSwitch = prevSessionIdRef.current !== session.id && !isInitialLoad.current;
+      // 恢復滾動位置：在切換 session 時，或頁面初次載入時都要恢復
+      const shouldRestoreScroll = prevSessionIdRef.current !== session.id;
+      
       prevSessionIdRef.current = session.id;
+      isInitialLoad.current = false;
 
       // Convert DB messages to display format
       const displayMsgs: DisplayMessage[] = session.messages.map((msg) => ({
@@ -575,14 +580,8 @@ export default function HomePage() {
       }
       setApiHistory(apiMsgs);
 
-      // Restore image if available
-      if (session.imageBase64) {
-        setImageUrl(session.imageBase64);
-        // Note: Cannot fully restore File object, but imageUrl is sufficient for display
-      }
-
-      // 只在真正切換 session 時恢復滾動位置（不是在同一個 session 更新訊息時）
-      if (isSessionSwitch) {
+      // 恢復滾動位置
+      if (shouldRestoreScroll) {
         const savedScrollPos = localStorage.getItem(`scroll-pos-${session.id}`);
         if (savedScrollPos && chatContainerRef.current) {
           setTimeout(() => {
@@ -640,13 +639,11 @@ export default function HomePage() {
       
       setImage(file);
       setImageUrl(URL.createObjectURL(file));
-      // 重置對話並開始新 session
-      setDisplayConversation([]);
-      setApiHistory([]);
-      setCurrentSessionId(null);
       setError(null);
+      // 清空 input，允許重新選擇同一個檔案
+      e.target.value = '';
     }
-  }, [setImage, setImageUrl, setDisplayConversation, setApiHistory, setError]);
+  }, [setImage, setImageUrl, setError]);
 
   // Start new conversation
   const handleNewChat = useCallback(() => {
@@ -668,6 +665,9 @@ export default function HomePage() {
   // Switch to existing session
   const handleSwitchSession = useCallback((sessionId: string) => {
     setCurrentSessionId(sessionId);
+    // 清空圖片預覽（切換 session 時不保留）
+    setImage(null);
+    setImageUrl("");
     // 儲存當前 session ID 以便頁面重載後恢復
     localStorage.setItem('current-session-id', sessionId);
     // Close sidebar on mobile only
@@ -675,7 +675,7 @@ export default function HomePage() {
       setShowSidebar(false);
       localStorage.setItem('sidebar-open', 'false');
     }
-  }, [setShowSidebar]);
+  }, [setShowSidebar, setImage, setImageUrl]);
 
   // Delete session
   const handleDeleteSession = useCallback(async (sessionId: string, e: React.MouseEvent) => {
@@ -1067,7 +1067,7 @@ export default function HomePage() {
     // --- 更新介面對話，只加入用戶訊息 ---
     const displayText = text || "[圖片問題]";
     const userMessage: DisplayMessage = { role: "user", text: displayText };
-    if (apiHistory.length === 0 && image) {
+    if (image) {
       userMessage.image = imageUrl;
     }
     
@@ -1083,6 +1083,14 @@ export default function HomePage() {
 
     const apiPrompt = text || "請分析這張圖片並解答題目";
     setCurrentPrompt("");
+    
+    // 保存圖片引用，用於後續處理
+    const currentImage = image;
+    const currentImageUrl = imageUrl;
+    
+    // 立即清除圖片狀態，允許用戶上傳下一張圖片
+    setImage(null);
+    setImageUrl("");
 
     try {
       // 嘗試使用當前 API key，如果失敗則輪轉
@@ -1099,13 +1107,13 @@ export default function HomePage() {
           // 準備請求的內容
           const parts: any[] = [];
 
-          // 如果是第一則訊息且有圖片，加入圖片
-          if (apiHistory.length === 0 && image) {
-            const base64 = await fileToBase64(image);
+          // 如果有圖片，加入圖片（使用保存的引用）
+          if (currentImage) {
+            const base64 = await fileToBase64(currentImage);
             parts.push({
               inlineData: {
                 data: base64,
-                mimeType: image.type || "image/jpeg",
+                mimeType: currentImage.type || "image/jpeg",
               },
             });
           }
@@ -1195,18 +1203,28 @@ export default function HomePage() {
           break;
         } catch (err: any) {
           lastError = err;
-          // 只在開發環境輸出詳細錯誤（避免 production console 噪音）
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(`API key ${keyIndex} failed:`, err.message);
-          }
+          // 記錄錯誤詳情以便除錯
+          console.error(`API key ${keyIndex} failed:`, {
+            message: err?.message,
+            status: err?.status,
+            statusText: err?.statusText,
+            error: err
+          });
           // 繼續嘗試下一個 key
           continue;
         }
       }
 
       if (!success) {
+        // 提供更詳細的錯誤訊息
+        const errorDetail = lastError?.message 
+          || lastError?.statusText 
+          || (lastError?.status ? `HTTP ${lastError.status}` : null)
+          || JSON.stringify(lastError)
+          || "未知錯誤";
+        
         throw new Error(
-          `所有 API keys 都失敗。最後錯誤: ${lastError?.message || "未知錯誤"}`
+          `所有 API keys 都失敗。最後錯誤: ${errorDetail}`
         );
       }
 
@@ -1222,20 +1240,23 @@ export default function HomePage() {
         timestamp: Date.now(),
       };
 
+      // 如果有圖片，保存到訊息中（使用保存的引用）
+      if (currentImage) {
+        try {
+          const base64Data = await fileToBase64(currentImage);
+          const imageB64 = `data:${currentImage.type};base64,${base64Data}`;
+          userDBMsg.imageBase64 = imageB64;
+        } catch (e) {
+          console.error("Failed to convert image to base64:", e);
+        }
+      }
+
       if (!currentSessionId) {
         const title = generateTitle(promptText || "圖片問題");
-        let imageB64: string | undefined;
-        if (apiHistory.length === 0 && image) {
-          try {
-            const base64Data = await fileToBase64(image);
-            imageB64 = `data:${image.type};base64,${base64Data}`;
-            userDBMsg.imageBase64 = imageB64;
-          } catch (e) {
-            console.error("Failed to convert image to base64:", e);
-          }
-        }
+        // 第一則訊息的圖片作為 session 的主圖片
+        const sessionImage = userDBMsg.imageBase64;
 
-        const newSession = await createNewSession(title, [userDBMsg, modelDBMsg], imageB64);
+        const newSession = await createNewSession(title, [userDBMsg, modelDBMsg], sessionImage);
         setCurrentSessionId(newSession.id);
         // 儲存新建立的 session ID
         localStorage.setItem('current-session-id', newSession.id);
@@ -1247,20 +1268,20 @@ export default function HomePage() {
 
       // --- 更新 API history ---
       const modelApiPart = { role: "model", parts: [{ text: modelResponseText }] };
-      if (apiHistory.length === 0 && image) {
+      if (currentImage) {
         try {
-          const base64 = await fileToBase64(image);
-          const initialUserWithImage = {
+          const base64 = await fileToBase64(currentImage);
+          const userWithImage = {
             role: "user",
             parts: [
-              { inlineData: { data: base64, mimeType: image.type || "image/jpeg" } },
+              { inlineData: { data: base64, mimeType: currentImage.type || "image/jpeg" } },
               { text: apiPrompt },
             ],
           };
-          setApiHistory([initialUserWithImage, modelApiPart]);
+          setApiHistory(prev => [...prev, userWithImage, modelApiPart]);
         } catch (e) {
           const fallbackUser = { role: "user", parts: [{ text: apiPrompt }] };
-          setApiHistory([fallbackUser, modelApiPart]);
+          setApiHistory(prev => [...prev, fallbackUser, modelApiPart]);
         }
       } else {
         const userApiPart = { role: "user", parts: [{ text: apiPrompt }] };
@@ -1278,6 +1299,12 @@ export default function HomePage() {
       setShowTechnicalDetails(false);
       setDisplayConversation(prev => prev.slice(0, -1));
       setCurrentPrompt(promptForRetry);
+      
+      // 恢復圖片狀態（發送失敗時）
+      if (currentImage) {
+        setImage(currentImage);
+        setImageUrl(currentImageUrl);
+      }
     } finally {
       modelMessageIndexRef.current = null;
       setIsLoading(false);
@@ -1573,9 +1600,36 @@ export default function HomePage() {
 
         {/* Input Area - 選取模式時隱藏 */}
         {!isSelectMode && (
-          <div className="sticky bottom-0 p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 z-10">
-            {error && (
-            <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg relative">
+          <div className="sticky bottom-0 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 z-10">
+            {/* 圖片預覽區域 - 只在有對話記錄時顯示 */}
+            {imageUrl && displayConversation.length > 0 && (
+              <div className="px-4 pt-3 pb-2">
+                <div className="relative inline-block">
+                  <img 
+                    src={imageUrl} 
+                    alt="準備發送的圖片" 
+                    className="h-20 max-w-xs rounded-lg object-cover shadow-md border-2 border-blue-500 dark:border-blue-400"
+                  />
+                  {/* 移除按鈕 */}
+                  <button
+                    onClick={() => {
+                      setImage(null);
+                      setImageUrl("");
+                    }}
+                    className="absolute -top-2 -right-2 w-10 h-10 flex items-center justify-center bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors shadow-lg"
+                    title="移除圖片"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <div className="p-4">
+              {error && (
+              <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg relative">
               {/* 關閉按鈕 */}
               <button
                 onClick={() => setError(null)}
@@ -1681,7 +1735,8 @@ export default function HomePage() {
             onUploadClick={handleUploadClick}
             onCameraClick={handleCameraClick}
           />
-        </div>
+            </div>
+          </div>
         )}
         </div>
       </div>
