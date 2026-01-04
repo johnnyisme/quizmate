@@ -1,6 +1,6 @@
 {
-  "name": "quizmate2",
-  "version": "1.1.0",
+  "name": "quizmate",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

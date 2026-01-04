@@ -8,10 +8,89 @@ QuizMate is a Next.js + React student tutoring platform that leverages Google Ge
 ### Frontend - Pure Client-Side Architecture
 This is a **100% client-side application** with no backend server. All Gemini API calls are made directly from the browser.
 
-**Main Component** ([src/app/page.tsx](../src/app/page.tsx)) - React Client Component:
-- **State Management**: Maintains two separate conversation histories:
-  - `displayConversation`: UI-facing messages with user-friendly formatting and images
-  - `apiHistory`: API-facing conversation in Gemini `Content[]` format (includes image base64 in each message with image)
+### Modular Architecture (Refactored v1.2.0)
+**Reduced from 1,855 lines to 456 lines (75.4% reduction)** through systematic extraction into:
+
+**Main Component** ([src/app/page.tsx](../src/app/page.tsx)) - Pure Orchestration Layer:
+- **No direct state management**: All state delegated to custom hooks
+- **Component composition**: Assembles 7 UI components with prop drilling
+- **Hook integration**: Composes 13 custom hooks for all business logic
+- **Minimal glue code**: Only ref declarations, hook composition, and event handler wiring
+
+**State Management Hooks** (5 hooks - Grouped State Pattern):
+- [useUIState.ts](../src/hooks/useUIState.ts): Modal visibility, sidebar, scroll buttons, selection mode (14 state variables)
+- [useSettingsState.ts](../src/hooks/useSettingsState.ts): API keys, models, prompts, thinking mode (6 state variables)
+- [useChatState.ts](../src/hooks/useChatState.ts): Conversations (display + API), loading, errors (5 state variables)
+- [useImageState.ts](../src/hooks/useImageState.ts): Image preview, camera stream (4 state variables)
+- [useSelectionState.ts](../src/hooks/useSelectionState.ts): Message selection, session editing (4 state variables)
+- **Pattern**: `useState` with object + batch updater + individual setters + spread return for flat access
+
+**Business Logic Hooks** (6 hooks - Event Handler Patterns):
+- [useTheme.ts](../src/hooks/useTheme.ts): Dark mode toggle, localStorage persistence, KaTeX dynamic loading
+- [useCamera.ts](../src/hooks/useCamera.ts): Platform detection, getUserMedia (desktop), file input (mobile), image validation
+- [useMessageActions.ts](../src/hooks/useMessageActions.ts): Copy, share, long-press gestures, Web Share API
+- [useScrollManagement.ts](../src/hooks/useScrollManagement.ts): Smart scroll, position memory per session, scroll-to-question
+- [useSessionManagement.ts](../src/hooks/useSessionManagement.ts): New chat, switch session, delete, title editing
+- [useGeminiAPI.ts](../src/hooks/useGeminiAPI.ts): API calls, key rotation, streaming, error recovery
+
+**UI Components** (7 components - Presentational Layer):
+- [Header.tsx](../src/components/Header.tsx): Sidebar toggle, logo, model/prompt selectors, settings button
+- [ChatArea.tsx](../src/components/ChatArea.tsx): Message list, empty state, loading animation, image upload area
+- [ChatInput.tsx](../src/components/ChatInput.tsx): Multi-line textarea, upload/camera buttons, submit button
+- [ErrorDisplay.tsx](../src/components/ErrorDisplay.tsx): Collapsible error (message → suggestion → technical)
+- [ImagePreviewModal.tsx](../src/components/ImagePreviewModal.tsx): Full-screen image viewer
+- [SelectionToolbar.tsx](../src/components/SelectionToolbar.tsx): Multi-message selection controls
+- [ScrollButtons.tsx](../src/components/ScrollButtons.tsx): Smart scroll-to-top/bottom buttons
+- [CameraModal.tsx](../src/components/CameraModal.tsx): Desktop camera capture with video preview
+- [MessageBubble.tsx](../src/components/MessageBubble.tsx): Memoized message rendering with Markdown/KaTeX/syntax highlighting
+
+**Utility Modules** (2 modules):
+- [errorHandling.ts](../src/utils/errorHandling.ts): Error classification, retry detection, user-friendly messages
+- [fileUtils.ts](../src/utils/fileUtils.ts): File validation, base64 conversion, size checks
+
+### Modular Architecture (Refactored v1.2.0)
+**Reduced from 1,855 lines to 456 lines (75.4% reduction)** through systematic extraction into:
+
+**Main Component** ([src/app/page.tsx](../src/app/page.tsx)) - Pure Orchestration Layer:
+- **No direct state management**: All state delegated to custom hooks
+- **Component composition**: Assembles 7 UI components with prop drilling
+- **Hook integration**: Composes 13 custom hooks for all business logic
+- **Minimal glue code**: Only ref declarations, hook composition, and event handler wiring
+
+**State Management Hooks** (5 hooks - Grouped State Pattern):
+- [useUIState.ts](../src/hooks/useUIState.ts): Modal visibility, sidebar, scroll buttons, selection mode (14 state variables)
+- [useSettingsState.ts](../src/hooks/useSettingsState.ts): API keys, models, prompts, thinking mode (6 state variables)
+- [useChatState.ts](../src/hooks/useChatState.ts): Conversations (display + API), loading, errors (5 state variables)
+- [useImageState.ts](../src/hooks/useImageState.ts): Image preview, camera stream (4 state variables)
+- [useSelectionState.ts](../src/hooks/useSelectionState.ts): Message selection, session editing (4 state variables)
+- **Pattern**: `useState` with object + batch updater + individual setters + spread return for flat access
+
+**Business Logic Hooks** (6 hooks - Event Handler Patterns):
+- [useTheme.ts](../src/hooks/useTheme.ts): Dark mode toggle, localStorage persistence, KaTeX dynamic loading
+- [useCamera.ts](../src/hooks/useCamera.ts): Platform detection, getUserMedia (desktop), file input (mobile), image validation
+- [useMessageActions.ts](../src/hooks/useMessageActions.ts): Copy, share, long-press gestures, Web Share API
+- [useScrollManagement.ts](../src/hooks/useScrollManagement.ts): Smart scroll, position memory per session, scroll-to-question
+- [useSessionManagement.ts](../src/hooks/useSessionManagement.ts): New chat, switch session, delete, title editing
+- [useGeminiAPI.ts](../src/hooks/useGeminiAPI.ts): API calls, key rotation, streaming, error recovery
+
+**UI Components** (7 components - Presentational Layer):
+- [Header.tsx](../src/components/Header.tsx): Sidebar toggle, logo, model/prompt selectors, settings button
+- [ChatArea.tsx](../src/components/ChatArea.tsx): Message list, empty state, loading animation, image upload area
+- [ChatInput.tsx](../src/components/ChatInput.tsx): Multi-line textarea, upload/camera buttons, submit button
+- [ErrorDisplay.tsx](../src/components/ErrorDisplay.tsx): Collapsible error (message → suggestion → technical)
+- [ImagePreviewModal.tsx](../src/components/ImagePreviewModal.tsx): Full-screen image viewer
+- [SelectionToolbar.tsx](../src/components/SelectionToolbar.tsx): Multi-message selection controls
+- [ScrollButtons.tsx](../src/components/ScrollButtons.tsx): Smart scroll-to-top/bottom buttons
+- [CameraModal.tsx](../src/components/CameraModal.tsx): Desktop camera capture with video preview
+- [MessageBubble.tsx](../src/components/MessageBubble.tsx): Memoized message rendering with Markdown/KaTeX/syntax highlighting
+
+**Utility Modules** (2 modules):
+- [errorHandling.ts](../src/utils/errorHandling.ts): Error classification, retry detection, user-friendly messages
+- [fileUtils.ts](../src/utils/fileUtils.ts): File validation, base64 conversion, size checks
+
+**Conversation State** (Maintained by useChatState):
+- `displayConversation`: UI-facing messages with user-friendly formatting and images
+- `apiHistory`: API-facing conversation in Gemini `Content[]` format (includes image base64 in each message with image)
 - **Multi-Image Support**: Users can upload multiple images in the same session
   - No session reset on image upload (removed auto-conversation reset)
   - File input cleared after each upload (`e.target.value = ''`) to allow re-uploading same file
@@ -172,18 +251,44 @@ npm run start       # Local production server
 
 ```
 src/app/
-├── page.tsx          # Client component: conversation UI, image upload, KaTeX rendering
+├── page.tsx          # Orchestration layer: hook composition + component assembly (456 lines, reduced from 1,855)
 ├── layout.tsx        # Root layout: global styles, metadata, PWA manifest
 ├── globals.css       # Tailwind directives
-src/components/
+
+src/hooks/            # Custom Hooks (13 total)
+├── useUIState.ts            # UI state: modals, sidebar, scroll buttons, selection mode
+├── useSettingsState.ts      # Settings: API keys, models, prompts, thinking mode
+├── useChatState.ts          # Chat state: conversations (display + API), loading, errors
+├── useImageState.ts         # Image state: preview, camera stream
+├── useSelectionState.ts     # Selection state: message selection, session editing
+├── useTheme.ts              # Theme management: dark mode, localStorage, KaTeX loading
+├── useCamera.ts             # Camera: platform detection, getUserMedia, validation
+├── useMessageActions.ts     # Message actions: copy, share, long-press gestures
+├── useScrollManagement.ts   # Scroll: smart scroll, position memory, scroll-to-question
+├── useSessionManagement.ts  # Session: new chat, switch, delete, title editing
+└── useGeminiAPI.ts          # API: Gemini calls, key rotation, streaming, error recovery
+
+src/components/       # UI Components (7 presentational + utilities)
+├── Header.tsx               # Top navigation with sidebar toggle, selectors, settings
+├── ChatArea.tsx             # Message display area with MessageBubble list
+├── ChatInput.tsx            # Multi-line textarea with upload/camera buttons
+├── ErrorDisplay.tsx         # Collapsible error display (3 levels)
+├── ImagePreviewModal.tsx    # Full-screen image viewer
+├── SelectionToolbar.tsx     # Multi-message selection controls
+├── ScrollButtons.tsx        # Smart scroll-to-top/bottom buttons
+├── CameraModal.tsx          # Desktop camera capture interface
 ├── MessageBubble.tsx        # Memoized message component (React.memo for performance)
+├── SessionList.tsx          # Sidebar session history list
 ├── ApiKeySetup.tsx          # API key management UI
 ├── PromptSettings.tsx       # Custom prompt editor
 └── Settings.tsx             # Settings modal container
-src/lib/
+
+src/lib/              # Utilities & Storage
 ├── db.ts                    # IndexedDB utilities for session storage
 ├── useSessionStorage.ts     # React hooks: useSessionStorage, useSessionHistory
-└── useAsyncState.ts         # Utility hook for async state management
+├── useAsyncState.ts         # Utility hook for async state management
+├── errorHandling.ts         # Error classification and user-friendly messages
+└── fileUtils.ts             # File validation and base64 conversion
 ```
 
 ### MessageBubble Component ([src/components/MessageBubble.tsx](../src/components/MessageBubble.tsx))

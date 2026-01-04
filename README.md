@@ -118,19 +118,61 @@ npm run test:e2e:ui    # Playwright UI 模式
 npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 ```
 
+## 專案架構
+
+### 純前端架構
+這是一個 **100% 前端應用**，無後端伺服器。所有 Gemini API 呼叫都直接從瀏覽器發起。
+
+### 模組化架構 (v1.2.0 重構)
+**從 1,855 行減少到 456 行（減少 75.4%）**，透過系統化拆分為：
+
+#### 主組件 - 純編排層
+- **[src/app/page.tsx](./src/app/page.tsx)** (456 行)
+  - 無直接狀態管理，所有狀態委派給 13 個自訂 hooks
+  - 組裝 7 個 UI 組件
+  - 僅有 ref 宣告、hook 組合、事件處理連接
+
+#### 狀態管理 Hooks (5 個)
+- `useUIState.ts`: 模態框、側邊欄、滾動按鈕、選取模式
+- `useSettingsState.ts`: API 金鑰、模型、提示詞、推理模式
+- `useChatState.ts`: 對話（顯示 + API）、載入中、錯誤
+- `useImageState.ts`: 圖片預覽、攝影機串流
+- `useSelectionState.ts`: 訊息選取、會話編輯
+
+#### 業務邏輯 Hooks (6 個)
+- `useTheme.ts`: 深色模式、localStorage、KaTeX 動態載入
+- `useCamera.ts`: 平台偵測、getUserMedia、圖片驗證
+- `useMessageActions.ts`: 複製、分享、長按手勢、Web Share API
+- `useScrollManagement.ts`: 智慧滾動、位置記憶、滾動至問題
+- `useSessionManagement.ts`: 新對話、切換會話、刪除、標題編輯
+- `useGeminiAPI.ts`: API 呼叫、金鑰輪替、串流、錯誤恢復
+
+#### UI 組件 (7 個)
+- `Header.tsx`: 頂部導航、側邊欄切換、選擇器、設定按鈕
+- `ChatArea.tsx`: 訊息列表、空白狀態、載入動畫
+- `ChatInput.tsx`: 多行文字框、上傳/攝影機按鈕
+- `ErrorDisplay.tsx`: 可摺疊錯誤顯示（三層）
+- `ImagePreviewModal.tsx`: 全螢幕圖片檢視器
+- `SelectionToolbar.tsx`: 多訊息選取工具列
+- `ScrollButtons.tsx`: 智慧滾動按鈕
+- `CameraModal.tsx`: 桌面攝影機捕捉介面
+- `MessageBubble.tsx`: 記憶化訊息渲染（React.memo 優化）
+
+#### 工具模組 (2 個)
+- `errorHandling.ts`: 錯誤分類、重試偵測、友善訊息
+- `fileUtils.ts`: 檔案驗證、base64 轉換、大小檢查
+
+詳細架構說明請參閱 [.github/copilot-instructions.md](./.github/copilot-instructions.md)
+
 ## 目錄摘要
-- `src/app/page.tsx`：前端主介面、Gemini API 呼叫、對話管理、Dark Mode、KaTeX 渲染
-- `src/components/MessageBubble.tsx`：訊息氣泡組件（React.memo 優化，封裝 Markdown 渲染邏輯）
-- `src/components/ApiKeySetup.tsx`：API Key 管理介面（新增、編輯、刪除）
-- `src/components/PromptSettings.tsx`：System Prompt 自訂介面（新增、編輯、刪除、設為預設）
-- `src/components/Settings.tsx`：Settings 模態視窗（包含 Prompt 設定、API 金鑰、外觀主題三個 tab）
-- `src/app/globals.css`：全域樣式、Tailwind v4 配置、Dark Mode 主題變數
+- `src/app/page.tsx`：主組件編排層（456 行，重構前 1,855 行）
+- `src/hooks/`：13 個自訂 hooks（狀態管理 5 個 + 業務邏輯 6 個 + 工具 2 個）
+- `src/components/`：UI 組件（MessageBubble、Header、ChatArea、Settings 等）
 - `src/lib/db.ts`：IndexedDB 核心操作，包含 CRUD、LRU 清理邏輯
 - `src/lib/useSessionStorage.ts`：React hooks，管理當前對話與對話列表
-- `src/__tests__/`：完整單元測試套件(1074 tests, ~92% 覆蓋率：前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、資料庫 LRU、主題切換、對話管理、側邊欄響應式行為、側邊欄持久化 (10 tests)、滾動位置記憶 (15 tests)、AI 回應後滾動行為 (23 tests - padding 管理、session 切換檢測、無跳動)、智慧滾動按鈕 (23 tests)、Session Hover 按鈕、訊息氣泡渲染優化、MessageBubble Ref Forwarding (5 tests)、Markdown 渲染 (55 tests)、HTML 安全性 (72 tests)、語法高亮 (78 tests)、表格橫向滾動 (33 tests)、代碼區塊橫向滾動 (24 tests)、Enter 鍵行為 (125 tests - 換行而非送出)、圖片大小驗證 (10 tests)、滾動 bug 回歸測試 (2 tests)、工具函數）
+- `src/__tests__/`：完整單元測試套件（1,085 tests，~92% 覆蓋率）
 - `e2e/`：Playwright E2E 測試套件（4 tests：API Key 設定、上傳圖片、連續追問、無 Key 場景）
-- `playwright.config.ts`：Playwright 配置（自動啟動 dev server、截圖/影片記錄）
-- `.env.test.example`：E2E 測試環境變數範本
+- `.github/copilot-instructions.md`：詳細專案文檔與 AI Agent 指引
 
 ## 技術架構
 
@@ -154,7 +196,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **React Testing Library 16.3.1** (React 組件測試)
 - **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **1074 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、側邊欄持久化 (10 tests)、滾動位置記憶 (15 tests)、AI 回應後滾動行為 (23 tests)、智慧滾動按鈕 (23 tests)、Session Hover 按鈕、訊息複製、訊息分享、訊息氣泡渲染優化、MessageBubble Ref Forwarding (5 tests)、Markdown 渲染 (55 tests)、HTML 安全性 (72 tests)、語法高亮 (78 tests)、表格橫向滾動 (33 tests)、代碼區塊橫向滾動 (24 tests)、Enter 鍵行為 (125 tests)、圖片大小驗證 (10 tests)、滾動 bug 回歸測試 (2 tests)、工具函數)
+- **1,085 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、側邊欄持久化、滾動位置記憶、AI 回應後滾動行為、智慧滾動按鈕、Session Hover 按鈕、訊息複製、訊息分享、訊息氣泡渲染優化、MessageBubble Ref Forwarding、Markdown 渲染、HTML 安全性、語法高亮、表格橫向滾動、代碼區塊橫向滾動、Enter 鍵行為、圖片大小驗證、滾動 bug 回歸測試、工具函數)
 - **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
 - **單元測試覆蓋率**: ~92%
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)
