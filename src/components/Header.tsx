@@ -1,5 +1,6 @@
 // Header component - Top navigation bar
-import { ModelType, ThinkingMode, CustomPrompt } from '@/hooks/useSettingsState';
+import { ModelType, ThinkingMode } from '@/hooks/useSettingsState';
+import { CustomPrompt } from '@/components/PromptSettings';
 import { truncatePromptName } from '@/utils/fileUtils';
 
 interface HeaderProps {

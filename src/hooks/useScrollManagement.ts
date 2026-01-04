@@ -1,5 +1,5 @@
 // Custom hook for scroll management
-import { useEffect, useCallback, RefObject } from 'react';
+import { useEffect, useCallback, RefObject, useRef } from 'react';
 
 type ScrollManagementProps = {
   chatContainerRef: RefObject<HTMLDivElement | null>;
@@ -23,36 +23,53 @@ export const useScrollManagement = ({
   setShowScrollToBottom,
 }: ScrollManagementProps) => {
 
+  // Track whether auto-scroll should be enabled (disable when user manually scrolls)
+  const shouldAutoScroll = useRef<boolean>(true);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevSessionIdRef = useRef<string | null>(null);
+  const prevHasAIMessageRef = useRef<boolean>(false);
+  const isAutoScrollingRef = useRef<boolean>(false); // ✅ Track if we're currently auto-scrolling
+
   // Auto-scroll to new question
   useEffect(() => {
     if (shouldScrollToQuestion.current && lastUserMessageRef.current && chatContainerRef.current) {
       shouldScrollToQuestion.current = false;
       
-      const userMessage = lastUserMessageRef.current;
-      const container = chatContainerRef.current;
-      
-      // Calculate question bubble position relative to container
-      const containerRect = container.getBoundingClientRect();
-      const messageRect = userMessage.getBoundingClientRect();
-      const relativeTop = messageRect.top - containerRect.top;
-      
-      // Scroll to question position (leave 16px top spacing)
-      container.scrollTo({
-        top: container.scrollTop + relativeTop - 16,
-        behavior: 'smooth'
+      // Use requestAnimationFrame to ensure DOM is fully updated
+      const rafId = requestAnimationFrame(() => {
+        const userMessage = lastUserMessageRef.current;
+        const container = chatContainerRef.current;
+        
+        if (!userMessage || !container) return;
+        
+        // ✅ Use getBoundingClientRect for accurate position calculation
+        const messageRect = userMessage.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        const relativeTop = messageRect.top - containerRect.top;
+        const scrollTop = container.scrollTop;
+        
+        // Scroll to message position (leave 16px top spacing)
+        container.scrollTo({
+          top: scrollTop + relativeTop - 16,
+          behavior: 'smooth'
+        });
       });
+      
+      return () => cancelAnimationFrame(rafId);
     }
-  }, [displayConversation, shouldScrollToQuestion, lastUserMessageRef, chatContainerRef]);
+  }, [displayConversation, lastUserMessageRef, chatContainerRef]);
 
-  // Gemini App-like scroll effect: use requestAnimationFrame for smooth scrolling
+  // Gemini App-like scroll effect during AI response
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
 
-    if (isLoading && displayConversation.length > 0) {
-      // Use requestAnimationFrame to ensure scroll executes in next paint cycle
+    if (isLoading && shouldAutoScroll.current) {
+      isAutoScrollingRef.current = true; // ✅ Mark that we're auto-scrolling
+      
       const rafId = requestAnimationFrame(() => {
-        if (lastUserMessageRef.current) {
+        if (lastUserMessageRef.current && shouldAutoScroll.current) {
           const userMessage = lastUserMessageRef.current;
           const containerRect = container.getBoundingClientRect();
           const messageRect = userMessage.getBoundingClientRect();
@@ -62,14 +79,26 @@ export const useScrollManagement = ({
             top: container.scrollTop + relativeTop - 16,
             behavior: 'smooth'
           });
+          
+          // ✅ After scroll completes, allow manual scroll detection again
+          const scrollHandler = () => {
+            isAutoScrollingRef.current = false;
+            container.removeEventListener('scroll', scrollHandler);
+          };
+          container.addEventListener('scroll', scrollHandler, { once: true });
         }
       });
       
-      return () => cancelAnimationFrame(rafId);
+      return () => {
+        cancelAnimationFrame(rafId);
+        isAutoScrollingRef.current = false;
+      };
     }
-  }, [isLoading, chatContainerRef, lastUserMessageRef, displayConversation]);
+  }, [isLoading, chatContainerRef, lastUserMessageRef]);
 
   // Monitor scroll position to show/hide scroll buttons
+  const prevShowStateRef = useRef({ top: false, bottom: false });
+  
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
@@ -78,11 +107,19 @@ export const useScrollManagement = ({
       const { scrollTop, scrollHeight, clientHeight } = container;
       const threshold = 100; // 100px threshold
       
-      // Show "scroll to top" button when scrolled more than 100px from top
-      setShowScrollToTop(scrollTop > threshold);
+      const newShowTop = scrollTop > threshold;
+      const newShowBottom = scrollTop < scrollHeight - clientHeight - threshold;
       
-      // Show "scroll to bottom" button when scrolled more than 100px from bottom
-      setShowScrollToBottom(scrollTop < scrollHeight - clientHeight - threshold);
+      // ✅ Only update if values changed (prevent unnecessary re-renders)
+      if (newShowTop !== prevShowStateRef.current.top) {
+        setShowScrollToTop(newShowTop);
+        prevShowStateRef.current.top = newShowTop;
+      }
+      
+      if (newShowBottom !== prevShowStateRef.current.bottom) {
+        setShowScrollToBottom(newShowBottom);
+        prevShowStateRef.current.bottom = newShowBottom;
+      }
     };
 
     // Initial check
@@ -95,6 +132,71 @@ export const useScrollManagement = ({
       container.removeEventListener('scroll', handleScroll);
     };
   }, [displayConversation, chatContainerRef, setShowScrollToTop, setShowScrollToBottom]);
+
+  // Detect user manual scroll and stop auto-scroll
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleUserScroll = () => {
+      // ✅ Only disable auto-scroll if it's manual scroll (not triggered by auto-scroll)
+      if (isLoading && !isAutoScrollingRef.current) {
+        shouldAutoScroll.current = false;
+        
+        // Clear any existing timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+      }
+    };
+
+    container.addEventListener('scroll', handleUserScroll, { passive: true });
+    
+    return () => {
+      container.removeEventListener('scroll', handleUserScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [isLoading, chatContainerRef]);
+
+  // Re-enable auto-scroll only when AI message appears (not on user message)
+  useEffect(() => {
+    // Check if there's an AI message in the conversation
+    const hasAIMessage = displayConversation.some(msg => msg.role === 'model');
+    
+    // Only enable auto-scroll if AI message just appeared (transition from no AI to has AI)
+    if (hasAIMessage && !prevHasAIMessageRef.current && isLoading) {
+      shouldAutoScroll.current = true;
+    }
+    
+    // Update prev state
+    prevHasAIMessageRef.current = hasAIMessage;
+  }, [displayConversation, isLoading]);
+
+  // Restore scroll position ONLY when switching between sessions (detected via prevSessionIdRef)
+  // NOT restored during same-session updates (e.g., AI streaming responses)
+  useEffect(() => {
+    if (!currentSessionId || !chatContainerRef.current) return;
+    
+    // Only restore scroll if session actually changed (not just initial load)
+    if (prevSessionIdRef.current !== null && prevSessionIdRef.current !== currentSessionId) {
+      const storedScrollPos = localStorage.getItem(`scroll-pos-${currentSessionId}`);
+      if (storedScrollPos) {
+        const scrollPos = parseInt(storedScrollPos, 10);
+        // Use requestAnimationFrame to ensure DOM is fully rendered
+        const rafId = requestAnimationFrame(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = scrollPos;
+          }
+        });
+        return () => cancelAnimationFrame(rafId);
+      }
+    }
+    
+    // Update prev session ID for next comparison
+    prevSessionIdRef.current = currentSessionId;
+  }, [currentSessionId, chatContainerRef]);
 
   // Save scroll position on page unload
   useEffect(() => {
@@ -134,3 +236,4 @@ export const useScrollManagement = ({
     scrollToBottom,
   };
 };
+

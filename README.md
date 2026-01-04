@@ -20,6 +20,12 @@
 - **系統 Prompt 自訂**：內建預設老師 Prompt，支援新增最多 5 組自訂 Prompt，靈活切換
 - 首則系統提示：用條列、繁體中文詳細解題
 
+## 📚 文檔
+- [**規格合規性審計**](docs/SPEC_COMPLIANCE_AUDIT.md) - v1.2.0 中發現的 11 個問題的詳細分析
+- [**已應用修復清單**](docs/FIXES_APPLIED.md) - 8 個關鍵修復的完整文檔
+- [**測試失效分析與改善計畫**](docs/TEST_FAILURE_ANALYSIS.md) - 為什麼 1000+ 測試沒有抓到 bug，以及根本改善方案
+- [**測試改善執行清單**](docs/TEST_IMPROVEMENT_ROADMAP.md) - 分階段的 12 個具體行動和進度追蹤
+
 ## 環境需求
 - Node.js 18+（Next.js App Router）
 - Google Gemini API Key（可多把）

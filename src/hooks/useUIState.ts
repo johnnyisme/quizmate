@@ -15,17 +15,21 @@ type UIState = {
 };
 
 export const useUIState = () => {
-  const [uiState, setUIState] = useState<UIState>({
-    showSettings: false,
-    showSidebar: false,
-    showCamera: false,
-    previewImage: null,
-    isSelectMode: false,
-    copiedMessageIndex: null,
-    showScrollToTop: false,
-    showScrollToBottom: false,
-    showErrorSuggestion: false,
-    showTechnicalDetails: false,
+  // ✅ Initialize sidebar state from localStorage
+  const [uiState, setUIState] = useState<UIState>(() => {
+    const storedSidebarOpen = localStorage.getItem('sidebar-open');
+    return {
+      showSettings: false,
+      showSidebar: storedSidebarOpen === 'true', // Default false, use stored if available
+      showCamera: false,
+      previewImage: null,
+      isSelectMode: false,
+      copiedMessageIndex: null,
+      showScrollToTop: false,
+      showScrollToBottom: false,
+      showErrorSuggestion: false,
+      showTechnicalDetails: false,
+    };
   });
 
   const updateUIState = useCallback((updates: Partial<UIState>) => {

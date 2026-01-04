@@ -1,5 +1,5 @@
 // Chat Area component - Messages display area
-import React from 'react';
+import React, { useMemo } from 'react';
 import MessageBubble from './MessageBubble';
 import { DisplayMessage } from '@/hooks/useChatState';
 
@@ -63,14 +63,20 @@ export const ChatArea = ({
       )}
 
       <div className="space-y-4">
-        {displayConversation.map((msg, index) => {
-          const userMessageIndices = displayConversation.reduce<number[]>((acc, m, i) => {
-            if (m.role === 'user') acc.push(i);
-            return acc;
-          }, []);
-          const lastUserIndex = userMessageIndices[userMessageIndices.length - 1];
-          const isLastUserMessage = msg.role === 'user' && index === lastUserIndex;
-          const isSelected = selectedMessages.has(index);
+        {(() => {
+          // ✅ Optimize: calculate lastUserMessageIndex once using useMemo
+          const lastUserMessageIndex = useMemo(() => {
+            for (let i = displayConversation.length - 1; i >= 0; i--) {
+              if (displayConversation[i].role === 'user') {
+                return i;
+              }
+            }
+            return -1;
+          }, [displayConversation]);
+          
+          return displayConversation.map((msg, index) => {
+            const isLastUserMessage = msg.role === 'user' && index === lastUserMessageIndex;
+            const isSelected = selectedMessages.has(index);
           
           return (
             <MessageBubble
@@ -91,7 +97,8 @@ export const ChatArea = ({
               onImagePreview={onImagePreview}
             />
           );
-        })}
+        });
+        })()}
         {isLoading && (
           <div className="flex justify-start">
             <div className="max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-center gap-3">

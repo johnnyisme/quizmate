@@ -59,9 +59,11 @@ export default function PromptSettings({
 
   useEffect(() => {
     // 當 props 傳入時，深度複製一份來編輯，避免直接修改 props
+    // ✅ 同時確保 isDefault 與 selectedPromptId 同步
     const copied = JSON.parse(JSON.stringify(prompts));
-    setEditingPrompts(copied);
-    setInitialPrompts(copied);
+    const updated = copied.map((p: CustomPrompt) => ({ ...p, isDefault: p.id === selectedPromptId }));
+    setEditingPrompts(updated);
+    setInitialPrompts(JSON.parse(JSON.stringify(updated)));
     setSelectedId(selectedPromptId);
   }, [prompts, selectedPromptId]);
 

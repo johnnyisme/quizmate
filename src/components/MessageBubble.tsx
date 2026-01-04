@@ -140,7 +140,7 @@ const MessageBubble = React.memo(
           </button>
         )}
         
-        <div className="relative">
+        <div className="relative overflow-hidden">
           <div 
             ref={isLastUserMessage ? ref : null}
             onTouchStart={() => !isSelectMode && onLongPressStart(index)}
@@ -162,7 +162,7 @@ const MessageBubble = React.memo(
                 onClick={() => onImagePreview(msg.image!)}
               />
             )}
-            <div className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto" style={{ width: '100%', wordBreak: 'break-word' }}>
+            <div className="prose prose-sm max-w-none dark:prose-invert !overflow-hidden" style={{ width: '100%', wordBreak: 'break-word' }}>
               <ReactMarkdown
                 remarkPlugins={remarkPlugins}
                 rehypePlugins={rehypePlugins}

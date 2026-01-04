@@ -25,7 +25,8 @@ import { useScrollManagement } from "@/hooks/useScrollManagement";
 import { useSessionManagement } from "@/hooks/useSessionManagement";
 import { useGeminiAPI } from "@/hooks/useGeminiAPI";
 import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { Content } from '@google/generative-ai';
 
 // Lazy load Settings modal
 const Settings = dynamic(() => import("@/components/Settings"), {
@@ -119,6 +120,61 @@ export default function HomePage() {
   // Session Storage Hooks
   const { session, createNewSession, addMessages, updateTitle } = useSessionStorage(currentSessionId);
   const { sessions: sessionList, loadSessions, removeSession, performCleanup } = useSessionHistory();
+
+  // Restore last session on page load
+  useEffect(() => {
+    const storedSessionId = localStorage.getItem('current-session-id');
+    if (storedSessionId) {
+      setCurrentSessionId(storedSessionId);
+    }
+    // ✅ 初始化時載入所有 sessions，讓側邊欄顯示對話列表
+    loadSessions();
+  }, [loadSessions]);
+
+  // Sync session data to UI state when session changes
+  useEffect(() => {
+    if (!session) {
+      // No session - keep current conversation (for new chat)
+      return;
+    }
+
+    // Convert DB messages to display format
+    const displayMessages = session.messages.map(msg => ({
+      role: msg.role as "user" | "model",
+      text: msg.content,
+      image: msg.imageBase64,
+    }));
+    chatState.setDisplayConversation(displayMessages);
+
+    // Convert DB messages to API format
+    const apiMessages: Content[] = [];
+    for (const msg of session.messages) {
+      if (msg.role === 'user') {
+        const parts: any[] = [];
+        // Add image if exists
+        if (msg.imageBase64) {
+          // Extract base64 data from data URI
+          const base64Match = msg.imageBase64.match(/^data:([^;]+);base64,(.+)$/);
+          if (base64Match) {
+            const mimeType = base64Match[1];
+            const base64Data = base64Match[2];
+            parts.push({
+              inlineData: {
+                data: base64Data,
+                mimeType: mimeType,
+              },
+            });
+          }
+        }
+        // Add text
+        parts.push({ text: msg.content });
+        apiMessages.push({ role: 'user', parts });
+      } else {
+        apiMessages.push({ role: 'model', parts: [{ text: msg.content }] });
+      }
+    }
+    chatState.setApiHistory(apiMessages);
+  }, [session]);
 
   // Session Management Hook
   const {
