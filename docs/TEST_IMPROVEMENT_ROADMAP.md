@@ -119,19 +119,19 @@
 
 ---
 
-## Phase 3: 測試工具改進 (待開始)
+## Phase 3: 測試工具改進 ✅ (已完成)
 
 ### Week 3 (2026-01-18 ~ 2026-01-24)
 
-- [ ] **Action 3.1**: 建立測試 helpers
-  - [ ] `src/__tests__/helpers/testHooks.ts`
-  - [ ] `src/__tests__/helpers/integrationSetup.ts`
-  - [ ] `src/__tests__/helpers/renderWithProviders.tsx`
+- [x] **Action 3.1**: 建立測試 helpers ✅
+  - [x] `src/__tests__/helpers/testHooks.ts` (220 lines)
+  - [x] `src/__tests__/helpers/integrationSetup.ts` (included in testHooks)
+  - [x] `src/__tests__/helpers/renderWithProviders.tsx` (280 lines)
 
-- [ ] **Action 3.2**: 建立 mock 工廠
-  - [ ] `src/__tests__/factories/messageFactory.ts`
-  - [ ] `src/__tests__/factories/sessionFactory.ts`
-  - [ ] `src/__tests__/factories/promptFactory.ts`
+- [x] **Action 3.2**: 建立 mock 工廠 ✅
+  - [x] `src/__tests__/factories/messageFactory.ts` (148 lines)
+  - [x] `src/__tests__/factories/sessionFactory.ts` (158 lines)
+  - [x] `src/__tests__/factories/promptFactory.ts` (150 lines)
 
 - [ ] **Action 3.3**: E2E 基類設置
   - [ ] `e2e/helpers/appPageObject.ts`
@@ -139,7 +139,46 @@
 
 ---
 
-## Phase 4: 逐個補充測試 (進行中)
+## Phase 4: Coverage Validation & Gap Filling 🔄 (進行中)
+
+### 目標: 達到 70% 測試覆蓋率
+
+**當前進度**: 68.17% / 70% (差 1.83%) 📊
+
+**Phase 4.1 完成** ✅ (2026-01-05):
+- [x] 運行覆蓋率分析 (基線: 60.93%)
+- [x] 識別低覆蓋文件 (lib: 39.95%, utils: 17.11%, components: 59.86%)
+- [x] 創建 3 個單元測試文件 (65 個測試):
+  - `fileUtils.test.ts`: 20/20 通過 (utils coverage 45.94% → 94.59% ✅)
+  - `errorHandling.test.ts`: 28/28 通過 (utils coverage 2.7% → 100% ✅)
+  - `useSessionStorage.test.ts`: 17/17 通過 (lib coverage 0% → 89.26% ✅)
+
+**當前覆蓋率詳情** (2026-01-05 測試後):
+- **utils/**: 98.19% ✅ (fileUtils: 94.59%, errorHandling: 100%)
+- **lib/**: 78.24% ✅ (db: 100%, useSessionStorage: 89.26%)
+- **hooks/**: 72.52% ✅ (已超過目標)
+- **components/**: 59.86% ⚠️ (需提升 10.14% 達到 70%)
+
+**Phase 4.2 進行中** 🔄:
+- [ ] 修復 lib 中的 0% 文件:
+  - `lib/useAsyncState.ts`: 0% (27 lines) - 高優先級
+  - `lib/useTheme.ts`: 0% (55 lines) - ⚠️ 疑似重複文件 (hooks/useTheme.ts 已 100%)
+- [ ] 提升 components 覆蓋率 (當前 59.86%):
+  - `ThemeProvider.tsx`: 0% (33 lines)
+  - `ApiKeySetup.tsx`: 43.27%
+  - `CameraModal.tsx`: 39.58%
+  - `ImagePreviewModal.tsx`: 25.64%
+  - `SelectionToolbar.tsx`: 22.44%
+  - `SessionList.tsx`: 38.93%
+
+**下一步行動**:
+1. 創建 `useAsyncState.test.ts` (~10 tests)
+2. 調查並清理 `lib/useTheme.ts` 重複文件
+3. 創建關鍵組件測試以提升 components/ 覆蓋率
+
+---
+
+## Phase 5: 逐個補充測試 (待開始)
 
 ### 優先級 1 - 關鍵路徑 (2026-01-25 ~ 2026-02-07)
 
