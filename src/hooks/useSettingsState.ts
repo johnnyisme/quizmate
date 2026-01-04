@@ -39,8 +39,11 @@ export const useSettingsState = () => {
   const setSelectedPromptId = useCallback((id: string) => updateSettingsState({ selectedPromptId: id }), [updateSettingsState]);
   const setIsDark = useCallback((dark: boolean) => updateSettingsState({ isDark: dark }), [updateSettingsState]);
 
-  // Initialize from localStorage
+  // Initialize from localStorage (client-side only)
   useEffect(() => {
+    // Check if we're on the client side
+    if (typeof window === 'undefined') return;
+
     const storedKeys = localStorage.getItem("gemini-api-keys");
     if (storedKeys) {
       try {

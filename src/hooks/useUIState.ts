@@ -15,9 +15,10 @@ type UIState = {
 };
 
 export const useUIState = () => {
-  // ✅ Initialize sidebar state from localStorage
+  // ✅ Initialize sidebar state from localStorage (client-side only)
   const [uiState, setUIState] = useState<UIState>(() => {
-    const storedSidebarOpen = localStorage.getItem('sidebar-open');
+    // Check if we're on the client side (localStorage is only available in browser)
+    const storedSidebarOpen = typeof window !== 'undefined' ? localStorage.getItem('sidebar-open') : null;
     return {
       showSettings: false,
       showSidebar: storedSidebarOpen === 'true', // Default false, use stored if available
