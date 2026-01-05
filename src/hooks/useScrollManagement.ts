@@ -29,6 +29,7 @@ export const useScrollManagement = ({
   const prevSessionIdRef = useRef<string | null>(null);
   const prevHasAIMessageRef = useRef<boolean>(false);
   const isAutoScrollingRef = useRef<boolean>(false); // ✅ Track if we're currently auto-scrolling
+  const hasRestoredScrollRef = useRef<boolean>(false); // ✅ Track if scroll has been restored for current session
 
   // Auto-scroll to new question
   useEffect(() => {
@@ -179,28 +180,39 @@ export const useScrollManagement = ({
   useEffect(() => {
     if (!currentSessionId || !chatContainerRef.current) return;
     
-    // Wait for conversation data to load before restoring scroll
-    if (displayConversation.length === 0) return;
+    // Check if this is a new session (either initial load or session switch)
+    const isSessionChange = prevSessionIdRef.current === null || prevSessionIdRef.current !== currentSessionId;
     
-    // Restore scroll if:
-    // 1. Initial load (prevSessionIdRef === null)
-    // 2. Session actually changed (prevSessionIdRef !== currentSessionId)
-    if (prevSessionIdRef.current === null || prevSessionIdRef.current !== currentSessionId) {
-      const storedScrollPos = localStorage.getItem(`scroll-pos-${currentSessionId}`);
-      console.log('Session changed, stored position:', storedScrollPos, 'Session:', currentSessionId);
+    if (isSessionChange) {
+      // Wait for conversation data to load
+      if (displayConversation.length === 0) {
+        hasRestoredScrollRef.current = false; // Reset flag, wait for data
+        return;
+      }
       
-      if (storedScrollPos) {
-        const scrollPos = parseInt(storedScrollPos, 10);
-        const container = chatContainerRef.current;
+      // Only restore once per session
+      if (!hasRestoredScrollRef.current) {
+        const storedScrollPos = localStorage.getItem(`scroll-pos-${currentSessionId}`);
+        console.log('Session changed, stored position:', storedScrollPos, 'Session:', currentSessionId);
         
-        console.log('Before scroll - scrollTop:', container.scrollTop, 'scrollHeight:', container.scrollHeight);
+        if (storedScrollPos) {
+          const scrollPos = parseInt(storedScrollPos, 10);
+          const container = chatContainerRef.current;
+          
+          console.log('Before scroll - scrollTop:', container.scrollTop, 'scrollHeight:', container.scrollHeight);
+          
+          // Use requestAnimationFrame to ensure DOM is ready
+          requestAnimationFrame(() => {
+            // Try multiple methods for iOS compatibility
+            container.scrollTop = scrollPos;
+            container.scrollTo(0, scrollPos);
+            container.scrollTo({ top: scrollPos, behavior: 'auto' });
+            
+            console.log('After scroll - scrollTop:', container.scrollTop, 'Target was:', scrollPos);
+          });
+        }
         
-        // Try multiple methods for iOS compatibility
-        container.scrollTop = scrollPos;
-        container.scrollTo(0, scrollPos);
-        container.scrollTo({ top: scrollPos, behavior: 'auto' });
-        
-        console.log('After scroll - scrollTop:', container.scrollTop, 'Target was:', scrollPos);
+        hasRestoredScrollRef.current = true; // Mark as restored
       }
       
       // Update prev session ID
