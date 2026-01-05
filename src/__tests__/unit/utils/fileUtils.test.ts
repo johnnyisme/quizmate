@@ -28,10 +28,13 @@ describe('fileUtils', () => {
       // Create a mock FileReader that fails
       const originalFileReader = global.FileReader;
       global.FileReader = class MockFileReader {
+        onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
         readAsDataURL() {
           setTimeout(() => {
             if (this.onerror) {
-              this.onerror(new Error('Read error'));
+              const event = new ProgressEvent('error', { bubbles: false, cancelable: false });
+              // event.target is readonly in JSDOM; just invoke handler with event
+              (this.onerror as any)(event);
             }
           }, 0);
         }

@@ -145,11 +145,6 @@ export function useSessionHistory() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load sessions on mount
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
   const loadSessions = useCallback(async () => {
     try {
       setLoading(true);
@@ -164,6 +159,11 @@ export function useSessionHistory() {
       setLoading(false);
     }
   }, []);
+
+  // Load sessions on mount
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   // Delete session and refresh list
   const removeSession = useCallback(

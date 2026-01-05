@@ -178,7 +178,7 @@ describe('Error Close Button', () => {
         message: "測試錯誤",
         suggestion: "測試建議"
       };
-      let showErrorSuggestion = true;
+      const showErrorSuggestion = true;
       
       // 點擊關閉按鈕
       error = null;

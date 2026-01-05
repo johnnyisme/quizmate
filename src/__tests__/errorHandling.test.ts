@@ -4,8 +4,13 @@
 import { describe, it, expect } from 'vitest';
 
 // 複製 getFriendlyErrorMessage 函數邏輯用於測試
-const getFriendlyErrorMessage = (error: any): { message: string; suggestion: string } => {
-  const errorStr = error?.message || JSON.stringify(error) || '';
+const getFriendlyErrorMessage = (error: unknown): { message: string; suggestion: string } => {
+  const errorStr =
+    (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message?: string }).message === 'string'
+      ? (error as { message?: string }).message
+      : '')
+    || JSON.stringify(error) 
+    || '';
   
   // 429 - 配額用完
   if (errorStr.includes("429") || errorStr.toLowerCase().includes("quota") || errorStr.toLowerCase().includes("resource_exhausted")) {

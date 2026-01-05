@@ -1,5 +1,6 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
+import { vi } from 'vitest';
 
 /**
  * Render with Providers - Test utility for rendering components with context
@@ -19,17 +20,17 @@ export const mockUIState = {
   showScrollToBottom: false,
   showErrorSuggestion: false,
   showTechnicalDetails: false,
-  setShowSettings: jest.fn(),
-  setShowSidebar: jest.fn(),
-  setShowCamera: jest.fn(),
-  setPreviewImage: jest.fn(),
-  setIsSelectMode: jest.fn(),
-  setCopiedMessageIndex: jest.fn(),
-  setShowScrollToTop: jest.fn(),
-  setShowScrollToBottom: jest.fn(),
-  setShowErrorSuggestion: jest.fn(),
-  setShowTechnicalDetails: jest.fn(),
-  updateUIState: jest.fn(),
+  setShowSettings: vi.fn(),
+  setShowSidebar: vi.fn(),
+  setShowCamera: vi.fn(),
+  setPreviewImage: vi.fn(),
+  setIsSelectMode: vi.fn(),
+  setCopiedMessageIndex: vi.fn(),
+  setShowScrollToTop: vi.fn(),
+  setShowScrollToBottom: vi.fn(),
+  setShowErrorSuggestion: vi.fn(),
+  setShowTechnicalDetails: vi.fn(),
+  updateUIState: vi.fn(),
 };
 
 export const mockSettingsState = {
@@ -47,14 +48,14 @@ export const mockSettingsState = {
   ],
   selectedPromptId: 'default',
   isDark: false,
-  setApiKeys: jest.fn(),
-  setCurrentKeyIndex: jest.fn(),
-  setSelectedModel: jest.fn(),
-  setThinkingMode: jest.fn(),
-  setPrompts: jest.fn(),
-  setSelectedPromptId: jest.fn(),
-  setIsDark: jest.fn(),
-  updateSettingsState: jest.fn(),
+  setApiKeys: vi.fn(),
+  setCurrentKeyIndex: vi.fn(),
+  setSelectedModel: vi.fn(),
+  setThinkingMode: vi.fn(),
+  setPrompts: vi.fn(),
+  setSelectedPromptId: vi.fn(),
+  setIsDark: vi.fn(),
+  updateSettingsState: vi.fn(),
 };
 
 export const mockChatState = {
@@ -63,32 +64,32 @@ export const mockChatState = {
   currentPrompt: '',
   isLoading: false,
   error: null,
-  setDisplayConversation: jest.fn(),
-  setApiHistory: jest.fn(),
-  setCurrentPrompt: jest.fn(),
-  setIsLoading: jest.fn(),
-  setError: jest.fn(),
-  updateChatState: jest.fn(),
+  setDisplayConversation: vi.fn(),
+  setApiHistory: vi.fn(),
+  setCurrentPrompt: vi.fn(),
+  setIsLoading: vi.fn(),
+  setError: vi.fn(),
+  updateChatState: vi.fn(),
 };
 
 export const mockImageState = {
   image: null,
   imageUrl: '',
   cameraStream: null,
-  setImage: jest.fn(),
-  setImageUrl: jest.fn(),
-  setCameraStream: jest.fn(),
-  updateImageState: jest.fn(),
+  setImage: vi.fn(),
+  setImageUrl: vi.fn(),
+  setCameraStream: vi.fn(),
+  updateImageState: vi.fn(),
 };
 
 export const mockSelectionState = {
   selectedMessages: new Set(),
   editingSessionId: null,
   editingTitle: '',
-  setSelectedMessages: jest.fn(),
-  setEditingSessionId: jest.fn(),
-  setEditingTitle: jest.fn(),
-  updateSelectionState: jest.fn(),
+  setSelectedMessages: vi.fn(),
+  setEditingSessionId: vi.fn(),
+  setEditingTitle: vi.fn(),
+  updateSelectionState: vi.fn(),
 };
 
 /**
@@ -160,16 +161,12 @@ export function MockProvider({
   children,
   overrides,
 }: {
-  children: ReactElement;
+  children: React.ReactNode;
   overrides?: ReturnType<typeof createMockProvider>;
 }) {
   const mockContext = overrides || createMockProvider();
 
-  return React.createElement(
-    React.Fragment,
-    null,
-    children
-  );
+  return <>{children}</>;
 }
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -202,16 +199,16 @@ export function renderWithProviders(
     selectionState,
   });
 
-  function Wrapper({ children }: { children: ReactElement }) {
-    return React.createElement(
-      MockProvider,
-      { overrides: mockContext },
-      children
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <MockProvider overrides={mockContext}>
+        {children}
+      </MockProvider>
     );
   }
 
   return {
-    ...render(ui, { wrapper: Wrapper, ...renderOptions }),
+    ...render(ui, { wrapper: Wrapper as React.ComponentType<{ children: React.ReactNode }>, ...renderOptions }),
     mockContext,
     resetMocks: resetAllMocks,
   };
@@ -244,15 +241,15 @@ export function setupTestEnvironment() {
 
   // Mock window.matchMedia
   Object.defineProperty(global, 'matchMedia', {
-    value: jest.fn((query: string) => ({
+    value: vi.fn((query: string) => ({
       matches: false,
       media: query,
       onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     })),
   });
 
@@ -275,11 +272,11 @@ export function cleanupTestEnvironment() {
 export function createComponentTestWrapper(
   defaultState?: RenderWithProvidersOptions
 ) {
-  return function Wrapper({ children }: { children: ReactElement }) {
-    return React.createElement(
-      MockProvider,
-      { overrides: createMockProvider(defaultState) },
-      children
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <MockProvider overrides={createMockProvider(defaultState)}>
+        {children}
+      </MockProvider>
     );
   };
 }
@@ -288,7 +285,7 @@ export function createComponentTestWrapper(
  * Assert mock function called with arguments
  */
 export function assertMockCalled(
-  mockFn: jest.Mock,
+  mockFn: ReturnType<typeof vi.fn>,
   expectedCalls: any[][],
   message?: string
 ): void {
@@ -312,7 +309,7 @@ export function assertMockCalled(
  * Wait for mock to be called
  */
 export async function waitForMockCall(
-  mockFn: jest.Mock,
+  mockFn: ReturnType<typeof vi.fn>,
   timeout: number = 1000
 ): Promise<void> {
   const startTime = Date.now();
@@ -328,7 +325,7 @@ export async function waitForMockCall(
 /**
  * Get latest mock call
  */
-export function getLatestMockCall<T = any>(mockFn: jest.Mock): T[] | undefined {
+export function getLatestMockCall<T = any>(mockFn: ReturnType<typeof vi.fn>): T[] | undefined {
   const calls = mockFn.mock.calls;
   return calls.length > 0 ? calls[calls.length - 1] : undefined;
 }

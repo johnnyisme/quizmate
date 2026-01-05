@@ -21,7 +21,7 @@ export const useMessageActions = ({
   setSelectedMessages,
   setError,
 }: MessageActionsProps) => {
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Copy message content
   const handleCopyMessage = useCallback(async (text: string, index: number) => {
@@ -71,7 +71,7 @@ export const useMessageActions = ({
 
   const handleLongPressEnd = useCallback(() => {
     if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
+      clearTimeout(longPressTimer.current as ReturnType<typeof setTimeout>);
       longPressTimer.current = null;
     }
   }, []);

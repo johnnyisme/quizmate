@@ -17,10 +17,10 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock URL.createObjectURL and revokeObjectURL (not available in jsdom)
-global.URL.createObjectURL = (blob: Blob | MediaSource) => {
+global.URL.createObjectURL = (_blob: Blob | MediaSource) => {
   return `blob:${Math.random().toString(36).substring(7)}`;
 };
 
-global.URL.revokeObjectURL = (url: string) => {
+global.URL.revokeObjectURL = (_url: string) => {
   // No-op in test environment
 };

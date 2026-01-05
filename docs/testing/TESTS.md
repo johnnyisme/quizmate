@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,085 個測試** (984 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
+本專案目前包含約 **1,222 個測試**（以最近一次完整執行為準），涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。（分類數量會隨功能演進略有變動）
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,085 tests (984 unit + 95 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 8.8% (95/1085)
+- **測試總數**: 約 1,222 tests（最近一次完整執行）
+- **整合測試覆蓋率**: 依最新覆蓋率報告為準
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -297,6 +297,12 @@ npm run test -- --coverage  # 查看覆蓋率報告
 ### E2E 測試
 ```bash
 npm run test:e2e      # 執行 Playwright E2E 測試（4 tests）
+
+---
+
+### 變更紀錄（2026-01-05）
+- 更新統計：以最近一次測試執行結果為準（約 1,222 tests）
+- 移除備份測試檔：`src/__tests__/multiImageUpload.test.tsx.backup`
 ```
 
 ### CI/CD

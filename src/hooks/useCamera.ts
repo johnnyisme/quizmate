@@ -1,5 +1,5 @@
 // Custom hook for camera functionality
-import { useCallback, RefObject } from 'react';
+import { useCallback, RefObject, ChangeEvent } from 'react';
 
 type CameraHookProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -38,7 +38,7 @@ export const useCamera = ({
   };
 
   // Handle image file selection
-  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       

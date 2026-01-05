@@ -25,7 +25,7 @@ export const useScrollManagement = ({
 
   // Track whether auto-scroll should be enabled (disable when user manually scrolls)
   const shouldAutoScroll = useRef<boolean>(true);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSessionIdRef = useRef<string | null>(null);
   const prevHasAIMessageRef = useRef<boolean>(false);
   const isAutoScrollingRef = useRef<boolean>(false); // ✅ Track if we're currently auto-scrolling
@@ -145,7 +145,7 @@ export const useScrollManagement = ({
         
         // Clear any existing timeout
         if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
+          clearTimeout(scrollTimeoutRef.current as ReturnType<typeof setTimeout>);
         }
       }
     };
@@ -155,7 +155,7 @@ export const useScrollManagement = ({
     return () => {
       container.removeEventListener('scroll', handleUserScroll);
       if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+        clearTimeout(scrollTimeoutRef.current as ReturnType<typeof setTimeout>);
       }
     };
   }, [isLoading, chatContainerRef]);

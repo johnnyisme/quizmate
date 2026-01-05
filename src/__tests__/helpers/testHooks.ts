@@ -1,5 +1,6 @@
 import { renderHook, act, RenderHookResult } from '@testing-library/react';
 import React from 'react';
+import { vi } from 'vitest';
 
 /**
  * Test Hooks Helpers - Reusable utilities for hook testing
@@ -127,13 +128,13 @@ export function restoreLocalStorage() {
  */
 export function createMockDocument() {
   return {
-    getElementById: jest.fn(),
-    createElement: jest.fn(() => ({
-      appendChild: jest.fn(),
-      removeChild: jest.fn(),
+    getElementById: vi.fn(),
+    createElement: vi.fn(() => ({
+      appendChild: vi.fn(),
+      removeChild: vi.fn(),
     })),
-    querySelector: jest.fn(),
-    querySelectorAll: jest.fn(() => []),
+    querySelector: vi.fn(),
+    querySelectorAll: vi.fn(() => []),
   };
 }
 
@@ -176,7 +177,7 @@ export function batchHookUpdates(updates: Array<() => void>): void {
 /**
  * Create mock ref
  */
-export function createMockRef<T = any>(initialValue: T = null) {
+export function createMockRef<T>(initialValue?: T) {
   return React.createRef<T>();
 }
 
@@ -191,8 +192,8 @@ export function testEffectCleanup(
   const originalSetInterval = global.setInterval;
   const originalSetTimeout = global.setTimeout;
 
-  global.setInterval = jest.fn(originalSetInterval);
-  global.setTimeout = jest.fn(originalSetTimeout);
+  (global as any).setInterval = vi.fn();
+  (global as any).setTimeout = vi.fn();
 
   const { unmount } = renderHook(() => {
     React.useEffect(() => {
@@ -219,18 +220,18 @@ export function mockWindow(properties: Record<string, any> = {}) {
   const windowMock = {
     innerWidth: 1024,
     innerHeight: 768,
-    matchMedia: jest.fn((query: string) => ({
+    matchMedia: vi.fn((query: string) => ({
       matches: false,
       media: query,
       onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     })),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
     ...properties,
   };
 
