@@ -41,7 +41,7 @@ export const ChatArea = ({
   onImagePreview,
 }: ChatAreaProps) => {
   return (
-    <div ref={chatContainerRef} className="flex-1 p-4 pb-[180px] overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'contain' }}>
+    <div ref={chatContainerRef} className="flex-1 p-4 pb-6 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'contain' }}>
       {displayConversation.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
           <div
