@@ -15,6 +15,8 @@ type SessionManagementProps = {
   setEditingSessionId: (id: string | null) => void;
   setEditingTitle: (title: string) => void;
   editingContainerRef: RefObject<HTMLDivElement | null>;
+  setDisplayConversation: (conv: any) => void;
+  setApiHistory: (hist: any) => void;
 };
 
 export const useSessionManagement = ({
@@ -31,6 +33,8 @@ export const useSessionManagement = ({
   setEditingSessionId,
   setEditingTitle,
   editingContainerRef,
+  setDisplayConversation,
+  setApiHistory,
 }: SessionManagementProps) => {
 
   // Start new conversation
@@ -38,6 +42,9 @@ export const useSessionManagement = ({
     setImage(null);
     setImageUrl("");
     setCurrentSessionId(null);
+    // Clear conversation
+    setDisplayConversation([]);
+    setApiHistory([]);
     // Clear stored session ID
     localStorage.removeItem('current-session-id');
     // Close sidebar on mobile only
@@ -45,7 +52,7 @@ export const useSessionManagement = ({
       setShowSidebar(false);
       localStorage.setItem('sidebar-open', 'false');
     }
-  }, [setImage, setImageUrl, setCurrentSessionId, setShowSidebar]);
+  }, [setImage, setImageUrl, setCurrentSessionId, setDisplayConversation, setApiHistory, setShowSidebar]);
 
   // Switch to existing session
   const handleSwitchSession = useCallback((sessionId: string) => {

@@ -179,24 +179,34 @@ export const useScrollManagement = ({
   useEffect(() => {
     if (!currentSessionId || !chatContainerRef.current) return;
     
-    // Only restore scroll if session actually changed (not just initial load)
-    if (prevSessionIdRef.current !== null && prevSessionIdRef.current !== currentSessionId) {
+    // Wait for conversation data to load before restoring scroll
+    if (displayConversation.length === 0) return;
+    
+    // Restore scroll if:
+    // 1. Initial load (prevSessionIdRef === null)
+    // 2. Session actually changed (prevSessionIdRef !== currentSessionId)
+    if (prevSessionIdRef.current === null || prevSessionIdRef.current !== currentSessionId) {
       const storedScrollPos = localStorage.getItem(`scroll-pos-${currentSessionId}`);
+      console.log('Session changed, stored position:', storedScrollPos, 'Session:', currentSessionId);
+      
       if (storedScrollPos) {
         const scrollPos = parseInt(storedScrollPos, 10);
-        // Use requestAnimationFrame to ensure DOM is fully rendered
-        const rafId = requestAnimationFrame(() => {
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = scrollPos;
-          }
-        });
-        return () => cancelAnimationFrame(rafId);
+        const container = chatContainerRef.current;
+        
+        console.log('Before scroll - scrollTop:', container.scrollTop, 'scrollHeight:', container.scrollHeight);
+        
+        // Try multiple methods for iOS compatibility
+        container.scrollTop = scrollPos;
+        container.scrollTo(0, scrollPos);
+        container.scrollTo({ top: scrollPos, behavior: 'auto' });
+        
+        console.log('After scroll - scrollTop:', container.scrollTop, 'Target was:', scrollPos);
       }
+      
+      // Update prev session ID
+      prevSessionIdRef.current = currentSessionId;
     }
-    
-    // Update prev session ID for next comparison
-    prevSessionIdRef.current = currentSessionId;
-  }, [currentSessionId, chatContainerRef]);
+  }, [currentSessionId, chatContainerRef, displayConversation]);
 
   // Save scroll position on page unload
   useEffect(() => {

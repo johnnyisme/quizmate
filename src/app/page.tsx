@@ -41,6 +41,7 @@ export default function HomePage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
   const errorSuggestionRef = useRef<HTMLDivElement>(null);
   const errorTechnicalRef = useRef<HTMLDivElement>(null);
   const editingContainerRef = useRef<HTMLDivElement>(null);
@@ -196,6 +197,8 @@ export default function HomePage() {
     setEditingTitle: selectionState.setEditingTitle,
     editingTitle: selectionState.editingTitle,
     editingSessionId: selectionState.editingSessionId,
+    setDisplayConversation: chatState.setDisplayConversation,
+    setApiHistory: chatState.setApiHistory,
     updateTitle,
     loadSessions,
     removeSession,
@@ -384,7 +387,14 @@ export default function HomePage() {
 
               {/* Input Area */}
               {!uiState.isSelectMode && (
-                <div className="sticky bottom-0 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 z-10">
+                <div 
+                  ref={inputContainerRef}
+                  className="border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 z-10"
+                  style={{
+                    position: 'sticky',
+                    bottom: 0,
+                  }}
+                >
                   {/* Image Preview */}
                   {imageState.imageUrl && chatState.displayConversation.length > 0 && (
                     <div className="px-4 pt-3 pb-2">

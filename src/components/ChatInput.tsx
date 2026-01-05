@@ -93,7 +93,7 @@ export const ChatInput = React.memo<ChatInputProps>(({
         placeholder={hasHistory ? "進行追問..." : "輸入問題或上傳圖片"}
         rows={1}
         disabled={disabled}
-        className="flex-1 min-w-0 px-3 py-1.5 text-sm border dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow resize-none overflow-y-auto leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex-1 min-w-0 px-3 py-1.5 text-base border dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow resize-none overflow-y-auto leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ minHeight: '36px', maxHeight: '66px' }}
       />
       <button
