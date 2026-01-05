@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,085 個測試** (984 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證和工具函數。
+本專案包含 **1,266 個測試** (1,165 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,46 +8,51 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,085 tests (984 unit + 95 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 8.8% (95/1085)
+- **測試總數**: 1,266 tests (1,165 unit + 95 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 7.5% (95/1266)
 - **整體測試覆蓋率**: ~92%
 
 ---
 
 ## 📋 測試文件總覽
 
+### Bug 修復驗證測試 (44 tests) ⭐ NEW
+1. **`src/__tests__/newChatBehavior.test.ts`** (15 tests) - 新對話狀態清除、側邊欄響應式行為
+2. **`src/__tests__/scrollPositionBugs.test.ts`** (14 tests) - 滾動位置恢復、自動滾動依賴、手動滾動檢測
+3. **`src/__tests__/uiStateBugs.test.ts`** (15 tests) - loadSessions 調用、側邊欄持久化、useMemo 優化
+
 ### 整合測試 - DOM 渲染與交互驗證 (95 tests) ⭐ NEW
-1. **`src/__tests__/errorHandling.integration.test.tsx`** (19 tests) - 錯誤 UI 展開/收起/滾動
-2. **`src/__tests__/scrollFeatures.integration.test.tsx`** (17 tests) - 滾動到問題、智慧按鈕、位置記憶
-3. **`src/__tests__/sessionUI.integration.test.tsx`** (22 tests) - 標題編輯、hover 按鈕、時間格式
-4. **`src/__tests__/messageInteraction.integration.test.tsx`** (18 tests) - 複製按鈕、分享選取、桌面分享
-5. **`src/__tests__/inputAndUI.integration.test.tsx`** (14 tests) - 輸入框自動增長、主題切換、側邊欄動畫
+4. **`src/__tests__/errorHandling.integration.test.tsx`** (19 tests) - 錯誤 UI 展開/收起/滾動
+5. **`src/__tests__/scrollFeatures.integration.test.tsx`** (17 tests) - 滾動到問題、智慧按鈕、位置記憶
+6. **`src/__tests__/sessionUI.integration.test.tsx`** (22 tests) - 標題編輯、hover 按鈕、時間格式
+7. **`src/__tests__/messageInteraction.integration.test.tsx`** (18 tests) - 複製按鈕、分享選取、桌面分享
+8. **`src/__tests__/inputAndUI.integration.test.tsx`** (14 tests) - 輸入框自動增長、主題切換、側邊欄動畫
 
 ### 核心頁面邏輯 (42 tests)
-6. **`src/__tests__/page.test.ts`** - 前端主介面、Gemini API 整合、對話管理
+9. **`src/__tests__/page.test.ts`** - 前端主介面、Gemini API 整合、對話管理
 
 ### React 組件測試 (162 tests)
-7. **`src/__tests__/messageBubbleRef.test.tsx`** (5 tests) ⭐ NEW - MessageBubble ref forwarding
-8. **`src/components/__tests__/ApiKeySetup.test.tsx`** (33 tests) - API Key 管理介面
-9. **`src/components/__tests__/Settings.test.tsx`** (41 tests) - Settings 模態視窗與 Tab
-10. **`src/components/__tests__/PromptSettings.test.tsx`** (16 tests) - System Prompt 自訂
-11. **`src/components/__tests__/PromptSettings.button.test.tsx`** (23 tests) - Prompt 按鈕邏輯
-12. **`src/lib/__tests__/useAsyncState.test.ts`** (44 tests) - 非同步狀態管理 hook
+10. **`src/__tests__/messageBubbleRef.test.tsx`** (5 tests) ⭐ NEW - MessageBubble ref forwarding
+11. **`src/components/__tests__/ApiKeySetup.test.tsx`** (33 tests) - API Key 管理介面
+12. **`src/components/__tests__/Settings.test.tsx`** (41 tests) - Settings 模態視窗與 Tab
+13. **`src/components/__tests__/PromptSettings.test.tsx`** (16 tests) - System Prompt 自訂
+14. **`src/components/__tests__/PromptSettings.button.test.tsx`** (23 tests) - Prompt 按鈕邏輯
+15. **`src/lib/__tests__/useAsyncState.test.ts`** (44 tests) - 非同步狀態管理 hook
 
 ### UI/UX 交互測試 (518 tests)
-13. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
-14. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
-15. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
-16. **`src/__tests__/errorCloseButton.test.ts`** (22 tests) - 錯誤訊息關閉按鈕
-17. **`src/__tests__/inputAutoGrow.test.ts`** (21 tests) - 輸入框自動高度
-18. **`src/__tests__/scrollButtons.test.ts`** (31 tests) - 快速滾動按鈕
-19. **`src/__tests__/smartScrollButtons.test.ts`** (23 tests) - 智慧滾動按鈕可見性
-20. **`src/__tests__/scrollToQuestion.test.ts`** (16 tests) - 滾動到問題位置
-21. **`src/__tests__/scrollAfterResponse.test.ts`** (23 tests) ⭐ NEW - AI 回應後滾動行為
-22. **`src/__tests__/enterKeyBehavior.test.ts`** (125 tests) ⭐ NEW - Enter 鍵換行行為
-23. **`src/__tests__/sessionTitleEdit.test.ts`** (24 tests) - 對話標題編輯
-24. **`src/__tests__/sessionTimeFormat.test.ts`** (12 tests) - 對話時間格式
-25. **`src/__tests__/sessionPersistence.test.ts`** (21 tests) - Session 持久化
+16. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
+17. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
+18. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
+19. **`src/__tests__/errorCloseButton.test.ts`** (22 tests) - 錯誤訊息關閉按鈕
+20. **`src/__tests__/inputAutoGrow.test.ts`** (21 tests) - 輸入框自動高度
+21. **`src/__tests__/scrollButtons.test.ts`** (31 tests) - 快速滾動按鈕
+22. **`src/__tests__/smartScrollButtons.test.ts`** (23 tests) - 智慧滾動按鈕可見性
+23. **`src/__tests__/scrollToQuestion.test.ts`** (16 tests) - 滾動到問題位置
+24. **`src/__tests__/scrollAfterResponse.test.ts`** (23 tests) ⭐ NEW - AI 回應後滾動行為
+25. **`src/__tests__/enterKeyBehavior.test.ts`** (125 tests) ⭐ NEW - Enter 鍵換行行為
+26. **`src/__tests__/sessionTitleEdit.test.ts`** (24 tests) - 對話標題編輯
+27. **`src/__tests__/sessionTimeFormat.test.ts`** (12 tests) - 對話時間格式
+28. **`src/__tests__/sessionPersistence.test.ts`** (21 tests) - Session 持久化
 26. **`src/__tests__/sessionHoverButtons.test.ts`** (22 tests) - Session hover 按鈕
 27. **`src/__tests__/sidebarToggle.test.ts`** (30 tests) - 側邊欄開關
 28. **`src/__tests__/sidebarPersistence.test.ts`** (10 tests) - 側邊欄狀態持久化
