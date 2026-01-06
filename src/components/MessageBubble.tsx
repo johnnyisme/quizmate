@@ -50,20 +50,37 @@ const MessageBubble = React.memo(
   // Memoize rehype plugins configuration
   const rehypePlugins = useMemo(() => [
     rehypeRaw,
+    rehypeKatex,
     [rehypeSanitize, {
       ...defaultSchema,
       attributes: {
         ...defaultSchema.attributes,
-        '*': ['className', 'style'],
-        span: ['className', 'style'],
+        '*': ['className', 'style', 'aria-hidden'],
+        span: ['className', 'style', 'aria-hidden'],
         div: ['className', 'style'],
+        // KaTeX specific attributes
+        annotation: ['encoding'],
+        semantics: [],
+        mrow: [],
+        mi: ['mathvariant'],
+        mo: ['stretchy', 'fence', 'separator', 'lspace', 'rspace'],
+        mn: [],
+        mspace: ['width'],
+        mtext: [],
+        msup: [],
+        msub: [],
+        mfrac: ['linethickness'],
+        msqrt: [],
+        mroot: [],
       },
       tagNames: [
         ...(defaultSchema.tagNames || []),
         'div', 'span', 'br', 'hr',
+        // KaTeX generates these MathML tags
+        'math', 'annotation', 'semantics', 'mrow', 'mi', 'mo', 'mn', 
+        'mspace', 'mtext', 'msup', 'msub', 'mfrac', 'msqrt', 'mroot',
       ],
     }],
-    rehypeKatex,
   ] as any, []);
 
   // Memoize remark plugins configuration

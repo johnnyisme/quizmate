@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,266 個測試** (1,165 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證和工具函數。
+本專案包含 **1,285 個測試** (1,184 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -62,17 +62,18 @@
 ### 資料庫測試 (24 tests)
 31. **`src/__tests__/db.test.ts`** (24 tests) - IndexedDB 對話儲存與 LRU
 
-### Markdown 渲染測試 (205 tests)
+### Markdown 渲染測試 (224 tests)
 32. **`src/__tests__/markdownRendering.test.ts`** (55 tests) - Markdown 基礎語法
 33. **`src/__tests__/htmlSanitization.test.ts`** (72 tests) - HTML 安全過濾
 34. **`src/__tests__/syntaxHighlighting.test.ts`** (78 tests) - 程式碼語法高亮
+35. **`src/__tests__/mathFormulaDuplication.test.tsx`** (19 tests) ⭐ NEW - 數學公式重複修復
 
 ### Overflow 處理測試 (57 tests)
-35. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動
-36. **`src/__tests__/codeBlockOverflow.test.ts`** (24 tests) - 代碼區塊橫向滾動
+36. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動
+37. **`src/__tests__/codeBlockOverflow.test.ts`** (24 tests) - 代碼區塊橫向滾動
 
 ### 圖片驗證測試 (10 tests) ⭐ NEW
-37. **`src/__tests__/imageSize.test.tsx`** (10 tests) - 圖片大小限制與錯誤處理
+38. **`src/__tests__/imageSize.test.tsx`** (10 tests) - 圖片大小限制與錯誤處理
    - 接受小於 10MB 的圖片
    - 拒絕大於 10MB 的圖片並顯示友善錯誤訊息
    - 顯示實際檔案大小（MB，兩位小數）
@@ -83,11 +84,11 @@
    - 錯誤關閉與重試流程
 
 ### 錯誤處理測試 (25 tests)
-38. **`src/__tests__/errorHandling.test.ts`** (25 tests) - 友善錯誤訊息轉換
+39. **`src/__tests__/errorHandling.test.ts`** (25 tests) - 友善錯誤訊息轉換
 
 ### 工具函數測試 (30 tests)
-39. **`src/__tests__/utils.test.ts`** (15 tests) - 通用工具函數
-40. **`src/__tests__/truncatePromptName.test.ts`** (15 tests) - Prompt 名稱智慧截斷
+40. **`src/__tests__/utils.test.ts`** (15 tests) - 通用工具函數
+41. **`src/__tests__/truncatePromptName.test.ts`** (15 tests) - Prompt 名稱智慧截斷
 
 ### 主題測試 (17 tests)
 41. **`src/__tests__/theme.test.ts`** (17 tests) - Dark Mode 切換
@@ -288,13 +289,51 @@ const MessageBubble = React.memo(
 - `calc(100vw - 4rem)` 防止 mobile overflow
 - Table cells `whiteSpace: nowrap` 自適應寬度
 
+### ⭐ NEW: 數學公式渲染修復 (19 tests)
+**文件**: `src/__tests__/mathFormulaDuplication.test.tsx`
+
+**Bug 修復驗證**：解決數學公式重複顯示問題（X=2x=2 → X=2）
+
+**問題根源：**
+- rehype-sanitize 在 rehype-katex 之後執行
+- KaTeX 生成的 MathML 標籤被移除
+- 導致公式渲染不完整或重複
+
+**解決方案：**
+```typescript
+// ✅ 正確順序：先渲染 KaTeX，再消毒
+rehypePlugins: [rehypeRaw, rehypeKatex, rehypeSanitize]
+
+// ❌ 錯誤順序：消毒會破壞 KaTeX 結構
+rehypePlugins: [rehypeRaw, rehypeSanitize, rehypeKatex]
+```
+
+**MathML 白名單：**
+- 標籤：`math`, `mrow`, `mi`, `mo`, `mn`, `msup`, `msub`, `mfrac`, `msqrt`, `mroot`
+- 屬性：`aria-hidden`, `encoding`, `mathvariant`, `stretchy`, `fence`, `separator`
+
+**測試覆蓋：**
+1. **行內公式渲染** (3 tests)：簡單公式 `$X=2$`、複雜公式、KaTeX MathML 保留
+2. **區塊公式渲染** (2 tests)：獨立公式 `$$...$$`、方程組
+3. **MathML 結構** (3 tests)：KaTeX HTML 類別、className、mathvariant 屬性
+4. **混合內容** (2 tests)：多個行內公式、行內 + 區塊混合
+5. **特殊符號** (4 tests)：希臘字母 `$\\alpha$`、上下標 `$x_1^2$`、分數 `$\\frac{a}{b}$`、根號 `$\\sqrt{x}$`
+6. **邊界情況** (3 tests)：空公式、無效 LaTeX、嵌套公式
+7. **消毒兼容性** (2 tests)：KaTeX 結構保留、樣式屬性不被移除
+
+**實際渲染驗證：**
+- KaTeX 預設輸出：HTML 結構（非 MathML DOM）
+- 檢查 `.katex` 類別存在
+- 驗證文字內容正確（非重複）
+- 測試允許 3-4 個副本（annotation + HTML + aria-label）
+
 ---
 
 ## 🚀 測試執行
 
 ### 本地開發
 ```bash
-npm test              # 執行所有 1074 個單元測試
+npm test              # 執行所有 1285 個單元測試
 npm run test:watch    # 監視模式（檔案變更自動重跑）
 npm run test -- --coverage  # 查看覆蓋率報告
 ```
