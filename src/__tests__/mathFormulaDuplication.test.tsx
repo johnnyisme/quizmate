@@ -59,20 +59,24 @@ describe('Math Formula Duplication Fix', () => {
       expect(htmlElements.length).toBeGreaterThan(0);
     });
 
-    it('should have correct KaTeX CSS integrity hash to prevent loading failures', () => {
+    it('should use local KaTeX CSS to avoid CSP issues in production', () => {
       // This is a meta-test checking the useTheme hook configuration
-      // The correct hash for KaTeX 0.16.27 is computed by browser
-      const expectedHash = 'sha384-Pu5+C18nP5dwykLJOhd2U4Xen7rjScHN/qusop27hdd2drI+lL5KvX7YntvT8yew';
+      // We use local CSS file instead of CDN to avoid Content Security Policy violations
       
-      // Read the useTheme.ts source to verify hash
+      // Read the useTheme.ts source to verify local CSS usage
       const fs = require('fs');
       const path = require('path');
       const useThemePath = path.join(__dirname, '..', 'hooks', 'useTheme.ts');
       const useThemeContent = fs.readFileSync(useThemePath, 'utf-8');
       
-      // Check that the correct hash is used
-      expect(useThemeContent).toContain(expectedHash);
-      expect(useThemeContent).toContain('katex@0.16.27');
+      // Check that we use local CSS file instead of CDN
+      expect(useThemeContent).toContain('/katex/katex.min.css');
+      expect(useThemeContent).toContain('from local file to avoid CSP issues');
+      
+      // Ensure we DON'T use CDN (which would violate CSP in production)
+      expect(useThemeContent).not.toContain('cdn.jsdelivr.net');
+      expect(useThemeContent).not.toContain('integrity');
+      expect(useThemeContent).not.toContain('crossOrigin');
     });
 
     it('should have CSS rule to hide .katex-mathml to prevent duplication', () => {

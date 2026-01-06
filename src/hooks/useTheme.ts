@@ -15,14 +15,12 @@ export const useTheme = () => {
     document.documentElement.classList.toggle('dark', shouldBeDark);
     document.documentElement.classList.toggle('light', !shouldBeDark);
     
-    // Dynamic KaTeX CSS loading (only when needed)
+    // Dynamic KaTeX CSS loading (from local file to avoid CSP issues)
     if (typeof window !== 'undefined' && !document.getElementById('katex-css')) {
       const link = document.createElement('link');
       link.id = 'katex-css';
       link.rel = 'stylesheet';
-      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css';
-      link.integrity = 'sha384-Pu5+C18nP5dwykLJOhd2U4Xen7rjScHN/qusop27hdd2drI+lL5KvX7YntvT8yew';
-      link.crossOrigin = 'anonymous';
+      link.href = '/katex/katex.min.css';
       document.head.appendChild(link);
     }
     

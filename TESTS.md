@@ -319,6 +319,17 @@ const MessageBubble = React.memo(
   2. **恢復預設模式**：移除 `{ output: 'html' }` → 保留 MathML（無障礙）+ HTML（顯示）
   3. **CSS 強制隱藏 MathML**：在 `globals.css` 添加 `.katex-mathml { display: none !important; }`
 
+**第四次修復（CSP Production Fix - Local CSS）：** ⭐ NEW
+- ❌ Production 問題：
+  - CSP 規則 `style-src 'self' 'unsafe-inline'` 阻擋外部 CDN
+  - 錯誤：`Loading the stylesheet 'https://cdn.jsdelivr.net/...' violates CSP`
+  - 症狀：Local 正常（有 CSS），Production 顯示 "x2" 無樣式
+- ✅ 最終解決方案：
+  1. **下載 CSS 到本地**：`public/katex/katex.min.css` (KaTeX 0.16.27)
+  2. **修改路徑**：`useTheme.ts` 改為 `/katex/katex.min.css`
+  3. **移除 CDN 相關**：刪除 `integrity`、`crossOrigin`、CDN URL
+  4. **符合 CSP**：完全本地載入，無外部請求
+
 **最終解決方案：**
 ```typescript
 // src/components/MessageBubble.tsx
@@ -333,9 +344,9 @@ rehypePlugins: [
   display: none !important;  // ← 強制隱藏 MathML，防止重複
 }
 
-// src/hooks/useTheme.ts
-link.integrity = 'sha384-Pu5+C18nP5dwykLJOhd2U4Xen7rjScHN/qusop27hdd2drI+lL5KvX7YntvT8yew';
-// ← 正確的 KaTeX 0.16.27 CSS hash
+// src/hooks/useTheme.ts (Phase 4: CSP Fix)
+link.href = '/katex/katex.min.css';  // ← 本地 CSS，符合 CSP 規範
+// 移除：integrity, crossOrigin, CDN URL
 ```
 
 **原理：**
