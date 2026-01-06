@@ -50,7 +50,7 @@ const MessageBubble = React.memo(
   // Memoize rehype plugins configuration
   const rehypePlugins = useMemo(() => [
     rehypeRaw,
-    rehypeKatex,
+    rehypeKatex, // Use default output (htmlAndMathml) for proper rendering
     [rehypeSanitize, {
       ...defaultSchema,
       attributes: {

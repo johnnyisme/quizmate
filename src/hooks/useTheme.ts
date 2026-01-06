@@ -21,7 +21,7 @@ export const useTheme = () => {
       link.id = 'katex-css';
       link.rel = 'stylesheet';
       link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css';
-      link.integrity = 'sha384-mXD7x5S50Ko38scHSnD4egvoExgMPbrseZorkbE49evAfv9nNcbrXJ8LLNsDgh9d';
+      link.integrity = 'sha384-Pu5+C18nP5dwykLJOhd2U4Xen7rjScHN/qusop27hdd2drI+lL5KvX7YntvT8yew';
       link.crossOrigin = 'anonymous';
       document.head.appendChild(link);
     }

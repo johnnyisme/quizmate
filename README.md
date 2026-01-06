@@ -202,7 +202,7 @@ npm run test:e2e:headed # 開啟瀏覽器視窗執行測試
 - **React Testing Library 16.3.1** (React 組件測試)
 - **Playwright 1.57.0** (E2E 測試框架)
 - **jsdom** (瀏覽器環境模擬)
-- **1,285 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、側邊欄持久化、滾動位置記憶、AI 回應後滾動行為、智能滾動按鈕、Session Hover 按鈕、訊息複製、訊息分享、訊息氣泡渲染優化、MessageBubble Ref Forwarding、Markdown 渲染、HTML 安全性、語法高亮、表格橫向滾動、代碼區塊橫向滾動、Enter 鍵行為、圖片大小驗證、**Bug 修復回歸測試 (63 tests)**、工具函數)
+- **1,291 個單元測試** (前端邏輯、Gemini SDK 整合、API Key 輪替、錯誤處理、Settings Tab、Prompt 管理、IndexedDB LRU 清理、主題切換、對話標題編輯、側邊欄響應式行為、側邊欄持久化、滾動位置記憶、AI 回應後滾動行為、智能滾動按鈕、Session Hover 按鈕、訊息複製、訊息分享、訊息氣泡渲染優化、MessageBubble Ref Forwarding、Markdown 渲染、HTML 安全性、語法高亮、**數學公式重複修復與樣式問題 (25 tests - CSS integrity hash + 預設模式 + CSS 隱藏)**、表格橫向滾動、代碼區塊橫向滾動、Enter 鍵行為、圖片大小驗證、**Bug 修復回歸測試 (63 tests)**、工具函數)
 - **4 個 E2E 測試** (API Key 設定流程、圖片上傳與詢問、連續追問、無 Key 顯示設定頁)
 - **單元測試覆蓋率**: ~92%
 - **E2E 測試環境**: .env.test (需設定 TEST_GEMINI_API_KEY)

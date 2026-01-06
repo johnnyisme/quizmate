@@ -45,6 +45,11 @@ body {
   @apply text-blue-600 dark:text-blue-400 hover:underline;
 }
 
+/* 確保 KaTeX MathML 始終隱藏（防止 CSS 載入延遲導致重複顯示） */
+.katex-mathml {
+  display: none !important;
+}
+
 .prose :where(table):not(:where([class~="not-prose"] *)) {
   @apply w-full border-collapse;
 }

@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,285 個測試** (1,184 unit + 95 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證和工具函數。
+本專案包含 **1,291 個測試** (1,186 unit + 99 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,266 tests (1,165 unit + 95 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 7.5% (95/1266)
+- **測試總數**: 1,291 tests (1,186 unit + 99 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 7.7% (99/1291)
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -62,11 +62,11 @@
 ### 資料庫測試 (24 tests)
 31. **`src/__tests__/db.test.ts`** (24 tests) - IndexedDB 對話儲存與 LRU
 
-### Markdown 渲染測試 (224 tests)
+### Markdown 渲染測試 (230 tests)
 32. **`src/__tests__/markdownRendering.test.ts`** (55 tests) - Markdown 基礎語法
 33. **`src/__tests__/htmlSanitization.test.ts`** (72 tests) - HTML 安全過濾
 34. **`src/__tests__/syntaxHighlighting.test.ts`** (78 tests) - 程式碼語法高亮
-35. **`src/__tests__/mathFormulaDuplication.test.tsx`** (19 tests) ⭐ NEW - 數學公式重複修復
+35. **`src/__tests__/mathFormulaDuplication.test.tsx`** (25 tests) ⭐ NEW - 數學公式重複修復與樣式問題
 
 ### Overflow 處理測試 (57 tests)
 36. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動
@@ -289,36 +289,110 @@ const MessageBubble = React.memo(
 - `calc(100vw - 4rem)` 防止 mobile overflow
 - Table cells `whiteSpace: nowrap` 自適應寬度
 
-### ⭐ NEW: 數學公式渲染修復 (19 tests)
+### ⭐ NEW: 數學公式渲染修復 (25 tests)
 **文件**: `src/__tests__/mathFormulaDuplication.test.tsx`
 
-**Bug 修復驗證**：解決數學公式重複顯示問題（X=2x=2 → X=2）
+**Bug 修復驗證**：解決數學公式重複顯示問題（"$a$" 顯示 "a a" → "a"）與上標顯示錯誤（"$x^2$" 顯示 "x2" → "x²"）
 
-**問題根源：**
-- rehype-sanitize 在 rehype-katex 之後執行
-- KaTeX 生成的 MathML 標籤被移除
-- 導致公式渲染不完整或重複
+**問題根源（經過三次修復迭代）：**
 
-**解決方案：**
+**第一次修復（插件順序）：**
+- ❌ 問題：rehype-sanitize 在 rehype-katex 之前執行，破壞 MathML 結構
+- ✅ 解決：調整順序為 `[rehypeRaw, rehypeKatex, rehypeSanitize]`
+- ⚠️ 結果：仍有重複顯示問題
+
+**第二次修復（HTML-only 渲染）：**
+- ❌ 根本原因：KaTeX 預設生成**兩套輸出**
+  - `.katex-mathml` - 給螢幕閱讀器（應該用 CSS `display: none` 隱藏）
+  - `.katex-html` - 給視覺顯示
+  - 如果 KaTeX CSS 載入失敗/延遲，兩套都顯示 → 重複
+- ✅ 解決：配置 `{ output: 'html' }` 只生成 HTML
+- ⚠️ 新問題：上標/下標/分數失去樣式，顯示為純文字（"x2" 而非 "x²"）
+
+**第三次修復（CSS Integrity Hash + 預設模式 + CSS 隱藏）：**
+- ❌ 第二次修復的問題：
+  - `output: 'html'` 生成的 HTML 需要 KaTeX CSS 才能正確顯示樣式
+  - KaTeX CSS integrity hash 錯誤導致瀏覽器阻止載入
+  - 無 CSS → 上標變純文字 "x2"
+- ✅ 徹底解決：
+  1. **修正 CSS integrity hash**：使用瀏覽器計算的正確 hash `sha384-Pu5+...`
+  2. **恢復預設模式**：移除 `{ output: 'html' }` → 保留 MathML（無障礙）+ HTML（顯示）
+  3. **CSS 強制隱藏 MathML**：在 `globals.css` 添加 `.katex-mathml { display: none !important; }`
+
+**最終解決方案：**
 ```typescript
-// ✅ 正確順序：先渲染 KaTeX，再消毒
-rehypePlugins: [rehypeRaw, rehypeKatex, rehypeSanitize]
+// src/components/MessageBubble.tsx
+rehypePlugins: [
+  rehypeRaw,
+  rehypeKatex,  // ← 預設模式（MathML + HTML 雙輸出）
+  rehypeSanitize
+]
 
-// ❌ 錯誤順序：消毒會破壞 KaTeX 結構
-rehypePlugins: [rehypeRaw, rehypeSanitize, rehypeKatex]
+// src/app/globals.css
+.katex-mathml {
+  display: none !important;  // ← 強制隱藏 MathML，防止重複
+}
+
+// src/hooks/useTheme.ts
+link.integrity = 'sha384-Pu5+C18nP5dwykLJOhd2U4Xen7rjScHN/qusop27hdd2drI+lL5KvX7YntvT8yew';
+// ← 正確的 KaTeX 0.16.27 CSS hash
 ```
 
-**MathML 白名單：**
-- 標籤：`math`, `mrow`, `mi`, `mo`, `mn`, `msup`, `msub`, `mfrac`, `msqrt`, `mroot`
-- 屬性：`aria-hidden`, `encoding`, `mathvariant`, `stretchy`, `fence`, `separator`
+**原理：**
+- **預設模式優勢**：
+  - 生成 MathML（螢幕閱讀器無障礙支援）
+  - 生成 HTML（完整 CSS 樣式：上標、分數、根號等）
+  - 最佳相容性和樣式完整性
+- **CSS 隱藏防重複**：
+  - `.katex-mathml` 明確設為 `display: none !important`
+  - 即使 KaTeX CSS 載入延遲，也能防止重複
+  - 比 `output: 'html'` 更保險（CSS 是同步載入）
+- **Integrity Hash 保護**：
+  - 確保 KaTeX CSS 必定載入成功
+  - 保證數學公式完整樣式（上標、下標、分數、根號等）
+
+**測試策略改變：**
+- **第一次**：檢查 MathML 元素存在（`<math>`, `<mfrac>`, `<msqrt>` 等）
+- **第二次**：檢查 HTML 結構和**文字內容不重複**（假設無 MathML）
+- **第三次（最終）**：檢查 MathML 和 HTML **都存在**（預設模式），但文字不重複（CSS 隱藏有效）+ 驗證 CSS 配置正確性
 
 **測試覆蓋：**
-1. **行內公式渲染** (3 tests)：簡單公式 `$X=2$`、複雜公式、KaTeX MathML 保留
-2. **區塊公式渲染** (2 tests)：獨立公式 `$$...$$`、方程組
-3. **MathML 結構** (3 tests)：KaTeX HTML 類別、className、mathvariant 屬性
-4. **混合內容** (2 tests)：多個行內公式、行內 + 區塊混合
-5. **特殊符號** (4 tests)：希臘字母 `$\\alpha$`、上下標 `$x_1^2$`、分數 `$\\frac{a}{b}$`、根號 `$\\sqrt{x}$`
-6. **邊界情況** (3 tests)：空公式、無效 LaTeX、嵌套公式
+1. **KaTeX 配置驗證** (4 tests - **+2 新增**）：
+   - 驗證預設模式：MathML + HTML 雙輸出都存在
+   - 驗證 `.katex-mathml` 元素生成（供螢幕閱讀器）
+   - **NEW**: 驗證 CSS integrity hash 正確（`sha384-Pu5+...`）
+   - **NEW**: 驗證 `globals.css` 有 `.katex-mathml { display: none !important; }` 規則
+2. **行內公式渲染** (3 tests)：
+   - 簡單公式 `$X=2$` 文字只出現 1 次（MathML 被 CSS 隱藏）
+   - 複雜公式 `$ax^2+bx+c=0$` 文字不重複
+   - 分數渲染：MathML `<mfrac>` 存在但被 CSS 隱藏
+3. **區塊公式渲染** (2 tests)：
+   - 獨立公式 `$$X=2$$` 文字只出現 1 次
+   - 方程組渲染正常（`.katex-display` 存在）
+4. **HTML 結構保留** (3 tests)：
+   - KaTeX 類別 (`.katex`, `.katex-html`, `.katex-mathml` 都存在）
+   - className 屬性保留
+   - 簡單變數不重複（`$x$` → "x" 只出現 1 次）
+5. **混合內容** (2 tests)：
+   - 多個行內公式（每個公式文字只出現 1 次）
+   - 行內 + 區塊混合渲染
+6. **特殊符號** (4 tests)：
+   - 希臘字母無重複（文字長度 < 100 sanity check）
+   - 上下標正常渲染
+   - 分數：MathML `<mfrac>` 存在但被 CSS 隱藏
+   - 根號：MathML `<msqrt>` 存在但被 CSS 隱藏
+7. **邊界案例** (3 tests)：
+   - 空公式、無效 LaTeX 不 crash
+   - 嵌套公式：MathML（`<mfrac>`, `<msqrt>`）存在但被 CSS 隱藏
+8. **安全性** (2 tests)：
+   - KaTeX HTML 結構不被 sanitize 破壞
+   - style 屬性保留（顏色等）
+
+**修復時間線**：
+- 2026/01/06 10:00 - 第一次修復（插件順序）
+- 2026/01/06 14:30 - 第二次修復（HTML-only 渲染）
+- 2026/01/06 18:45 - 發現上標問題（"x2" 而非 "x²"）
+- 2026/01/06 19:00 - 第三次修復（CSS hash + 預設模式 + CSS 隱藏）✅ 完全解決
 7. **消毒兼容性** (2 tests)：KaTeX 結構保留、樣式屬性不被移除
 
 **實際渲染驗證：**
