@@ -320,7 +320,7 @@ export default function HomePage() {
                 <span>新對話</span>
               </button>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
               <SessionList
                 sessions={sessionList}
                 currentSessionId={currentSessionId}

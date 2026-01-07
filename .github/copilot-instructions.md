@@ -109,6 +109,9 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - Full GFM support: tables, strikethrough, task lists, autolinks
   - Syntax highlighting: react-syntax-highlighter with oneDark/oneLight themes
   - Math formulas: KaTeX integration via rehype-katex plugin
+    - **Plugin order**: rehype-sanitize → rehype-katex (先清理 Markdown，再生成數學公式，避免 KaTeX 輸出被過濾)
+    - **Configuration**: `output: 'htmlAndMathml'`, `strict: false`, `trust: true`
+    - **Root symbol fix**: 調整插件順序解決根號符號無法顯示的問題
   - Custom code component: auto-detects language from `` ```language `` fence
   - Safe HTML support: rehype-raw + rehype-sanitize allow common HTML tags while filtering dangerous content (script, iframe, etc.)
   - **Code Block Overflow Handling**: Custom wrapper with horizontal scroll for long code lines
@@ -142,6 +145,10 @@ This is a **100% client-side application** with no backend server. All Gemini AP
   - Restored on page load
   - Auto-closes on mobile (<1024px) when switching sessions or starting new chat
   - Persists across page refreshes
+- **Sidebar Scrolling**: Session list container has `overflow-y-auto` for vertical scrolling
+  - Container uses `flex-1` to fill available space
+  - Allows browsing extensive conversation history (30+ sessions)
+  - Maintains fixed header and "新對話" button at top
 - **Scroll Position Memory**: Chat scroll position saved per session
   - Key pattern: `scroll-pos-{sessionId}` (string: scroll offset in pixels)
   - Saved on `beforeunload` event
@@ -229,7 +236,13 @@ npm run start       # Local production server
 ### UI/UX Conventions
 - Responsive design: `max-w-2xl` container, Tailwind v4 with `@tailwindcss/postcss`
 - Loading state: inline `animate-pulse` spinner
-- **Input Behavior**: Enter key creates new line (no auto-submit); submit via button click only
+- **Input Behavior**: 
+  - Desktop: Enter 送出訊息, Shift+Enter 換行
+  - Mobile: Enter 換行，點擊按鈕送出
+  - **IME 輸入法支援**: 使用 `onCompositionStart`/`onCompositionEnd` 事件追蹤組字狀態
+    - 組字期間（`isComposing === true`）忽略 Enter 鍵，避免誤觸發送
+    - 支援注音、拼音、日文等需要選字的輸入法
+    - Enter 鍵僅在完成選字後（`isComposing === false`）才會觸發送出
 - **Mobile Keyboard UX**: Input Area uses `sticky bottom-0 z-10` to keep input field anchored above mobile keyboard when scrolling chat
 - **Multi-line Input**: Textarea auto-grows up to 3 lines; scrollable beyond that
 - **Scroll Behavior**: 

@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,303 個測試** (1,198 unit + 99 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證、性能優化和工具函數。
+本專案包含 **1,327 個測試** (1,222 unit + 99 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證、性能優化和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,303 tests (1,198 unit + 99 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 7.6% (99/1303)
+- **測試總數**: 1,327 tests (1,222 unit + 99 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 7.5% (99/1327)
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -21,10 +21,10 @@
 2. **`src/__tests__/scrollPositionBugs.test.ts`** (14 tests) - 滾動位置恢復、自動滾動依賴、手動滾動檢測
 3. **`src/__tests__/uiStateBugs.test.ts`** (15 tests) - loadSessions 調用、側邊欄持久化、useMemo 優化
 
-### 整合測試 - DOM 渲染與交互驗證 (95 tests) ⭐ NEW
+### 整合測試 - DOM 渲染與交互驗證 (99 tests) ⭐ NEW
 4. **`src/__tests__/errorHandling.integration.test.tsx`** (19 tests) - 錯誤 UI 展開/收起/滾動
 5. **`src/__tests__/scrollFeatures.integration.test.tsx`** (17 tests) - 滾動到問題、智慧按鈕、位置記憶
-6. **`src/__tests__/sessionUI.integration.test.tsx`** (22 tests) - 標題編輯、hover 按鈕、時間格式
+6. **`src/__tests__/sessionUI.integration.test.tsx`** (26 tests) - 標題編輯、hover 按鈕、時間格式、**側邊欄垂直滾動**
 7. **`src/__tests__/messageInteraction.integration.test.tsx`** (18 tests) - 複製按鈕、分享選取、桌面分享
 8. **`src/__tests__/inputAndUI.integration.test.tsx`** (14 tests) - 輸入框自動增長、主題切換、側邊欄動畫
 
@@ -39,11 +39,12 @@
 14. **`src/components/__tests__/PromptSettings.button.test.tsx`** (23 tests) - Prompt 按鈕邏輯
 15. **`src/lib/__tests__/useAsyncState.test.ts`** (44 tests) - 非同步狀態管理 hook
 
-### UI/UX 交互測試 (518 tests)
-16. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
-17. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
-18. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
-19. **`src/__tests__/errorCloseButton.test.ts`** (22 tests) - 錯誤訊息關閉按鈕
+### UI/UX 交互測試 (526 tests)
+16. **`src/__tests__/imeInput.test.tsx`** (8 tests) ⭐ NEW - IME 輸入法支援（注音、拼音、日文）
+17. **`src/__tests__/copyMessage.test.ts`** (34 tests) - 訊息複製功能
+18. **`src/__tests__/shareMessages.test.ts`** (31 tests) - 多則訊息選取與分享
+19. **`src/__tests__/desktopShareButton.test.ts`** (21 tests) - 桌面端分享按鈕
+
 20. **`src/__tests__/inputAutoGrow.test.ts`** (21 tests) - 輸入框自動高度
 21. **`src/__tests__/scrollButtons.test.ts`** (31 tests) - 快速滾動按鈕
 22. **`src/__tests__/smartScrollButtons.test.ts`** (23 tests) - 智慧滾動按鈕可見性
@@ -62,11 +63,12 @@
 ### 資料庫測試 (24 tests)
 31. **`src/__tests__/db.test.ts`** (24 tests) - IndexedDB 對話儲存與 LRU
 
-### Markdown 渲染測試 (230 tests)
+### Markdown 渲染測試 (242 tests)
 32. **`src/__tests__/markdownRendering.test.ts`** (55 tests) - Markdown 基礎語法
 33. **`src/__tests__/htmlSanitization.test.ts`** (72 tests) - HTML 安全過濾
 34. **`src/__tests__/syntaxHighlighting.test.ts`** (78 tests) - 程式碼語法高亮
-35. **`src/__tests__/mathFormulaDuplication.test.tsx`** (25 tests) ⭐ NEW - 數學公式重複修復與樣式問題
+35. **`src/__tests__/mathFormula.test.tsx`** (12 tests) ⭐ NEW - KaTeX 數學公式渲染（根號、分數、積分、矩陣、插件順序驗證）
+36. **`src/__tests__/mathFormulaDuplication.test.tsx`** (25 tests) ⭐ NEW - 數學公式重複修復與樣式問題
 
 ### Overflow 處理測試 (57 tests)
 36. **`src/__tests__/tableOverflow.test.ts`** (33 tests) - 表格橫向滾動

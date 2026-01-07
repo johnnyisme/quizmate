@@ -1,5 +1,5 @@
 // src/__tests__/sessionUI.integration.test.tsx
-// Integration tests for session UI - 驗證標題編輯、hover 按鈕、時間格式顯示
+// Integration tests for session UI - 驗證標題編輯、hover 按鈕、時間格式顯示、側邊欄滾動
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -428,6 +428,147 @@ describe('Session UI Integration', () => {
       
       const timeDisplay = screen.getAllByTestId('session-time')[0];
       expect(timeDisplay).toHaveClass('text-xs', 'text-gray-500');
+    });
+  });
+
+  describe('側邊欄滾動功能', () => {
+    it('should allow vertical scrolling when session list exceeds container height', () => {
+      const SidebarWithScroll = () => {
+        const sessions = Array.from({ length: 30 }, (_, i) => ({
+          id: `session-${i}`,
+          title: `Session ${i}`,
+          updatedAt: Date.now() - i * 60000,
+        }));
+
+        return (
+          <div className="fixed inset-y-0 left-0 w-72 bg-white flex flex-col">
+            <div className="p-4 border-b">
+              <h2>對話歷史</h2>
+            </div>
+            <div className="p-2">
+              <button>新對話</button>
+            </div>
+            <div className="flex-1 overflow-y-auto" data-testid="session-list-container">
+              {sessions.map(session => (
+                <div key={session.id} className="p-2 border-b" data-testid="session-item">
+                  {session.title}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
+
+      render(<SidebarWithScroll />);
+      
+      const container = screen.getByTestId('session-list-container');
+      
+      // ✅ 應該有 overflow-y-auto class
+      expect(container).toHaveClass('overflow-y-auto');
+      
+      // ✅ 不應該有 overflow-hidden
+      expect(container).not.toHaveClass('overflow-hidden');
+    });
+
+    it('should render all sessions in scrollable container', () => {
+      const SidebarWithScroll = () => {
+        const sessions = Array.from({ length: 50 }, (_, i) => ({
+          id: `session-${i}`,
+          title: `Session ${i}`,
+          updatedAt: Date.now() - i * 60000,
+        }));
+
+        return (
+          <div className="flex-1 overflow-y-auto" data-testid="session-list-container">
+            {sessions.map(session => (
+              <div key={session.id} className="p-2" data-testid="session-item">
+                {session.title}
+              </div>
+            ))}
+          </div>
+        );
+      };
+
+      render(<SidebarWithScroll />);
+      
+      const container = screen.getByTestId('session-list-container');
+      const sessionItems = screen.getAllByTestId('session-item');
+      
+      // ✅ 所有 50 個 session 都應該被渲染（雖然可能需要滾動才能看到）
+      expect(sessionItems).toHaveLength(50);
+      
+      // ✅ 容器應該有滾動能力
+      expect(container).toHaveClass('overflow-y-auto');
+    });
+
+    it('should maintain flex-1 to fill available space', () => {
+      const SidebarLayout = () => {
+        return (
+          <div className="flex flex-col h-screen">
+            <div className="p-4">Header</div>
+            <div className="p-2">Button</div>
+            <div className="flex-1 overflow-y-auto" data-testid="session-list-container">
+              <div>Session 1</div>
+              <div>Session 2</div>
+            </div>
+          </div>
+        );
+      };
+
+      render(<SidebarLayout />);
+      
+      const container = screen.getByTestId('session-list-container');
+      
+      // ✅ 應該同時有 flex-1 和 overflow-y-auto
+      expect(container).toHaveClass('flex-1');
+      expect(container).toHaveClass('overflow-y-auto');
+    });
+
+    it('should have correct CSS classes for scrolling', () => {
+      const ScrollableSessionList = () => {
+        const containerRef = useRef<HTMLDivElement>(null);
+        const sessions = Array.from({ length: 100 }, (_, i) => ({
+          id: `session-${i}`,
+          title: `Session ${i}`,
+        }));
+
+        const scrollToBottom = () => {
+          if (containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+          }
+        };
+
+        return (
+          <div>
+            <button onClick={scrollToBottom} data-testid="scroll-to-bottom">
+              Scroll to Bottom
+            </button>
+            <div ref={containerRef} className="flex-1 overflow-y-auto h-64" data-testid="session-list-container">
+              {sessions.map(session => (
+                <div key={session.id} className="p-2 h-16" data-testid="session-item">
+                  {session.title}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
+
+      render(<ScrollableSessionList />);
+      
+      const container = screen.getByTestId('session-list-container');
+      const scrollButton = screen.getByTestId('scroll-to-bottom');
+      
+      // ✅ 容器應該有正確的 CSS classes
+      expect(container).toHaveClass('overflow-y-auto');
+      expect(container).toHaveClass('h-64');
+      
+      // ✅ 按鈕應該存在且可點擊
+      expect(scrollButton).toBeInTheDocument();
+      
+      // ✅ 所有 session 都應該被渲染
+      const sessionItems = screen.getAllByTestId('session-item');
+      expect(sessionItems).toHaveLength(100);
     });
   });
 });

@@ -51,46 +51,19 @@ const MessageBubble = React.memo(
   // Memoize rehype plugins configuration
   const rehypePlugins = useMemo(() => [
     rehypeRaw,
-    rehypeKatex, // Use default output (htmlAndMathml) for proper rendering
+    // First sanitize, then process KaTeX (so KaTeX output is trusted)
     [rehypeSanitize, {
       ...defaultSchema,
       attributes: {
         ...defaultSchema.attributes,
-        '*': [...(defaultSchema.attributes?.['*'] || []), 'className', 'style', 'aria-hidden'],
-        span: [...(defaultSchema.attributes?.span || []), 'className', 'style', 'aria-hidden'],
-        div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
-        // Markdown basic formatting tags (preserve default attributes)
-        strong: defaultSchema.attributes?.strong || [],
-        em: defaultSchema.attributes?.em || [],
-        b: defaultSchema.attributes?.b || [],
-        i: defaultSchema.attributes?.i || [],
-        code: defaultSchema.attributes?.code || [],
-        pre: defaultSchema.attributes?.pre || [],
-        // KaTeX specific attributes
-        annotation: ['encoding'],
-        semantics: [],
-        mrow: [],
-        mi: ['mathvariant'],
-        mo: ['stretchy', 'fence', 'separator', 'lspace', 'rspace'],
-        mn: [],
-        mspace: ['width'],
-        mtext: [],
-        msup: [],
-        msub: [],
-        mfrac: ['linethickness'],
-        msqrt: [],
-        mroot: [],
+        '*': [...(defaultSchema.attributes?.['*'] || []), 'className', 'style'],
       },
       tagNames: [
         ...(defaultSchema.tagNames || []),
-        // Ensure basic Markdown tags are included (though defaultSchema should already have them)
-        'strong', 'em', 'b', 'i', 'code', 'pre',
-        'div', 'span', 'br', 'hr',
-        // KaTeX generates these MathML tags
-        'math', 'annotation', 'semantics', 'mrow', 'mi', 'mo', 'mn', 
-        'mspace', 'mtext', 'msup', 'msub', 'mfrac', 'msqrt', 'mroot',
+        'div', 'span', 'annotation', 'semantics',
       ],
     }],
+    [rehypeKatex, { output: 'htmlAndMathml', strict: false, trust: true }], // Process after sanitize, trust KaTeX output
   ] as any, []);
 
   // Memoize remark plugins configuration
