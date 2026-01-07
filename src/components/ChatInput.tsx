@@ -66,6 +66,21 @@ export const ChatInput = React.memo<ChatInputProps>(({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Desktop: Enter 提交, Shift+Enter 换行
+    // Mobile: 保持原有行为（Enter 换行）
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // 检测是否为桌面设备（窗口宽度 >= 1024px）
+      const isDesktop = window.innerWidth >= 1024;
+      
+      if (isDesktop) {
+        e.preventDefault(); // 阻止默认换行
+        handleSubmit();
+      }
+      // Mobile: 不阻止，允许换行
+    }
+  };
+
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
       <button 
@@ -88,6 +103,7 @@ export const ChatInput = React.memo<ChatInputProps>(({
         name="prompt"
         value={localPrompt}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder={hasHistory ? "進行追問..." : "輸入問題或上傳圖片"}

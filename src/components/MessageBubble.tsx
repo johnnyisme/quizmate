@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -55,9 +56,16 @@ const MessageBubble = React.memo(
       ...defaultSchema,
       attributes: {
         ...defaultSchema.attributes,
-        '*': ['className', 'style', 'aria-hidden'],
-        span: ['className', 'style', 'aria-hidden'],
-        div: ['className', 'style'],
+        '*': [...(defaultSchema.attributes?.['*'] || []), 'className', 'style', 'aria-hidden'],
+        span: [...(defaultSchema.attributes?.span || []), 'className', 'style', 'aria-hidden'],
+        div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
+        // Markdown basic formatting tags (preserve default attributes)
+        strong: defaultSchema.attributes?.strong || [],
+        em: defaultSchema.attributes?.em || [],
+        b: defaultSchema.attributes?.b || [],
+        i: defaultSchema.attributes?.i || [],
+        code: defaultSchema.attributes?.code || [],
+        pre: defaultSchema.attributes?.pre || [],
         // KaTeX specific attributes
         annotation: ['encoding'],
         semantics: [],
@@ -75,6 +83,8 @@ const MessageBubble = React.memo(
       },
       tagNames: [
         ...(defaultSchema.tagNames || []),
+        // Ensure basic Markdown tags are included (though defaultSchema should already have them)
+        'strong', 'em', 'b', 'i', 'code', 'pre',
         'div', 'span', 'br', 'hr',
         // KaTeX generates these MathML tags
         'math', 'annotation', 'semantics', 'mrow', 'mi', 'mo', 'mn', 
@@ -84,7 +94,7 @@ const MessageBubble = React.memo(
   ] as any, []);
 
   // Memoize remark plugins configuration
-  const remarkPlugins = useMemo(() => [remarkMath, remarkGfm], []);
+  const remarkPlugins = useMemo(() => [remarkMath, remarkGfm, remarkBreaks], []);
 
   // Memoize ReactMarkdown components
   const markdownComponents = useMemo(() => ({
