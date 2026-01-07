@@ -164,7 +164,7 @@ export const useGeminiAPI = ({
           const buildRequestPayload = (withThinking: boolean) => {
             const generationConfig: any = {
               temperature: 0.7,  // Lower for faster, more focused responses
-              maxOutputTokens: 65536,
+              maxOutputTokens: 16384,  // Balanced: sufficient for complex problems, potentially faster response
             };
 
             if (withThinking && selectedModel.includes("gemini-3")) {
