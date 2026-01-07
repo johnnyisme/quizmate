@@ -21,6 +21,7 @@ export const ChatInput = React.memo<ChatInputProps>(({
 }) => {
   const [localPrompt, setLocalPrompt] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
+  const [isComposing, setIsComposing] = useState(false); // Track IME composition state
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 自動調整高度
@@ -70,6 +71,11 @@ export const ChatInput = React.memo<ChatInputProps>(({
     // Desktop: Enter 提交, Shift+Enter 换行
     // Mobile: 保持原有行为（Enter 换行）
     if (e.key === 'Enter' && !e.shiftKey) {
+      // 🚫 如果正在使用輸入法組字，不處理 Enter（讓輸入法完成選字）
+      if (isComposing) {
+        return;
+      }
+      
       // 检测是否为桌面设备（窗口宽度 >= 1024px）
       const isDesktop = window.innerWidth >= 1024;
       
@@ -104,6 +110,8 @@ export const ChatInput = React.memo<ChatInputProps>(({
         value={localPrompt}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={() => setIsComposing(false)}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder={hasHistory ? "進行追問..." : "輸入問題或上傳圖片"}
