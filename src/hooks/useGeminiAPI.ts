@@ -153,14 +153,14 @@ export const useGeminiAPI = ({
           // Call Gemini API (supports streaming)
           const buildRequestPayload = (withThinking: boolean) => {
             const generationConfig: any = {
-              temperature: 1.0,
+              temperature: 0.7,  // Lower for faster, more focused responses
               maxOutputTokens: 65536,
             };
 
             if (withThinking && selectedModel.includes("gemini-3")) {
               generationConfig.thinkingConfig = {
                 thinkingLevel: "high",
-                includeThoughts: false,
+                includeThoughts: false,  // Thoughts are in English, not user-friendly for students
               };
             }
 
@@ -186,12 +186,29 @@ export const useGeminiAPI = ({
           const streamOnce = async (withThinking: boolean): Promise<string> => {
             const result = await model.generateContentStream(buildRequestPayload(withThinking));
             let aggregated = "";
+            let batchBuffer = "";
+            let lastUpdateTime = Date.now();
+            const BATCH_INTERVAL_MS = 50; // Update UI every 50ms max (20fps)
 
             for await (const chunk of result.stream) {
               const chunkText = chunk.text();
               if (!chunkText) continue;
               aggregated += chunkText;
-              updateModelMessage((prevText) => prevText + chunkText);
+              batchBuffer += chunkText;
+              
+              // Batch updates: only update UI every 50ms or when buffer is large
+              const now = Date.now();
+              if (now - lastUpdateTime >= BATCH_INTERVAL_MS || batchBuffer.length > 100) {
+                const textToAdd = batchBuffer;
+                batchBuffer = "";
+                lastUpdateTime = now;
+                updateModelMessage((prevText) => prevText + textToAdd);
+              }
+            }
+            
+            // Flush remaining buffer
+            if (batchBuffer) {
+              updateModelMessage((prevText) => prevText + batchBuffer);
             }
 
             // Fallback: if stream has no content, fall back to full response text
