@@ -1,6 +1,6 @@
 # QuizMate - 測試文檔
 
-本專案包含 **1,291 個測試** (1,186 unit + 99 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證和工具函數。
+本專案包含 **1,303 個測試** (1,198 unit + 99 integration + 2 regression + 4 E2E)，涵蓋前端邏輯、React 組件、資料庫操作、UI 交互、DOM 渲染驗證、bug 修復驗證、性能優化和工具函數。
 
 ## 測試框架
 - **Vitest 1.6.1**: 單元測試與整合測試框架
@@ -8,8 +8,8 @@
 - **@testing-library/jest-dom 6.9.1**: DOM 斷言（toBeInTheDocument, toHaveClass 等）
 - **jsdom 27.4.0**: 瀏覽器環境模擬
 - **Playwright 1.57.0**: E2E 測試（完整用戶流程）
-- **測試總數**: 1,291 tests (1,186 unit + 99 integration + 2 regression + 4 E2E)
-- **整合測試覆蓋率**: 7.7% (99/1291)
+- **測試總數**: 1,303 tests (1,198 unit + 99 integration + 2 regression + 4 E2E)
+- **整合測試覆蓋率**: 7.6% (99/1303)
 - **整體測試覆蓋率**: ~92%
 
 ---
@@ -92,6 +92,25 @@
 
 ### 主題測試 (17 tests)
 41. **`src/__tests__/theme.test.ts`** (17 tests) - Dark Mode 切換
+
+### 性能優化測試 (12 tests) ⭐ NEW
+42. **`src/__tests__/geminiAPIOptimization.test.ts`** (12 tests) - Gemini API 性能優化
+   - **Client 和 Model Instance Caching** (4 tests)
+     - 驗證 GoogleGenerativeAI clients 使用 useMemo 緩存
+     - 驗證相同 props 不會重新創建 clients
+     - 驗證 apiKeys 改變時會重新創建 clients
+     - 驗證 model instances 使用 useMemo 緩存
+     - 驗證 selectedModel 改變時會重新創建 models
+   - **Load Balancing - API Key Rotation** (6 tests)
+     - 驗證成功後輪轉到下一個 key（分散負載）
+     - 驗證從不同 index 開始輪轉正確
+     - 驗證循環回到第一個 key（wrap around）
+     - 驗證均勻分散請求到所有 keys
+     - 驗證成功時不嘗試其他 key
+     - 驗證失敗時嘗試所有 keys
+   - **Performance Benefits** (2 tests)
+     - 驗證重用 cached clients 避免連線開銷
+     - 驗證每個 API key 有獨立的 cached instance
 
 ---
 
@@ -538,7 +557,62 @@ Error: Cannot read properties of undefined
 
 ## 📈 測試品質指標
 
-- **執行時間**: ~6.5 秒
+- **執行時間**: ~7 秒（1,303 tests）
+- **整體覆蓋率**: ~92%
+- **整合測試比例**: 7.6% (99/1303)
+- **測試穩定性**: 100% pass rate
+- **重點測試領域**:
+  - ✅ React component rendering
+  - ✅ User interaction (click, type, scroll)
+  - ✅ State management (hooks, context)
+  - ✅ Database operations (IndexedDB)
+  - ✅ Error handling
+  - ✅ Browser APIs (clipboard, localStorage, mediaDevices)
+  - ✅ Markdown/Math rendering
+  - ✅ Responsive UI behaviors
+  - ✅ Performance optimizations (API caching, load balancing)
+
+---
+
+## 🚀 執行測試
+
+```bash
+# 執行所有測試
+npm test
+
+# 執行特定測試文件
+npm test -- geminiAPIOptimization.test.ts
+
+# Watch 模式
+npm test -- --watch
+
+# 生成覆蓋率報告
+npm run test:coverage
+```
+
+---
+
+## 📚 測試撰寫指南
+
+### 1. 單元測試
+- 測試單一功能或函數
+- 使用 mock 隔離依賴
+- 快速執行（< 100ms）
+
+### 2. 整合測試
+- 測試多個組件協作
+- 驗證 DOM 渲染與事件
+- 使用 React Testing Library
+
+### 3. E2E 測試
+- 測試完整用戶流程
+- 使用 Playwright
+- 模擬真實瀏覽器環境
+
+### 4. 性能測試 ⭐ NEW
+- 測試緩存機制
+- 驗證 API 連線重用
+- 檢查 load balancing 邏輯
 - **通過率**: 100% (1074/1074)
 - **覆蓋率**: ~92% ✅  
 - **維護性**: 模組化設計，每個功能獨立測試檔

@@ -1,5 +1,5 @@
 // Custom hook for Gemini API integration
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useMemo } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ModelType, ThinkingMode } from './useSettingsState';
 import { DisplayMessage } from './useChatState';
@@ -56,6 +56,16 @@ export const useGeminiAPI = ({
 }: GeminiAPIProps) => {
 
   const modelMessageIndexRef = useRef<number | null>(null);
+  
+  // ✅ Cache Gemini clients to reuse HTTP connections (major performance boost!)
+  const geminiClients = useMemo(() => {
+    return apiKeys.map(key => new GoogleGenerativeAI(key));
+  }, [apiKeys]);
+  
+  // ✅ Cache model instances per key to avoid re-initialization
+  const geminiModels = useMemo(() => {
+    return geminiClients.map(client => client.getGenerativeModel({ model: selectedModel }));
+  }, [geminiClients, selectedModel]);
 
   // Generate title from first user message
   const generateTitle = (text: string): string => {
@@ -124,8 +134,8 @@ export const useGeminiAPI = ({
       for (let i = 0; i < apiKeys.length; i++) {
         const keyIndex = (currentKeyIndex + i) % apiKeys.length;
         try {
-          const client = new GoogleGenerativeAI(apiKeys[keyIndex]);
-          const model = client.getGenerativeModel({ model: selectedModel });
+          // ✅ Use cached client and model instance (reuses HTTP connections)
+          const model = geminiModels[keyIndex];
 
           // Prepare request content
           const parts: any[] = [];
@@ -236,7 +246,8 @@ export const useGeminiAPI = ({
           }
 
           success = true;
-          setCurrentKeyIndex(keyIndex);
+          // ✅ Load balancing: rotate to next key after success (distribute load across all keys)
+          setCurrentKeyIndex((keyIndex + 1) % apiKeys.length);
           break;
         } catch (err: any) {
           lastError = err;
