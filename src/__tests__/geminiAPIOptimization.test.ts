@@ -36,7 +36,7 @@ describe('Gemini API Performance Optimizations', () => {
   const mockProps = {
     apiKeys: ['key1', 'key2', 'key3'],
     currentKeyIndex: 0,
-    selectedModel: 'gemini-2.5-flash' as ModelType,
+    selectedModel: 'gemini-3-flash-preview' as ModelType,
     thinkingMode: 'fast' as const,
     prompts: [{ id: 'default', name: 'Default', content: 'You are a helpful teacher' }],
     selectedPromptId: 'default',

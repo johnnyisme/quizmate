@@ -177,7 +177,7 @@ describe('HomePage Helper Functions', () => {
       expect(config2.thinkingConfig).toBeUndefined();
 
       // gemini-2.5 即使是 thinking mode 也不加入（只支援 gemini-3）
-      const config3 = buildConfig('gemini-2.5-flash', 'thinking');
+      const config3 = buildConfig('gemini-2.5-pro', 'thinking');
       expect(config3.thinkingConfig).toBeUndefined();
     });
   });

@@ -214,7 +214,7 @@ npm run start       # Local production server
 ## Important Patterns & Conventions
 
 ### Gemini API Usage
-- **Model**: `gemini-2.5-flash` (as of current code)
+- **Model**: `gemini-3-flash-preview` (as of current code, v1.3.0+)
 - **Config**: `maxOutputTokens: 16384` (balanced: sufficient for complex problems, potentially faster response)
 - **History Format**: Gemini `Content[]` type; roles are `"user"` and `"model"`
 

@@ -51,7 +51,7 @@
 // Before: 37 個獨立 state
 const [apiKeys, setApiKeys] = useState<string[]>([]);
 const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
-const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-2.5-flash");
+const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-3-flash-preview");
 const [thinkingMode, setThinkingMode] = useState<ThinkingMode>("fast");
 // ... 還有 33 個
 
@@ -76,7 +76,7 @@ const [chatState, setChatState] = useState({
 const [settingsState, setSettingsState] = useState({
   apiKeys: [],
   currentKeyIndex: 0,
-  selectedModel: "gemini-2.5-flash",
+  selectedModel: "gemini-3-flash-preview",
   // ...
 });
 ```
