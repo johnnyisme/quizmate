@@ -106,14 +106,6 @@ export const useGeminiAPI = ({
     
     setDisplayConversation((prev: DisplayMessage[]) => [...prev, userMessage]);
 
-    // Mark need to scroll to new question
-    shouldScrollToQuestion.current = true;
-
-    // Directly set padding (don't rely on useEffect)
-    if (chatContainerRef.current) {
-      chatContainerRef.current.style.paddingBottom = '80vh';
-    }
-
     const apiPrompt = text || "請分析這張圖片並解答題目";
     setCurrentPrompt("");
     
@@ -347,11 +339,6 @@ export const useGeminiAPI = ({
     } finally {
       modelMessageIndexRef.current = null;
       setIsLoading(false);
-      
-      // Remove padding (let browser handle scroll naturally)
-      if (chatContainerRef.current) {
-        chatContainerRef.current.style.paddingBottom = '0px';
-      }
     }
   }, [
     apiKeys,

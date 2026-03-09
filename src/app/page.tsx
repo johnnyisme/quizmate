@@ -5,7 +5,7 @@ import ApiKeySetup from "@/components/ApiKeySetup";
 import { ChatInput } from "@/components/ChatInput";
 import SessionList from "@/components/SessionList";
 import { Header } from "@/components/Header";
-import { ChatArea } from "@/components/ChatArea";
+import { VirtualizedChatArea, VirtualizedChatAreaHandle } from "@/components/VirtualizedChatArea";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
@@ -47,6 +47,7 @@ export default function HomePage() {
   const editingContainerRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const shouldScrollToQuestion = useRef<boolean>(false);
+  const virtualizedChatRef = useRef<VirtualizedChatAreaHandle>(null);
 
   // State Hooks
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -356,7 +357,8 @@ export default function HomePage() {
                 onOpenSettings={() => uiState.setShowSettings(true)}
               />
 
-              <ChatArea
+              <VirtualizedChatArea
+                ref={virtualizedChatRef}
                 chatContainerRef={chatContainerRef}
                 lastUserMessageRef={lastUserMessageRef}
                 displayConversation={chatState.displayConversation}
@@ -373,6 +375,8 @@ export default function HomePage() {
                 onLongPressStart={handleLongPressStart}
                 onLongPressEnd={handleLongPressEnd}
                 onImagePreview={uiState.setPreviewImage}
+                setShowScrollToTop={uiState.setShowScrollToTop}
+                setShowScrollToBottom={uiState.setShowScrollToBottom}
               />
 
               {/* Selection Toolbar */}
@@ -467,8 +471,8 @@ export default function HomePage() {
             <ScrollButtons
               showScrollToTop={uiState.showScrollToTop}
               showScrollToBottom={uiState.showScrollToBottom}
-              onScrollToTop={scrollToTop}
-              onScrollToBottom={scrollToBottom}
+              onScrollToTop={() => virtualizedChatRef.current?.scrollToTop()}
+              onScrollToBottom={() => virtualizedChatRef.current?.scrollToBottom()}
             />
           )}
 

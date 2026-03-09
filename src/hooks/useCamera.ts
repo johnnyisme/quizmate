@@ -1,5 +1,6 @@
 // Custom hook for camera functionality
 import { useCallback, RefObject, ChangeEvent } from 'react';
+import { compressImage } from '@/utils/fileUtils';
 
 type CameraHookProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -38,7 +39,7 @@ export const useCamera = ({
   };
 
   // Handle image file selection
-  const handleImageChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
@@ -55,9 +56,25 @@ export const useCamera = ({
         return;
       }
       
-      setImage(file);
-      setImageUrl(URL.createObjectURL(file));
-      setError(null);
+      try {
+        // Auto-compress image (1024px max width, 70% quality)
+        const compressedFile = await compressImage(file, 1024, 0.7);
+        const originalSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const compressedSizeMB = (compressedFile.size / (1024 * 1024)).toFixed(2);
+        
+        console.log(`Image compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB (${((1 - compressedFile.size / file.size) * 100).toFixed(1)}% reduction)`);
+        
+        setImage(compressedFile);
+        setImageUrl(URL.createObjectURL(compressedFile));
+        setError(null);
+      } catch (err) {
+        console.error('Failed to compress image:', err);
+        // Fallback: use original image if compression fails
+        setImage(file);
+        setImageUrl(URL.createObjectURL(file));
+        setError(null);
+      }
+      
       // Clear input to allow re-selecting same file
       e.target.value = '';
     }

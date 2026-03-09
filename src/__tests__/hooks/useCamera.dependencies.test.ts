@@ -9,6 +9,11 @@ import { renderHook, act } from '@testing-library/react';
 import { useCamera } from '@/hooks/useCamera';
 import { useRef } from 'react';
 
+// Mock compressImage utility
+vi.mock('@/utils/fileUtils', () => ({
+  compressImage: vi.fn((file) => Promise.resolve(file)), // Return original file for tests
+}));
+
 describe('useCamera - MediaStream 生命週期和許可管理', () => {
   let mockGeometryGetUserMedia: any;
   let mockCanvasContext: any;
