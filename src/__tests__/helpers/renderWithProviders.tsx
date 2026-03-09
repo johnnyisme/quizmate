@@ -36,7 +36,7 @@ export const mockUIState = {
 export const mockSettingsState = {
   apiKeys: ['test-key'],
   currentKeyIndex: 0,
-  selectedModel: 'gemini-3.1-flash-lite-preview' as const,
+  selectedModel: 'gemini-3-flash-preview' as const,
   thinkingMode: 'fast' as const,
   prompts: [
     {

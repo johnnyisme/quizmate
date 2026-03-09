@@ -19,7 +19,7 @@ export const useSettingsState = () => {
   const [settingsState, setSettingsState] = useState<SettingsState>({
     apiKeys: [],
     currentKeyIndex: 0,
-    selectedModel: "gemini-3.1-flash-lite-preview",
+    selectedModel: "gemini-3-flash-preview",
     thinkingMode: "fast",
     prompts: [DEFAULT_PROMPT],
     selectedPromptId: "default",
@@ -60,7 +60,7 @@ export const useSettingsState = () => {
     if (storedModel && validModels.includes(storedModel)) {
       setSelectedModel(storedModel);
     } else {
-      const defaultModel: ModelType = "gemini-3.1-flash-lite-preview";
+      const defaultModel: ModelType = "gemini-3-flash-preview";
       setSelectedModel(defaultModel);
       localStorage.setItem("selected-model", defaultModel);
     }
