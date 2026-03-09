@@ -15,8 +15,8 @@
 - **訊息複製功能**：每個問題或回答都可一鍵複製，方便保存或分享內容
 - **訊息分享功能**：長按訊息進入選取模式，可選擇多則訊息分享到 LINE、Messenger、WhatsApp 等 App
 - **Dark Mode 深色模式**：支援淺色/深色主題切換，自動記憶偏好設定
-- **多模型選擇**：Gemini 3 Flash、Gemini 2.5 Flash、Gemini 2.5 Pro
-- **推理深度控制**：Gemini 3 Flash 支援快速/深度兩種推理模式
+- **多模型選擇**：Gemini 3.1 Flash-Lite、Gemini 3 Flash、Gemini 2.5 Flash-Lite、Gemini 2.5 Flash
+- **推理深度控制**：Gemini 3 系列支援快速/深度兩種推理模式
 - **API Key 管理**：瀏覽器端 CRUD 管理，支援多把 Key 輪替
 - **系統 Prompt 自訂**：內建預設老師 Prompt，支援新增最多 5 組自訂 Prompt，靈活切換
 - 首則系統提示：用條列、繁體中文詳細解題
@@ -59,9 +59,10 @@ npm run dev
    - 支援新增最多 5 組自訂 Prompt（點擊「新增」按鈕）
    - 編輯完後點「儲存」，使用按鈕可切換 Prompt（已使用的會呈現禁用狀態）
 3) **選擇模型**：從下拉選單選擇 AI 模型
-   - Gemini 3 Flash（最新，支援推理深度控制）
+   - Gemini 3.1 Flash-Lite（最新，更輕量快速）
+   - Gemini 3 Flash（支援推理深度控制）
+   - Gemini 2.5 Flash-Lite（輕量快速）
    - Gemini 2.5 Flash（快速平衡）
-   - Gemini 2.5 Pro（高品質）
 4) **上傳題目**：
    - 點擊上傳按鈕：從相簿選擇或拖曳圖片
    - 點擊攝影機按鈕：

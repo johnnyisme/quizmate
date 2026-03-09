@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { CustomPrompt, DEFAULT_PROMPT } from '@/components/PromptSettings';
 
-export type ModelType = "gemini-3-flash-preview" | "gemini-2.5-flash" | "gemini-2.5-pro";
+export type ModelType = "gemini-3-flash-preview" | "gemini-3.1-flash-lite-preview" | "gemini-2.5-flash" | "gemini-2.5-flash-lite";
 export type ThinkingMode = "fast" | "thinking";
 
 type SettingsState = {
@@ -19,7 +19,7 @@ export const useSettingsState = () => {
   const [settingsState, setSettingsState] = useState<SettingsState>({
     apiKeys: [],
     currentKeyIndex: 0,
-    selectedModel: "gemini-2.5-flash",
+    selectedModel: "gemini-3.1-flash-lite-preview",
     thinkingMode: "fast",
     prompts: [DEFAULT_PROMPT],
     selectedPromptId: "default",
@@ -55,12 +55,12 @@ export const useSettingsState = () => {
     }
 
     const storedModel = localStorage.getItem("selected-model") as ModelType | null;
-    const validModels: ModelType[] = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-pro"];
+    const validModels: ModelType[] = ["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
     
     if (storedModel && validModels.includes(storedModel)) {
       setSelectedModel(storedModel);
     } else {
-      const defaultModel: ModelType = "gemini-2.5-flash";
+      const defaultModel: ModelType = "gemini-3.1-flash-lite-preview";
       setSelectedModel(defaultModel);
       localStorage.setItem("selected-model", defaultModel);
     }
