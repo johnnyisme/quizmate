@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import type { Session } from '@/lib/db';
+import { formatSessionTime } from '@/utils/dateUtils';
 
 interface SessionListProps {
   sessions: Session[];
@@ -77,7 +78,7 @@ const SessionList: React.FC<SessionListProps> = ({
               ) : (
                 <>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{s.title}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(s.updatedAt).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatSessionTime(s.updatedAt)}</p>
                 </>
               )}
             </div>

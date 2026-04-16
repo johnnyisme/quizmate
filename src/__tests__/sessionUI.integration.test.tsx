@@ -4,6 +4,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useState, useRef, useEffect } from 'react';
+import { formatSessionTime } from '@/utils/dateUtils';
 
 interface Session {
   id: string;
@@ -65,17 +66,8 @@ function SessionItem({ session, onEdit, onDelete, onTitleSave }: {
     }
   }, [editingSessionId]);
 
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString('zh-TW', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit', 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit', 
-      hour12: false 
-    });
-  };
+  // Use the same formatting function as the actual component
+  const formatTime = formatSessionTime;
 
   return (
     <div className="group p-3 rounded-lg bg-white dark:bg-gray-900 border" data-testid={`session-${session.id}`}>
