@@ -31,6 +31,28 @@ interface MessageBubbleProps {
   onImagePreview: (imageUrl: string) => void;
 }
 
+type ReactMarkdownProps = React.ComponentProps<typeof ReactMarkdown>;
+type CodeComponentProps = React.ComponentPropsWithoutRef<'code'> & {
+  inline?: boolean;
+  node?: unknown;
+  children?: React.ReactNode;
+};
+type TableComponentProps = React.ComponentPropsWithoutRef<'table'> & {
+  node?: unknown;
+  children?: React.ReactNode;
+};
+type TableHeaderCellProps = React.ComponentPropsWithoutRef<'th'> & {
+  node?: unknown;
+  children?: React.ReactNode;
+};
+type TableCellProps = React.ComponentPropsWithoutRef<'td'> & {
+  node?: unknown;
+  children?: React.ReactNode;
+};
+type SyntaxHighlighterTheme = {
+  [key: string]: React.CSSProperties;
+};
+
 const MessageBubble = React.memo(
   React.forwardRef<HTMLDivElement, MessageBubbleProps>(({
     msg,
@@ -64,19 +86,21 @@ const MessageBubble = React.memo(
       ],
     }],
     [rehypeKatex, { output: 'htmlAndMathml', strict: false, trust: true }], // Process after sanitize, trust KaTeX output
-  ] as any, []);
+  ] as unknown as NonNullable<ReactMarkdownProps['rehypePlugins']>, []);
 
   // Memoize remark plugins configuration
   const remarkPlugins = useMemo(() => [remarkMath, remarkGfm, remarkBreaks], []);
 
   // Memoize ReactMarkdown components
   const markdownComponents = useMemo(() => ({
-    code({ node, inline, className, children, ...props }: any) {
+    code({ inline, className, children, style: _style, ...props }: CodeComponentProps) {
       const match = /language-(\w+)/.exec(className || '');
+      const syntaxTheme = (isDark ? oneDark : oneLight) as SyntaxHighlighterTheme;
+
       return !inline && match ? (
         <div className="overflow-x-auto -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)' }}>
           <SyntaxHighlighter
-            style={isDark ? oneDark : oneLight}
+            style={syntaxTheme}
             language={match[1]}
             PreTag="div"
             customStyle={{
@@ -95,21 +119,21 @@ const MessageBubble = React.memo(
         </code>
       );
     },
-    table({ node, children, ...props }: any) {
+      table({ children, ...props }: TableComponentProps) {
       return (
         <div className="overflow-x-scroll -mx-3 px-3 my-2" style={{ maxWidth: 'calc(100vw - 4rem)', wordBreak: 'normal' }}>
           <table {...props}>{children}</table>
         </div>
       );
     },
-    th({ node, children, ...props }: any) {
+      th({ children, ...props }: TableHeaderCellProps) {
       return (
         <th {...props} style={{ whiteSpace: 'nowrap', ...props.style }}>
           {children}
         </th>
       );
     },
-    td({ node, children, ...props }: any) {
+      td({ children, ...props }: TableCellProps) {
       return (
         <td {...props} style={{ whiteSpace: 'nowrap', ...props.style }}>
           {children}

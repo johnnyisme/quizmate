@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from 'next/dynamic';
 import ApiKeySetup from "@/components/ApiKeySetup";
 import { ChatInput } from "@/components/ChatInput";
@@ -25,8 +25,11 @@ import { useScrollManagement } from "@/hooks/useScrollManagement";
 import { useSessionManagement } from "@/hooks/useSessionManagement";
 import { useGeminiAPI } from "@/hooks/useGeminiAPI";
 import { useSessionStorage, useSessionHistory } from "@/lib/useSessionStorage";
-import { useState, useEffect } from "react";
 import type { Content } from '@google/generative-ai';
+import type { ModelType } from "@/hooks/useSettingsState";
+import type { CustomPrompt } from "@/components/PromptSettings";
+
+type GeminiPart = NonNullable<Content['parts']>[number];
 
 // Lazy load Settings modal
 const Settings = dynamic(() => import("@/components/Settings"), {
@@ -110,7 +113,7 @@ export default function HomePage() {
   } = useScrollManagement({
     chatContainerRef,
     lastUserMessageRef,
-    shouldScrollToQuestion,
+    shouldScrollToQuestionRef: shouldScrollToQuestion,
     currentSessionId,
     displayConversation: chatState.displayConversation,
     isLoading: chatState.isLoading,
@@ -151,7 +154,7 @@ export default function HomePage() {
     const apiMessages: Content[] = [];
     for (const msg of session.messages) {
       if (msg.role === 'user') {
-        const parts: any[] = [];
+        const parts: GeminiPart[] = [];
         // Add image if exists
         if (msg.imageBase64) {
           // Extract base64 data from data URI
@@ -241,7 +244,7 @@ export default function HomePage() {
   };
 
   // Handle settings updates
-  const handlePromptsUpdated = (updatedPrompts: any[], newSelectedId?: string) => {
+  const handlePromptsUpdated = (updatedPrompts: CustomPrompt[], newSelectedId?: string) => {
     settingsState.setPrompts(updatedPrompts);
     if (newSelectedId) {
       settingsState.setSelectedPromptId(newSelectedId);
@@ -252,7 +255,7 @@ export default function HomePage() {
     settingsState.setSelectedPromptId(promptId);
   };
 
-  const handleModelChange = (model: any) => {
+  const handleModelChange = (model: ModelType) => {
     settingsState.setSelectedModel(model);
   };
 

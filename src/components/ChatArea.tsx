@@ -40,6 +40,16 @@ export const ChatArea = ({
   onLongPressEnd,
   onImagePreview,
 }: ChatAreaProps) => {
+  const lastUserMessageIndex = useMemo(() => {
+    for (let i = displayConversation.length - 1; i >= 0; i--) {
+      if (displayConversation[i].role === 'user') {
+        return i;
+      }
+    }
+
+    return -1;
+  }, [displayConversation]);
+
   return (
     <div ref={chatContainerRef} className="flex-1 p-4 pb-6 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'contain' }}>
       {displayConversation.length === 0 && (
@@ -63,21 +73,10 @@ export const ChatArea = ({
       )}
 
       <div className="space-y-4">
-        {(() => {
-          // ✅ Optimize: calculate lastUserMessageIndex once using useMemo
-          const lastUserMessageIndex = useMemo(() => {
-            for (let i = displayConversation.length - 1; i >= 0; i--) {
-              if (displayConversation[i].role === 'user') {
-                return i;
-              }
-            }
-            return -1;
-          }, [displayConversation]);
-          
-          return displayConversation.map((msg, index) => {
-            const isLastUserMessage = msg.role === 'user' && index === lastUserMessageIndex;
-            const isSelected = selectedMessages.has(index);
-          
+        {displayConversation.map((msg, index) => {
+          const isLastUserMessage = msg.role === 'user' && index === lastUserMessageIndex;
+          const isSelected = selectedMessages.has(index);
+
           return (
             <MessageBubble
               key={index}
@@ -97,8 +96,7 @@ export const ChatArea = ({
               onImagePreview={onImagePreview}
             />
           );
-        });
-        })()}
+        })}
         {isLoading && (
           <div className="flex justify-start">
             <div className="max-w-lg lg:max-w-3xl p-3 rounded-lg shadow-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-center gap-3">

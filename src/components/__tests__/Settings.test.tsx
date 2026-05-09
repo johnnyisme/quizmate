@@ -185,7 +185,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should store theme preference as string', () => {
-      let isDark = true;
+      const isDark = true;
       const themeString = isDark ? 'dark' : 'light';
       
       expect(themeString).toBe('dark');
@@ -346,7 +346,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should handle close while on different tabs', () => {
-      let activeTab: SettingsTab = "theme";
+      const activeTab: SettingsTab = "theme";
       let isClosed = false;
       
       const onClose = () => { isClosed = true; };
@@ -357,7 +357,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should handle theme toggle from theme tab', () => {
-      let activeTab: SettingsTab = "theme";
+      const activeTab: SettingsTab = "theme";
       let isDark = false;
       
       const onThemeToggle = () => { isDark = !isDark; };
@@ -368,7 +368,7 @@ describe('Settings Tab Logic', () => {
     });
 
     it('should preserve tab state across theme changes', () => {
-      let activeTab: SettingsTab = "apikey";
+      const activeTab: SettingsTab = "apikey";
       let isDark = false;
       
       // Toggle theme

@@ -1,5 +1,7 @@
 // Custom hook for camera functionality
-import { useCallback, RefObject, ChangeEvent } from 'react';
+import { useCallback, type ChangeEvent, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import type { Content } from '@google/generative-ai';
+import type { ChatError, DisplayMessage } from './useChatState';
 
 type CameraHookProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -11,10 +13,10 @@ type CameraHookProps = {
   setCameraStream: (stream: MediaStream | null) => void;
   setImage: (img: File | null) => void;
   setImageUrl: (url: string) => void;
-  setDisplayConversation: (conv: any) => void;
-  setApiHistory: (hist: any) => void;
+  setDisplayConversation: Dispatch<SetStateAction<DisplayMessage[]>>;
+  setApiHistory: Dispatch<SetStateAction<Content[]>>;
   setCurrentSessionId: (id: string | null) => void;
-  setError: (err: any) => void;
+  setError: (err: ChatError) => void;
 };
 
 export const useCamera = ({

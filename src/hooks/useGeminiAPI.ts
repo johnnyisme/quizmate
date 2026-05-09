@@ -1,34 +1,59 @@
 // Custom hook for Gemini API integration
-import { useCallback, useRef, useMemo } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useCallback, useRef, useMemo, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { GoogleGenerativeAI, type Content } from '@google/generative-ai';
+import type { CustomPrompt } from '@/components/PromptSettings';
 import { ModelType, ThinkingMode } from './useSettingsState';
-import { DisplayMessage } from './useChatState';
+import type { ChatError, DisplayMessage } from './useChatState';
 import { fileToBase64 } from '@/utils/fileUtils';
 import { getFriendlyErrorMessage } from '@/utils/errorHandling';
-import type { Message as DBMessage } from '@/lib/db';
+import type { Message as DBMessage, Session as DBSession } from '@/lib/db';
+
+type GeminiPart = NonNullable<Content['parts']>[number];
+type GeminiGenerationConfig = {
+  temperature: number;
+  maxOutputTokens: number;
+  thinkingConfig?: {
+    thinkingLevel: string;
+    includeThoughts: boolean;
+  };
+};
 
 type GeminiAPIProps = {
   apiKeys: string[];
   currentKeyIndex: number;
   selectedModel: ModelType;
   thinkingMode: ThinkingMode;
-  prompts: any[];
+  prompts: CustomPrompt[];
   selectedPromptId: string;
   currentSessionId: string | null;
-  apiHistory: any[];
-  chatContainerRef: React.RefObject<HTMLDivElement | null>;
-  shouldScrollToQuestion: React.RefObject<boolean>;
+  apiHistory: Content[];
+  chatContainerRef: RefObject<HTMLDivElement | null>;
+  shouldScrollToQuestion: RefObject<boolean>;
   setCurrentKeyIndex: (index: number) => void;
-  setDisplayConversation: (conv: any) => void;
-  setApiHistory: (hist: any) => void;
+  setDisplayConversation: Dispatch<SetStateAction<DisplayMessage[]>>;
+  setApiHistory: Dispatch<SetStateAction<Content[]>>;
   setCurrentPrompt: (prompt: string) => void;
   setIsLoading: (loading: boolean) => void;
-  setError: (err: any) => void;
+  setError: (err: ChatError) => void;
   setCurrentSessionId: (id: string | null) => void;
-  createNewSession: (title: string, messages: DBMessage[], image?: string) => Promise<any>;
+  createNewSession: (title: string, messages: DBMessage[], image?: string) => Promise<DBSession>;
   addMessages: (messages: DBMessage[]) => Promise<void>;
   performCleanup: () => Promise<void>;
   loadSessions: () => Promise<void>;
+};
+
+// Generate title from first user message
+const generateTitle = (text: string): string => {
+  const cleaned = text.replace(/[*$\n]/g, " ").trim();
+  return cleaned.length > 30 ? cleaned.slice(0, 30) + "..." : cleaned;
+};
+
+const isMissingSessionError = (err: unknown) => {
+  if (!(err instanceof Error)) {
+    return false;
+  }
+
+  return err.message === 'No active session' || /Session .+ not found/.test(err.message);
 };
 
 export const useGeminiAPI = ({
@@ -67,11 +92,18 @@ export const useGeminiAPI = ({
     return geminiClients.map(client => client.getGenerativeModel({ model: selectedModel }));
   }, [geminiClients, selectedModel]);
 
-  // Generate title from first user message
-  const generateTitle = (text: string): string => {
-    const cleaned = text.replace(/[*$\n]/g, " ").trim();
-    return cleaned.length > 30 ? cleaned.slice(0, 30) + "..." : cleaned;
-  };
+  const persistNewSession = useCallback(async (
+    titleText: string,
+    messages: DBMessage[],
+    imageBase64?: string
+  ) => {
+    const title = generateTitle(titleText || "圖片問題");
+    const newSession = await createNewSession(title, messages, imageBase64);
+    setCurrentSessionId(newSession.id);
+    localStorage.setItem('current-session-id', newSession.id);
+    await performCleanup();
+    await loadSessions();
+  }, [createNewSession, setCurrentSessionId, performCleanup, loadSessions]);
 
   // Handle form submission (send message)
   const handleSubmit = useCallback(async (
@@ -129,7 +161,7 @@ export const useGeminiAPI = ({
       // Try current API key, rotate if failed
       let modelResponseText = "";
       let success = false;
-      let lastError: any = null;
+      let lastError: unknown = null;
 
       for (let i = 0; i < apiKeys.length; i++) {
         const keyIndex = (currentKeyIndex + i) % apiKeys.length;
@@ -138,7 +170,7 @@ export const useGeminiAPI = ({
           const model = geminiModels[keyIndex];
 
           // Prepare request content
-          const parts: any[] = [];
+          const parts: GeminiPart[] = [];
 
           // If there's an image, add it
           if (currentImage) {
@@ -162,7 +194,7 @@ export const useGeminiAPI = ({
 
           // Call Gemini API (supports streaming)
           const buildRequestPayload = (withThinking: boolean) => {
-            const generationConfig: any = {
+            const generationConfig: GeminiGenerationConfig = {
               temperature: 0.7,  // Lower for faster, more focused responses
               maxOutputTokens: 16384,  // Balanced: sufficient for complex problems, potentially faster response
             };
@@ -233,12 +265,12 @@ export const useGeminiAPI = ({
 
           try {
             modelResponseText = await streamOnce(thinkingMode === "thinking");
-          } catch (err: any) {
-            const msg = (err?.message || "").toLowerCase();
+          } catch (err) {
+            const msg = err instanceof Error ? err.message.toLowerCase() : "";
             const thinkingLikelyUnsupported = msg.includes("thinking") || msg.includes("unknown name") || msg.includes("unrecognized");
 
             if (thinkingMode === "thinking" && thinkingLikelyUnsupported && selectedModel.includes("gemini-3")) {
-              console.warn("Thinking not supported for this key/model, retrying without thinking.", err?.message);
+              console.warn("Thinking not supported for this key/model, retrying without thinking.", err instanceof Error ? err.message : err);
               modelResponseText = await streamOnce(false);
             } else {
               throw err;
@@ -249,12 +281,16 @@ export const useGeminiAPI = ({
           // ✅ Load balancing: rotate to next key after success (distribute load across all keys)
           setCurrentKeyIndex((keyIndex + 1) % apiKeys.length);
           break;
-        } catch (err: any) {
+        } catch (err) {
           lastError = err;
+          const errorMessage = err instanceof Error ? err.message : undefined;
+          const errorStatus = typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: number }).status : undefined;
+          const errorStatusText = typeof err === 'object' && err !== null && 'statusText' in err ? (err as { statusText?: string }).statusText : undefined;
+
           console.error(`API key ${keyIndex} failed:`, {
-            message: err?.message,
-            status: err?.status,
-            statusText: err?.statusText,
+            message: errorMessage,
+            status: errorStatus,
+            statusText: errorStatusText,
             error: err
           });
           continue;
@@ -262,9 +298,9 @@ export const useGeminiAPI = ({
       }
 
       if (!success) {
-        const errorDetail = lastError?.message 
-          || lastError?.statusText 
-          || (lastError?.status ? `HTTP ${lastError.status}` : null)
+        const errorDetail = (lastError instanceof Error ? lastError.message : null)
+          || (typeof lastError === 'object' && lastError !== null && 'statusText' in lastError ? ((lastError as { statusText?: string }).statusText || null) : null)
+          || (typeof lastError === 'object' && lastError !== null && 'status' in lastError && (lastError as { status?: number }).status ? `HTTP ${(lastError as { status?: number }).status}` : null)
           || JSON.stringify(lastError)
           || "未知錯誤";
         
@@ -295,16 +331,18 @@ export const useGeminiAPI = ({
       }
 
       if (!currentSessionId) {
-        const title = generateTitle(promptText || "圖片問題");
-        const sessionImage = userDBMsg.imageBase64;
-
-        const newSession = await createNewSession(title, [userDBMsg, modelDBMsg], sessionImage);
-        setCurrentSessionId(newSession.id);
-        localStorage.setItem('current-session-id', newSession.id);
-        await performCleanup();
-        await loadSessions();
+        await persistNewSession(promptText || "圖片問題", [userDBMsg, modelDBMsg], userDBMsg.imageBase64);
       } else {
-        await addMessages([userDBMsg, modelDBMsg]);
+        try {
+          await addMessages([userDBMsg, modelDBMsg]);
+        } catch (err) {
+          if (!isMissingSessionError(err)) {
+            throw err;
+          }
+
+          console.warn("Active session was unavailable; creating a new session instead.", err);
+          await persistNewSession(promptText || "圖片問題", [userDBMsg, modelDBMsg], userDBMsg.imageBase64);
+        }
       }
 
       // Update API history
@@ -318,19 +356,22 @@ export const useGeminiAPI = ({
               { inlineData: { data: base64, mimeType: currentImage.type || "image/jpeg" } },
               { text: apiPrompt },
             ],
-          };
-          setApiHistory((prev: any[]) => [...prev, userWithImage, modelApiPart]);
+          } as Content;
+          setApiHistory((prev: Content[]) => [...prev, userWithImage, modelApiPart]);
         } catch (e) {
           const fallbackUser = { role: "user", parts: [{ text: apiPrompt }] };
-          setApiHistory((prev: any[]) => [...prev, fallbackUser, modelApiPart]);
+          setApiHistory((prev: Content[]) => [...prev, fallbackUser as Content, modelApiPart]);
         }
       } else {
         const userApiPart = { role: "user", parts: [{ text: apiPrompt }] };
-        setApiHistory((prev: any[]) => [...prev, userApiPart, modelApiPart]);
+        setApiHistory((prev: Content[]) => [...prev, userApiPart as Content, modelApiPart]);
       }
-    } catch (err: any) {
+    } catch (err) {
       const friendlyError = getFriendlyErrorMessage(err);
-      const technicalDetails = err?.stack || JSON.stringify(err, null, 2);
+      const technicalDetails = err instanceof Error
+        ? (err.stack || err.message)
+        : JSON.stringify(err, null, 2);
+
       setError({ 
         message: friendlyError.message,
         suggestion: friendlyError.suggestion,
@@ -375,6 +416,7 @@ export const useGeminiAPI = ({
     addMessages,
     performCleanup,
     loadSessions,
+    persistNewSession,
   ]);
 
   return {

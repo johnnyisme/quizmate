@@ -54,7 +54,7 @@ describe('Scroll After AI Response', () => {
 
   describe('Session Switch Detection', () => {
     it('should detect when session ID changes', () => {
-      let prevSessionId: string | null = null;
+      const prevSessionId: string | null = null;
       const newSessionId = 'session-123';
       
       const isSessionSwitch = prevSessionId !== newSessionId;
@@ -63,7 +63,7 @@ describe('Scroll After AI Response', () => {
     });
 
     it('should not detect session switch when ID remains same', () => {
-      let prevSessionId: string | null = 'session-123';
+      const prevSessionId: string | null = 'session-123';
       const newSessionId = 'session-123';
       
       const isSessionSwitch = prevSessionId !== newSessionId;
@@ -84,7 +84,7 @@ describe('Scroll After AI Response', () => {
 
   describe('Scroll Restoration Logic', () => {
     it('should restore scroll position only on session switch', () => {
-      let prevSessionId: string | null = null;
+      const prevSessionId: string | null = null;
       const newSessionId = 'session-456';
       const savedScrollPos = 250;
       
@@ -98,7 +98,7 @@ describe('Scroll After AI Response', () => {
     });
 
     it('should NOT restore scroll position when session updates', () => {
-      let prevSessionId: string | null = 'session-456';
+      const prevSessionId: string | null = 'session-456';
       const newSessionId = 'session-456'; // 同一個 session
       const currentScrollPos = 500;
       const savedScrollPos = 250;
@@ -139,7 +139,7 @@ describe('Scroll After AI Response', () => {
 
   describe('Edge Cases', () => {
     it('should handle rapid session updates without scroll jumps', () => {
-      let prevSessionId: string | null = 'session-123';
+      const prevSessionId: string | null = 'session-123';
       const newSessionId = 'session-123';
       
       // 連續多次更新同一個 session（AI 回應串流更新）
@@ -195,7 +195,7 @@ describe('Scroll After AI Response', () => {
     });
 
     it('should not jump to saved position during active session', () => {
-      let prevSessionId: string | null = 'active-session';
+      const prevSessionId: string | null = 'active-session';
       const currentSessionId = 'active-session';
       const savedPosition = 100;
       chatContainer.scrollTop = 500; // 用戶當前位置

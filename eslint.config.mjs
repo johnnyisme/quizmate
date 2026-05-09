@@ -13,6 +13,22 @@ const eslintConfig = defineConfig([
     rules: {
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn", // ✅ 依賴陣列檢查
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    files: ["**/__tests__/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}", "e2e/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/refs": "off",
+    },
+  },
+  {
+    files: ["scripts/**/*.js", "test-*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
   // Override default ignores of eslint-config-next.

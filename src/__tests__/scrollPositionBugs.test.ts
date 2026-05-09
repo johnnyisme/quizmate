@@ -136,7 +136,7 @@ describe('Scroll Position Bug Fixes', () => {
       };
 
       let isLoading = false;
-      let shouldAutoScroll = true;
+      const shouldAutoScroll = true;
       let conversationLength = 0;
 
       // Act 1: User sends message (isLoading = true, conversation length 增加)
@@ -161,7 +161,7 @@ describe('Scroll Position Bug Fixes', () => {
     it('should not auto-scroll when user manually scrolls during loading', () => {
       // Arrange: Setup auto-scroll state
       let shouldAutoScroll = true;
-      let isLoading = true;
+      const isLoading = true;
       let isAutoScrolling = false;
 
       // Act 1: Auto-scroll starts
@@ -274,7 +274,7 @@ describe('Scroll Position Bug Fixes', () => {
     it('should re-enable auto-scroll when AI response completes', () => {
       // Arrange: User disabled auto-scroll by manual scrolling
       let shouldAutoScroll = false;
-      let isLoading = true;
+      const isLoading = true;
 
       // Act 1: AI response is still loading
       expect(shouldAutoScroll).toBe(false);

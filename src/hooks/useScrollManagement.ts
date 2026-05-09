@@ -1,13 +1,14 @@
 // Custom hook for scroll management
 import { useEffect, useCallback, RefObject, useRef } from 'react';
+import type { DisplayMessage } from './useChatState';
 
 type ScrollManagementProps = {
   chatContainerRef: RefObject<HTMLDivElement | null>;
   lastUserMessageRef: RefObject<HTMLDivElement | null>;
   currentSessionId: string | null;
-  displayConversation: any[];
+  displayConversation: DisplayMessage[];
   isLoading: boolean;
-  shouldScrollToQuestion: RefObject<boolean>;
+  shouldScrollToQuestionRef: RefObject<boolean>;
   setShowScrollToTop: (show: boolean) => void;
   setShowScrollToBottom: (show: boolean) => void;
 };
@@ -18,7 +19,7 @@ export const useScrollManagement = ({
   currentSessionId,
   displayConversation,
   isLoading,
-  shouldScrollToQuestion,
+  shouldScrollToQuestionRef,
   setShowScrollToTop,
   setShowScrollToBottom,
 }: ScrollManagementProps) => {
@@ -33,8 +34,8 @@ export const useScrollManagement = ({
 
   // Auto-scroll to new question
   useEffect(() => {
-    if (shouldScrollToQuestion.current && lastUserMessageRef.current && chatContainerRef.current) {
-      shouldScrollToQuestion.current = false;
+    if (shouldScrollToQuestionRef.current && lastUserMessageRef.current && chatContainerRef.current) {
+      shouldScrollToQuestionRef.current = false;
       
       // Use requestAnimationFrame to ensure DOM is fully updated
       const rafId = requestAnimationFrame(() => {
@@ -59,7 +60,7 @@ export const useScrollManagement = ({
       
       return () => cancelAnimationFrame(rafId);
     }
-  }, [displayConversation, lastUserMessageRef, chatContainerRef]);
+  }, [displayConversation, lastUserMessageRef, chatContainerRef, shouldScrollToQuestionRef]);
 
   // Gemini App-like scroll effect during AI response
   useEffect(() => {
@@ -146,7 +147,7 @@ export const useScrollManagement = ({
         
         // Clear any existing timeout
         if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current as ReturnType<typeof setTimeout>);
+          clearTimeout(scrollTimeoutRef.current);
         }
       }
     };
@@ -156,7 +157,7 @@ export const useScrollManagement = ({
     return () => {
       container.removeEventListener('scroll', handleUserScroll);
       if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current as ReturnType<typeof setTimeout>);
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, [isLoading, chatContainerRef]);

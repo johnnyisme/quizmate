@@ -222,7 +222,7 @@ describe('useAsyncState Logic', () => {
     });
 
     it('should handle failed async operation pattern', () => {
-      let value: string | null = null;
+      const value: string | null = null;
       let loading = false;
       let error: string | null = null;
       
@@ -274,8 +274,8 @@ describe('useAsyncState Logic', () => {
     });
 
     it('should handle value and error together (stale data)', () => {
-      let value = "old data";
-      let error: string | null = "Fetch failed";
+      const value = "old data";
+      const error: string | null = "Fetch failed";
       
       // Can have both value (old) and error (new)
       expect(value).toBe("old data");
@@ -299,7 +299,7 @@ describe('useAsyncState Logic', () => {
     it('should work with string type', () => {
       type TestType = string;
       const initialValue: TestType = "test";
-      let value: TestType = initialValue;
+      const value: TestType = initialValue;
       
       expect(typeof value).toBe("string");
     });
@@ -307,7 +307,7 @@ describe('useAsyncState Logic', () => {
     it('should work with number type', () => {
       type TestType = number;
       const initialValue: TestType = 0;
-      let value: TestType = initialValue;
+      const value: TestType = initialValue;
       
       expect(typeof value).toBe("number");
     });
@@ -315,7 +315,7 @@ describe('useAsyncState Logic', () => {
     it('should work with boolean type', () => {
       type TestType = boolean;
       const initialValue: TestType = false;
-      let value: TestType = initialValue;
+      const value: TestType = initialValue;
       
       expect(typeof value).toBe("boolean");
     });
@@ -323,7 +323,7 @@ describe('useAsyncState Logic', () => {
     it('should work with object type', () => {
       type TestType = { id: number; name: string };
       const initialValue: TestType = { id: 1, name: "test" };
-      let value: TestType = initialValue;
+      const value: TestType = initialValue;
       
       expect(value).toHaveProperty("id");
       expect(value).toHaveProperty("name");
@@ -332,7 +332,7 @@ describe('useAsyncState Logic', () => {
     it('should work with array type', () => {
       type TestType = number[];
       const initialValue: TestType = [1, 2, 3];
-      let value: TestType = initialValue;
+      const value: TestType = initialValue;
       
       expect(Array.isArray(value)).toBe(true);
     });
@@ -352,48 +352,48 @@ describe('useAsyncState Logic', () => {
   describe('Edge Cases', () => {
     it('should handle undefined initial value', () => {
       const initialValue = undefined;
-      let value = initialValue;
+      const value = initialValue;
       
       expect(value).toBeUndefined();
     });
 
     it('should handle empty string', () => {
       const initialValue = "";
-      let value = initialValue;
+      const value = initialValue;
       
       expect(value).toBe("");
     });
 
     it('should handle zero', () => {
       const initialValue = 0;
-      let value = initialValue;
+      const value = initialValue;
       
       expect(value).toBe(0);
     });
 
     it('should handle false', () => {
       const initialValue = false;
-      let value = initialValue;
+      const value = initialValue;
       
       expect(value).toBe(false);
     });
 
     it('should handle empty array', () => {
       const initialValue: any[] = [];
-      let value = initialValue;
+      const value = initialValue;
       
       expect(value).toHaveLength(0);
     });
 
     it('should handle empty object', () => {
       const initialValue = {};
-      let value = initialValue;
+      const value = initialValue;
       
       expect(Object.keys(value)).toHaveLength(0);
     });
 
     it('should handle very long error message', () => {
-      let error: string | null = "A".repeat(1000);
+      const error: string | null = "A".repeat(1000);
       
       expect(error).toHaveLength(1000);
     });

@@ -1,6 +1,6 @@
 // Custom hook for message actions (copy, share, select)
 import { useCallback, useRef } from 'react';
-import { DisplayMessage } from './useChatState';
+import type { ChatError, DisplayMessage } from './useChatState';
 
 type MessageActionsProps = {
   displayConversation: DisplayMessage[];
@@ -9,7 +9,7 @@ type MessageActionsProps = {
   setCopiedMessageIndex: (idx: number | null) => void;
   setIsSelectMode: (mode: boolean) => void;
   setSelectedMessages: (msgs: Set<number> | ((prev: Set<number>) => Set<number>)) => void;
-  setError: (err: any) => void;
+  setError: (err: ChatError) => void;
 };
 
 export const useMessageActions = ({
@@ -172,9 +172,11 @@ export const useMessageActions = ({
       
       alert('✅ 已複製到剪貼簿！\n\n💡 你的瀏覽器不支援直接分享功能。請手動貼上到 LINE、Messenger 等 App 分享。\n\n提示：在支援的瀏覽器（如 Safari、Chrome Mobile）上可直接呼叫分享選單。');
       clearSelection();
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+
       // User cancelled sharing
-      if (err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         console.log('用戶取消分享');
         return;
       }
@@ -182,7 +184,7 @@ export const useMessageActions = ({
       console.error('Failed to share:', err);
       setError({
         message: "分享失敗",
-        suggestion: "請確認瀏覽器支援分享功能，或嘗試使用複製功能\n\n技術細節：" + (err.message || JSON.stringify(err))
+        suggestion: "請確認瀏覽器支援分享功能，或嘗試使用複製功能\n\n技術細節：" + errorMessage
       });
     }
   }, [selectedMessages, formatSelectedMessages, clearSelection, setError]);

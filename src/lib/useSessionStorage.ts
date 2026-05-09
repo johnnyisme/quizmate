@@ -66,16 +66,35 @@ export function useSessionStorage(sessionId: string | null) {
     []
   );
 
+  const loadTargetSession = useCallback(async () => {
+    if (sessionId && session?.id === sessionId) {
+      return session;
+    }
+
+    if (!sessionId) {
+      return null;
+    }
+
+    const data = await getSession(sessionId);
+    if (data) {
+      setSession(data);
+    }
+    return data || null;
+  }, [session, sessionId]);
+
   // Append messages to current session
   const addMessages = useCallback(
     async (messages: Message[]) => {
-      if (!session) {
+      const targetSession = await loadTargetSession();
+
+      if (!targetSession) {
         throw new Error('No active session');
       }
 
       try {
         setError(null);
-        await appendMessages(session.id, messages);
+        const updatedAt = Date.now();
+        await appendMessages(targetSession.id, messages);
 
         // Update local state
         setSession((prev) =>
@@ -83,9 +102,13 @@ export function useSessionStorage(sessionId: string | null) {
             ? {
                 ...prev,
                 messages: [...prev.messages, ...messages],
-                updatedAt: Date.now(),
+                updatedAt,
               }
-            : null
+            : {
+                ...targetSession,
+                messages: [...targetSession.messages, ...messages],
+                updatedAt,
+              }
         );
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : 'Failed to append messages';
@@ -93,19 +116,22 @@ export function useSessionStorage(sessionId: string | null) {
         throw err;
       }
     },
-    [session]
+    [loadTargetSession]
   );
 
   // Update session title
   const updateTitle = useCallback(
     async (newTitle: string) => {
-      if (!session) {
+      const targetSession = await loadTargetSession();
+
+      if (!targetSession) {
         throw new Error('No active session');
       }
 
       try {
         setError(null);
-        await updateSessionTitle(session.id, newTitle);
+        const updatedAt = Date.now();
+        await updateSessionTitle(targetSession.id, newTitle);
 
         // Update local state
         setSession((prev) =>
@@ -113,9 +139,13 @@ export function useSessionStorage(sessionId: string | null) {
             ? {
                 ...prev,
                 title: newTitle,
-                updatedAt: Date.now(),
+                updatedAt,
               }
-            : null
+            : {
+                ...targetSession,
+                title: newTitle,
+                updatedAt,
+              }
         );
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : 'Failed to update title';
@@ -123,7 +153,7 @@ export function useSessionStorage(sessionId: string | null) {
         throw err;
       }
     },
-    [session]
+    [loadTargetSession]
   );
 
   return {

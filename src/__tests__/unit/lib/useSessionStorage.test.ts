@@ -181,6 +181,71 @@ describe('useSessionStorage', () => {
       expect(db.appendMessages).toHaveBeenCalledWith(sessionId, newMessages);
     });
 
+    it('should append messages when restored session state is still loading', async () => {
+      const sessionId = 'session-123';
+      const mockSession = {
+        id: sessionId,
+        title: '會話',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+      };
+
+      vi.mocked(db.getSession).mockResolvedValue(mockSession);
+
+      const { result } = renderHook(() => useSessionStorage(sessionId));
+      const newMessages = [
+        { role: 'user' as const, content: '問題', timestamp: Date.now() },
+      ];
+
+      await act(async () => {
+        await result.current.addMessages(newMessages);
+      });
+
+      expect(db.appendMessages).toHaveBeenCalledWith(sessionId, newMessages);
+    });
+
+    it('should append to the requested session after switching before state loads', async () => {
+      const oldSession = {
+        id: 'old-session',
+        title: '舊會話',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+      };
+      const newSession = {
+        id: 'new-session',
+        title: '新會話',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+      };
+
+      vi.mocked(db.getSession).mockResolvedValueOnce(oldSession);
+
+      const { result, rerender } = renderHook(
+        ({ id }) => useSessionStorage(id),
+        { initialProps: { id: oldSession.id } }
+      );
+
+      await waitFor(() => {
+        expect(result.current.session?.id).toBe(oldSession.id);
+      });
+
+      vi.mocked(db.getSession).mockResolvedValue(newSession);
+      rerender({ id: newSession.id });
+
+      const newMessages = [
+        { role: 'user' as const, content: '追問', timestamp: Date.now() },
+      ];
+
+      await act(async () => {
+        await result.current.addMessages(newMessages);
+      });
+
+      expect(db.appendMessages).toHaveBeenCalledWith(newSession.id, newMessages);
+    });
+
     it('should throw error when no active session', async () => {
       const { result } = renderHook(() => useSessionStorage(null));
       
@@ -221,6 +286,27 @@ describe('useSessionStorage', () => {
         await result.current.updateTitle('新標題');
       });
       
+      expect(db.updateSessionTitle).toHaveBeenCalledWith(sessionId, '新標題');
+    });
+
+    it('should update title when restored session state is still loading', async () => {
+      const sessionId = 'session-123';
+      const mockSession = {
+        id: sessionId,
+        title: '舊標題',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+      };
+
+      vi.mocked(db.getSession).mockResolvedValue(mockSession);
+
+      const { result } = renderHook(() => useSessionStorage(sessionId));
+
+      await act(async () => {
+        await result.current.updateTitle('新標題');
+      });
+
       expect(db.updateSessionTitle).toHaveBeenCalledWith(sessionId, '新標題');
     });
 

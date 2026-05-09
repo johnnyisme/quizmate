@@ -99,7 +99,7 @@ describe('Enter Key Behavior in Chat Input', () => {
       const maxHeight = lineHeight * maxLines;
       
       let currentHeight = 36; // 初始高度
-      let scrollHeight = 44; // 換行後的高度（兩行）
+      const scrollHeight = 44; // 換行後的高度（兩行）
       
       // 模擬自動增長
       currentHeight = Math.min(scrollHeight, maxHeight);
@@ -112,7 +112,7 @@ describe('Enter Key Behavior in Chat Input', () => {
       const maxLines = 3;
       const maxHeight = lineHeight * maxLines;
       
-      let scrollHeight = 100; // 很多行
+      const scrollHeight = 100; // 很多行
       
       // 應該限制在最大高度
       const currentHeight = Math.min(scrollHeight, maxHeight);
@@ -182,7 +182,7 @@ describe('Enter Key Behavior in Chat Input', () => {
     });
 
     it('should keep keyboard open during multi-line editing', () => {
-      let isFocused = true;
+      const isFocused = true;
       
       // 按 Enter 不改變 focus 狀態
       // (沒有 blur 呼叫)
@@ -258,7 +258,7 @@ describe('Enter Key Behavior in Chat Input', () => {
     });
 
     it('should maintain focus during typing and Enter presses', () => {
-      let isFocused = true;
+      const isFocused = true;
       
       // 輸入文字 + 按 Enter + 繼續輸入
       // focus 狀態不變

@@ -8,12 +8,18 @@ export type DisplayMessage = {
   image?: string;
 };
 
+export type ChatError = {
+  message: string;
+  suggestion?: string;
+  technicalDetails?: string;
+} | null;
+
 type ChatState = {
   displayConversation: DisplayMessage[];
   apiHistory: Content[];
   currentPrompt: string;
   isLoading: boolean;
-  error: { message: string; suggestion?: string; technicalDetails?: string } | null;
+  error: ChatError;
 };
 
 export const useChatState = () => {
@@ -47,7 +53,7 @@ export const useChatState = () => {
 
   const setCurrentPrompt = useCallback((prompt: string) => updateChatState({ currentPrompt: prompt }), [updateChatState]);
   const setIsLoading = useCallback((loading: boolean) => updateChatState({ isLoading: loading }), [updateChatState]);
-  const setError = useCallback((err: { message: string; suggestion?: string; technicalDetails?: string } | null) => updateChatState({ error: err }), [updateChatState]);
+  const setError = useCallback((err: ChatError) => updateChatState({ error: err }), [updateChatState]);
 
   return {
     ...chatState,

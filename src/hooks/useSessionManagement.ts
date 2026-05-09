@@ -1,5 +1,7 @@
 // Custom hook for session management
-import { useCallback, useEffect, RefObject } from 'react';
+import { useCallback, useEffect, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import type { Content } from '@google/generative-ai';
+import type { DisplayMessage } from './useChatState';
 
 type SessionManagementProps = {
   currentSessionId: string | null;
@@ -15,8 +17,8 @@ type SessionManagementProps = {
   setEditingSessionId: (id: string | null) => void;
   setEditingTitle: (title: string) => void;
   editingContainerRef: RefObject<HTMLDivElement | null>;
-  setDisplayConversation: (conv: any) => void;
-  setApiHistory: (hist: any) => void;
+  setDisplayConversation: Dispatch<SetStateAction<DisplayMessage[]>>;
+  setApiHistory: Dispatch<SetStateAction<Content[]>>;
 };
 
 export const useSessionManagement = ({

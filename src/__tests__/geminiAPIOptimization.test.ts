@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useGeminiAPI } from '@/hooks/useGeminiAPI';
 import type { ModelType } from '@/hooks/useSettingsState';
 
@@ -59,6 +59,7 @@ describe('Gemini API Performance Optimizations', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     
     // Setup default mock behavior
     mockGenerateContentStream.mockResolvedValue({
@@ -305,6 +306,38 @@ describe('Gemini API Performance Optimizations', () => {
         // Should rotate to next successful key (0 failed, 1 succeeded, so rotate to 2)
         expect(setCurrentKeyIndex).toHaveBeenCalledWith(2);
       });
+    });
+  });
+
+  describe('Session Persistence Fallback', () => {
+    it('should create a new session when restored active session is unavailable', async () => {
+      const addMessages = vi.fn().mockRejectedValue(new Error('No active session'));
+      const createNewSession = vi.fn().mockResolvedValue({ id: 'new-session' });
+      const setCurrentSessionId = vi.fn();
+
+      const { result } = renderHook(() => useGeminiAPI({
+        ...mockProps,
+        currentSessionId: 'stale-session',
+        addMessages,
+        createNewSession,
+        setCurrentSessionId,
+      }));
+
+      await act(async () => {
+        await result.current.handleSubmit('Test question', null, '', vi.fn(), vi.fn());
+      });
+
+      expect(addMessages).toHaveBeenCalled();
+      expect(createNewSession).toHaveBeenCalledWith(
+        'Test question',
+        expect.arrayContaining([
+          expect.objectContaining({ role: 'user', content: 'Test question' }),
+          expect.objectContaining({ role: 'model', content: 'Test response' }),
+        ]),
+        undefined
+      );
+      expect(setCurrentSessionId).toHaveBeenCalledWith('new-session');
+      expect(localStorage.getItem('current-session-id')).toBe('new-session');
     });
   });
 
